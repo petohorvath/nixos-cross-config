@@ -187,6 +187,47 @@ services.nginx.virtualHosts."app.example".serverName = "public.example";
 
 Here `senderConfig.networking.hostName` belongs to the sender; `config.serverName` includes the receiver's refinement. Nested conditions can likewise depend on captured sender values or the receiving submodule's configuration. Submodule evaluation stays with the receiving option type. Receiver root imports and option declarations remain caller-owned and independent of received values.
 
+## Node relationships and value dependencies
+
+A sender can contribute to itself using its node identity. Self-targeted contributions merge with local definitions through the receiving option type:
+
+```nix
+# Node application, with networking.hosts registered.
+networking.hosts."192.0.2.10" = [ "local.example" ];
+crossConfig.nodes.application.networking.hosts."192.0.2.10" = [
+  "service.example"
+];
+# Both names appear in nodes.application.config.networking.hosts."192.0.2.10".
+```
+
+Two nodes can also contribute independent values to one another. Neither node must finish evaluation before the other starts:
+
+```nix
+# Node alpha, with networking.hosts registered.
+crossConfig.nodes.beta.networking.hosts."192.0.2.10" = [ "alpha.example" ];
+
+# Node beta, in its own module.
+crossConfig.nodes.alpha.networking.hosts."192.0.2.20" = [ "beta.example" ];
+```
+
+These relationships work for hosts and guests, including a container contributing to its parent and itself. Each participant imports the generated module with its collection identity.
+
+An actual value-dependency cycle still fails with Nix's native `infinite recursion encountered` error. For example, each sender below reads the domain that only the other sender can supply:
+
+```nix
+# Node alpha module, with networking.domain registered.
+{ config, ... }: {
+  crossConfig.nodes.beta.networking.domain = config.networking.domain;
+}
+
+# Node beta module.
+{ config, ... }: {
+  crossConfig.nodes.alpha.networking.domain = config.networking.domain;
+}
+```
+
+Forcing either receiving domain exposes the cycle. Cyclic values are not dropped or replaced with defaults. All participants remain accessible within one outer Nix computation; separate source repositories and per-node module evaluations fit this boundary.
+
 ## Minimal consumer
 
 The runnable [example](./examples/minimal.nix) constructs an application and a proxy as NixOS container configurations. Both use the same Nixpkgs revision and import the public factory. The application contributes proxy settings for an illustrative backend at `192.0.2.10:8080`.
@@ -237,6 +278,8 @@ nix eval --json ./dev#lib.tests.x86_64-linux.stable.merging
 nix eval --json ./dev#lib.tests.x86_64-linux.stable.priorities
 nix eval --json ./dev#lib.tests.x86_64-linux.stable.conditional
 nix eval --json ./dev#lib.tests.x86_64-linux.stable.senderContext
+nix eval --json ./dev#lib.tests.x86_64-linux.stable.selfTarget
+nix eval --json ./dev#lib.tests.x86_64-linux.stable.reciprocal
 
 # Full evaluation suite on stable and unstable, plus formatting.
 nix flake check ./dev
@@ -245,11 +288,13 @@ nix flake check ./dev
 (cd dev && nix fmt -- ..)
 ```
 
-Each complete collection suite can also run in a separate evaluator process to reduce peak memory use:
+The checks can also run in separate evaluator processes to reduce peak memory use:
 
 ```bash
 nix build --no-link ./dev#checks.x86_64-linux.stable
 nix build --no-link ./dev#checks.x86_64-linux.unstable
+nix build --no-link ./dev#checks.x86_64-linux.stable-value-cycle
+nix build --no-link ./dev#checks.x86_64-linux.unstable-value-cycle
 nix build --no-link ./dev#checks.x86_64-linux.formatting
 ```
 
@@ -261,9 +306,16 @@ nix eval --json ./dev#lib.failures.x86_64-linux.stable.localConflict
 
 The [conditional fixture](./tests/conditional.nix) exercises enabled and disabled branches at registered options and transport containers, including unevaluated disabled payloads. The [merging fixture](./tests/merging.nix) combines several exports targeting one receiver with another sender and local definitions. The [sender-context fixture](./tests/sender-context.nix) distinguishes captured sender values from receiving submodule arguments and refinements.
 
+The [self-targeting](./tests/self-target.nix) and [reciprocal](./tests/reciprocal.nix) fixtures force received values on every participant. The [host and guest fixture](./tests/host-guest.nix) also covers guest-to-parent and guest-to-self contributions merged with local definitions. Separate evaluator checks require the [value-cycle fixture](./tests/value-cycle.nix) to fail with a native recursion error on both revisions. `tryEval` cannot catch that error. The failure can be inspected directly:
+
+```bash
+nix eval --json ./dev#lib.failures.x86_64-linux.stable.valueCycle
+# error: infinite recursion encountered
+```
+
 ## Current scope
 
-Contributions preserve whole-option and nested override priorities, list ordering, conditions, merges, and captured sender context. Receiving submodules use their option type's ordinary evaluation semantics. The cyclic-node contract and destination diagnostics remain follow-up work. Until destination validation is complete, every participant must provide the registered writable destinations.
+Contributions preserve whole-option and nested override priorities, list ordering, conditions, merges, and captured sender context. Receiving submodules use their option type's ordinary evaluation semantics. Self-targeted and reciprocal contributions are supported; actual value-dependency cycles retain native recursion errors. Destination validation and diagnostics remain follow-up work. Until destination validation is complete, every participant must provide the registered writable destinations.
 
 The implementation plan also includes migration of the existing `nixos-config` consumer. Work is tracked in GitHub Issues.
 
@@ -275,7 +327,7 @@ The implementation plan also includes migration of the existing `nixos-config` c
 1. [Forward contributions through a caller-owned node collection](https://github.com/petohorvath/nixos-cross-config/issues/1) — implemented.
 2. [Preserve override priorities and ordering in contributions](https://github.com/petohorvath/nixos-cross-config/issues/2) — implemented.
 3. [Preserve conditional contributions and sender context](https://github.com/petohorvath/nixos-cross-config/issues/3) — implemented.
-4. [Support self-targeted and reciprocal node contributions](https://github.com/petohorvath/nixos-cross-config/issues/4)
+4. [Support self-targeted and reciprocal node contributions](https://github.com/petohorvath/nixos-cross-config/issues/4) — implemented.
 5. [Validate destinations and report contribution origins](https://github.com/petohorvath/nixos-cross-config/issues/5)
 6. [Adopt the library in the consumer and migrate Vaultwarden](https://github.com/petohorvath/nixos-cross-config/issues/6)
 7. [Migrate the remaining nginx publication integrations](https://github.com/petohorvath/nixos-cross-config/issues/7)

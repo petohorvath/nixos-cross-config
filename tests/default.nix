@@ -25,6 +25,8 @@ in
   nestedProperties = import ./nested-properties.nix { inherit checkAssertions mkNodes; };
   ordering = import ./ordering.nix { inherit checkAssertions mkNodes; };
   priorities = import ./priorities.nix { inherit checkAssertions mkNodes; };
+  reciprocal = import ./reciprocal.nix { inherit checkAssertions mkNodes; };
+  selfTarget = import ./self-target.nix { inherit checkAssertions mkNodes; };
   senderContext = import ./sender-context.nix { inherit checkAssertions mkNodes; };
   transportProperties = import ./transport-properties.nix { inherit checkAssertions mkNodes; };
   validation = builtins.mapAttrs (

@@ -15,6 +15,7 @@ let
     extraNodes.guest.config = nodes.host.config.containers.application.config;
     modules = {
       host = {
+        networking.hosts."192.0.2.20" = [ "host-local.example" ];
         crossConfig.nodes.guest.networking.hosts."192.0.2.10" = [
           "host-to-guest.example"
         ];
@@ -26,7 +27,14 @@ let
             })
           ];
           networking.hostName = "application-container";
+          networking.hosts."192.0.2.10" = [ "guest-local.example" ];
           system.stateVersion = "26.05";
+          crossConfig.nodes.host.networking.hosts."192.0.2.20" = [
+            "guest-to-parent.example"
+          ];
+          crossConfig.nodes.guest.networking.hosts."192.0.2.10" = [
+            "guest-to-self.example"
+          ];
           crossConfig.nodes.receiver.networking.hosts."192.0.2.20" = [
             "guest-to-host.example"
           ];
@@ -39,8 +47,15 @@ in
 assert nodes.guest.config.boot.isContainer;
 assert nodes.guest.config.networking.hostName == "application-container";
 assert
-  nodes.guest.config.networking.hosts."192.0.2.10" == [
+  builtins.sort builtins.lessThan nodes.guest.config.networking.hosts."192.0.2.10" == [
+    "guest-local.example"
+    "guest-to-self.example"
     "host-to-guest.example"
+  ];
+assert
+  builtins.sort builtins.lessThan nodes.host.config.networking.hosts."192.0.2.20" == [
+    "guest-to-parent.example"
+    "host-local.example"
   ];
 assert
   nodes.receiver.config.networking.hosts."192.0.2.20" == [

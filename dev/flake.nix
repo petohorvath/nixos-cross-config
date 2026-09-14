@@ -34,10 +34,14 @@
         system:
         builtins.mapAttrs (
           _: nixpkgs:
-          import ../tests/failures.nix {
+          let
             mkNodes = import ../tests/mk-nodes.nix {
               inherit crossConfig nixpkgs system;
             };
+          in
+          import ../tests/failures.nix { inherit mkNodes; }
+          // {
+            valueCycle = import ../tests/value-cycle.nix { inherit mkNodes; };
           }
         ) collections
       );
@@ -56,6 +60,14 @@
         builtins.mapAttrs (
           channel: results: pkgs.writeText "cross-config-${channel}-tests.json" (builtins.toJSON results)
         ) testResults.${system}
+        // stable.lib.mapAttrs' (
+          channel: nixpkgs:
+          stable.lib.nameValuePair "${channel}-value-cycle" (
+            import ../tests/check-value-cycle.nix {
+              inherit nixpkgs pkgs system;
+            }
+          )
+        ) collections
         // {
           formatting =
             pkgs.runCommand "cross-config-formatting"
