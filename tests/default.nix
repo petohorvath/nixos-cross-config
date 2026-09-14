@@ -16,6 +16,7 @@ let
   failures = import ./failures.nix { inherit mkNodes; };
 in
 {
+  conditional = import ./conditional.nix { inherit checkAssertions mkNodes; };
   example = import ./example.nix { inherit crossConfig nixpkgs system; };
   forwarding = import ./forwarding.nix { inherit checkAssertions mkNodes; };
   hostGuest = import ./host-guest.nix { inherit checkAssertions crossConfig mkNodes; };
@@ -24,6 +25,7 @@ in
   nestedProperties = import ./nested-properties.nix { inherit checkAssertions mkNodes; };
   ordering = import ./ordering.nix { inherit checkAssertions mkNodes; };
   priorities = import ./priorities.nix { inherit checkAssertions mkNodes; };
+  senderContext = import ./sender-context.nix { inherit checkAssertions mkNodes; };
   transportProperties = import ./transport-properties.nix { inherit checkAssertions mkNodes; };
   validation = builtins.mapAttrs (
     _: value:

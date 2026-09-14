@@ -108,6 +108,85 @@ crossConfig.nodes = lib.mkForce {
 
 The receiving guarantee starts at each registered option. Properties intended to control receiving precedence belong at that option or within its nested values.
 
+## Conditional integrations
+
+`lib.mkIf` guards contributions at registered options:
+
+```nix
+# Sender, with networking.firewall.allowedTCPPorts registered.
+crossConfig.nodes.receiver.networking.firewall.allowedTCPPorts =
+  lib.mkIf config.services.openssh.enable [ 22 ];
+```
+
+A false condition contributes no definitions to the declared writable destination. Its payload values remain unevaluated; receiver-local settings and option defaults still apply.
+
+`mkIf` and `mkMerge` also work around `crossConfig.nodes`, individual receiver entries, and intermediate path attributes. These containers select outgoing contributions during sender evaluation. Conditions and merges at registered options are also processed in the sender; nested values follow the receiving option type's semantics.
+
+Several integrations can select the same receiver. `mkMerge` combines their receiver maps so each integration's definitions reach the receiving option:
+
+```nix
+# Sender, with services.nginx.virtualHosts registered.
+let
+  exports = [
+    {
+      receiver = "proxy";
+      location = "/api";
+      port = 8080;
+      enable = true;
+    }
+    {
+      receiver = "proxy";
+      location = "/metrics";
+      port = 9090;
+      enable = true;
+    }
+  ];
+in
+{
+  crossConfig.nodes = lib.mkMerge (
+    map (export: lib.mkIf export.enable {
+      ${export.receiver}.services.nginx.virtualHosts."app.example" = {
+        locations.${export.location}.proxyPass =
+          "http://192.0.2.10:${toString export.port}";
+      };
+    }) exports
+  );
+}
+```
+
+The proxy receives both locations. Disabling either export removes its contribution. Other senders and receiver-local refinements merge through the same receiving type.
+
+## Sender context and receiving submodules
+
+Expressions captured from the sender keep their lexical context. A function supplied to a receiving submodule gets that submodule's ordinary arguments, including its merged `config`. An explicit binding preserves access to the sender when a submodule also binds `config`:
+
+```nix
+# Sender module, with services.nginx.virtualHosts registered.
+{ config, lib, ... }:
+let
+  senderConfig = config;
+in
+{
+  networking.hostName = "application";
+  crossConfig.nodes.proxy.services.nginx.virtualHosts."app.example" =
+    { config, ... }: {
+      serverName = lib.mkDefault "app.example";
+      serverAliases = [
+        "${senderConfig.networking.hostName}.${config.serverName}"
+      ];
+    };
+}
+```
+
+The receiver can refine the submodule:
+
+```nix
+services.nginx.virtualHosts."app.example".serverName = "public.example";
+# The resulting serverAliases is [ "application.public.example" ].
+```
+
+Here `senderConfig.networking.hostName` belongs to the sender; `config.serverName` includes the receiver's refinement. Nested conditions can likewise depend on captured sender values or the receiving submodule's configuration. Submodule evaluation stays with the receiving option type. Receiver root imports and option declarations remain caller-owned and independent of received values.
+
 ## Minimal consumer
 
 The runnable [example](./examples/minimal.nix) constructs an application and a proxy as NixOS container configurations. Both use the same Nixpkgs revision and import the public factory. The application contributes proxy settings for an illustrative backend at `192.0.2.10:8080`.
@@ -156,6 +235,8 @@ git add <new-files>
 # One fixture, including native NixOS option typechecking.
 nix eval --json ./dev#lib.tests.x86_64-linux.stable.merging
 nix eval --json ./dev#lib.tests.x86_64-linux.stable.priorities
+nix eval --json ./dev#lib.tests.x86_64-linux.stable.conditional
+nix eval --json ./dev#lib.tests.x86_64-linux.stable.senderContext
 
 # Full evaluation suite on stable and unstable, plus formatting.
 nix flake check ./dev
@@ -178,9 +259,11 @@ Fixtures force received values, host and guest assertions, and the example's sys
 nix eval --json ./dev#lib.failures.x86_64-linux.stable.localConflict
 ```
 
+The [conditional fixture](./tests/conditional.nix) exercises enabled and disabled branches at registered options and transport containers, including unevaluated disabled payloads. The [merging fixture](./tests/merging.nix) combines several exports targeting one receiver with another sender and local definitions. The [sender-context fixture](./tests/sender-context.nix) distinguishes captured sender values from receiving submodule arguments and refinements.
+
 ## Current scope
 
-Contributions preserve whole-option and nested override priorities and list ordering. The full conditional and cyclic-node contracts and destination diagnostics remain follow-up work. Until destination validation is complete, every participant must provide the registered writable destinations.
+Contributions preserve whole-option and nested override priorities, list ordering, conditions, merges, and captured sender context. Receiving submodules use their option type's ordinary evaluation semantics. The cyclic-node contract and destination diagnostics remain follow-up work. Until destination validation is complete, every participant must provide the registered writable destinations.
 
 The implementation plan also includes migration of the existing `nixos-config` consumer. Work is tracked in GitHub Issues.
 
@@ -191,7 +274,7 @@ The implementation plan also includes migration of the existing `nixos-config` c
 
 1. [Forward contributions through a caller-owned node collection](https://github.com/petohorvath/nixos-cross-config/issues/1) — implemented.
 2. [Preserve override priorities and ordering in contributions](https://github.com/petohorvath/nixos-cross-config/issues/2) — implemented.
-3. [Preserve conditional contributions and sender context](https://github.com/petohorvath/nixos-cross-config/issues/3)
+3. [Preserve conditional contributions and sender context](https://github.com/petohorvath/nixos-cross-config/issues/3) — implemented.
 4. [Support self-targeted and reciprocal node contributions](https://github.com/petohorvath/nixos-cross-config/issues/4)
 5. [Validate destinations and report contribution origins](https://github.com/petohorvath/nixos-cross-config/issues/5)
 6. [Adopt the library in the consumer and migrate Vaultwarden](https://github.com/petohorvath/nixos-cross-config/issues/6)
