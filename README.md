@@ -358,7 +358,7 @@ nix eval --json ./dev#lib.failures.x86_64-linux.stable.valueCycle
 
 Contributions preserve whole-option and nested override priorities, list ordering, conditions, merges, and captured sender context. Receiving submodules use their option type's ordinary evaluation semantics. Self-targeted and reciprocal contributions are supported; actual value-dependency cycles retain native recursion errors. Shared registrations tolerate unused missing and read-only destinations; actual invalid contributions fail with contribution context.
 
-The implementation plan also includes migration of the existing `nixos-config` consumer. Work is tracked in GitHub Issues.
+The existing `nixos-config` consumer imports the library through its host and guest builders. Vaultwarden's nginx publication uses the library; the remaining integrations still use the legacy transport during migration. The consumer's `docs/cross-config.md` documents wiring, coexistence, and regression checks. Work is tracked in GitHub Issues.
 
 - [Domain glossary](./CONTEXT.md)
 - [Architectural decisions](./docs/adr/)
@@ -370,7 +370,7 @@ The implementation plan also includes migration of the existing `nixos-config` c
 3. [Preserve conditional contributions and sender context](https://github.com/petohorvath/nixos-cross-config/issues/3) — implemented.
 4. [Support self-targeted and reciprocal node contributions](https://github.com/petohorvath/nixos-cross-config/issues/4) — implemented.
 5. [Validate destinations and report contribution origins](https://github.com/petohorvath/nixos-cross-config/issues/5) — implemented.
-6. [Adopt the library in the consumer and migrate Vaultwarden](https://github.com/petohorvath/nixos-cross-config/issues/6)
+6. [Adopt the library in the consumer and migrate Vaultwarden](https://github.com/petohorvath/nixos-cross-config/issues/6) — implemented.
 7. [Migrate the remaining nginx publication integrations](https://github.com/petohorvath/nixos-cross-config/issues/7)
 8. [Migrate metrics and log access contributions](https://github.com/petohorvath/nixos-cross-config/issues/8)
 9. [Remove legacy forwarding after the consumer cutover](https://github.com/petohorvath/nixos-cross-config/issues/9)
