@@ -17,6 +17,7 @@ let
 in
 {
   conditional = import ./conditional.nix { inherit checkAssertions mkNodes; };
+  destinations = import ./destinations.nix { inherit checkAssertions mkNodes; };
   example = import ./example.nix { inherit crossConfig nixpkgs system; };
   forwarding = import ./forwarding.nix { inherit checkAssertions mkNodes; };
   hostGuest = import ./host-guest.nix { inherit checkAssertions crossConfig mkNodes; };

@@ -4,19 +4,10 @@
   system,
 }:
 let
-  expression = builtins.toFile "cross-config-value-cycle.nix" ''
-    let
-      crossConfig = (import ${../.}/flake.nix).outputs { };
-      nixpkgs = (import ${nixpkgs}/flake.nix).outputs {
-        self.outPath = "${nixpkgs}";
-      };
-      mkNodes = import ${./mk-nodes.nix} {
-        inherit crossConfig nixpkgs;
-        system = "${system}";
-      };
-    in
-    import ${./value-cycle.nix} { inherit mkNodes; }
-  '';
+  expression = import ./mk-failure-expression.nix {
+    inherit nixpkgs system;
+    fixture = "value-cycle.nix";
+  };
 in
 # Native recursion errors escape tryEval, so inspect a separate evaluator.
 pkgs.runCommand "cross-config-value-cycle" { nativeBuildInputs = [ pkgs.nix ]; } ''

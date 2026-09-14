@@ -50,6 +50,37 @@ Multiple senders and receiver-local definitions merge through the receiving opti
 
 `crossConfig.nodes` is a declaration interface. The observable result is `nodes.<receiver>.config`; the transport's evaluated representation is internal.
 
+## Destinations and diagnostics
+
+The forwarding surface is shared across heterogeneous nodes. Registration alone does not require every participant to declare an option or accept writes to it.
+
+```nix
+optionPaths = [
+  [ "services" "nginx" "virtualHosts" ]
+  [ "inventory" "serial" ]
+];
+```
+
+A participant without `inventory.serial`, or with a read-only declaration for it, can still receive nginx contributions. Unused missing and read-only destinations are omitted from receiving definitions, including registered paths inside submodules. Defaults and receiver-local definitions remain intact. A false condition at a registered option contributes no definitions and leaves its payload unevaluated.
+
+| Contribution | Validation |
+| --- | --- |
+| Missing receiving option | The receiver's assertions fail. |
+| Read-only receiving option | The receiver's assertions fail, even without a default or another definition. |
+| Unknown receiver identity | The sender's assertions fail; building the sender exposes the error. |
+| Path outside the forwarding surface | The sender's module option check fails, including with an empty forwarding surface. |
+| Incompatible value or conflicting definitions | The receiving option type reports its native type or merge error. |
+
+System evaluation forces assertions through `config.system.build.toplevel`. Evaluations of individual configuration values must also check `config.assertions` to detect invalid destinations. A disabled receiver entry contributes nothing; an entry that remains present must name a member of the node collection.
+
+Missing-option, read-only, type, and merge failures identify the sender, receiver, registered destination, and original definition filename when available. Forwarded definitions retain source filenames with contribution context appended:
+
+```text
+/path/to/application.nix (sender `application`, receiver `proxy`, destination `services.nginx.virtualHosts`)
+```
+
+Nested errors retain the receiving type's more specific option path. `--show-trace` exposes additional evaluation context, including the sender of an out-of-surface contribution. Diagnostics preserve normal option merging; exact original line and column attribution is not guaranteed.
+
 ## Definition properties
 
 Override and ordering properties survive at each registered option and inside contributed attribute sets and submodules. The receiver merges contributed and local definitions using its ordinary option semantics.
@@ -261,7 +292,7 @@ The consumer's `flake.lock` pins its selected revisions. Existing host and guest
 
 V1 targets NixOS, with one Nixpkgs revision per node collection. All participating configurations must be accessible within one outer Nix computation. Separate source repositories and per-node evaluations fit that boundary; mixed-revision collections are outside the v1 contract.
 
-Node identities, the forwarding surface, receiver imports, and receiver option declarations must remain independent of received values. Contributions define existing options. Root module imports and option declarations stay with the caller.
+Node identities, the forwarding surface, receiver imports, and receiver option declarations must remain independent of received values. This includes `readOnly` metadata; receiver-local configuration can determine it. Ordinary receiver-local values and conditions can depend on contributions. Contributions define existing options. Root module imports and option declarations stay with the caller.
 
 The receiver's generated NixOS configuration contains its contributions. Deploying that receiver through the consumer's normal deployment process activates the result. Node construction, discovery, globals aggregation, topology, service ownership, and deployment remain consumer responsibilities. The library provides no runtime exchange protocol, deployment orchestration, or required fleet framework.
 
@@ -280,6 +311,7 @@ nix eval --json ./dev#lib.tests.x86_64-linux.stable.conditional
 nix eval --json ./dev#lib.tests.x86_64-linux.stable.senderContext
 nix eval --json ./dev#lib.tests.x86_64-linux.stable.selfTarget
 nix eval --json ./dev#lib.tests.x86_64-linux.stable.reciprocal
+nix eval --json ./dev#lib.tests.x86_64-linux.stable.destinations
 
 # Full evaluation suite on stable and unstable, plus formatting.
 nix flake check ./dev
@@ -295,6 +327,8 @@ nix build --no-link ./dev#checks.x86_64-linux.stable
 nix build --no-link ./dev#checks.x86_64-linux.unstable
 nix build --no-link ./dev#checks.x86_64-linux.stable-value-cycle
 nix build --no-link ./dev#checks.x86_64-linux.unstable-value-cycle
+nix build --no-link ./dev#checks.x86_64-linux.stable-diagnostics
+nix build --no-link ./dev#checks.x86_64-linux.unstable-diagnostics
 nix build --no-link ./dev#checks.x86_64-linux.formatting
 ```
 
@@ -302,6 +336,13 @@ Fixtures force received values, host and guest assertions, and the example's sys
 
 ```bash
 nix eval --json ./dev#lib.failures.x86_64-linux.stable.localConflict
+```
+
+The [destination fixtures](./tests/destinations.nix) cover unused missing and read-only registrations on idle and active nodes, submodule paths, and disabled invalid contributions. [Failure fixtures](./tests/destination-failures.nix) force invalid destinations through receiver builds and unknown receivers and unregistered paths through sender builds. Separate [diagnostic checks](./tests/check-diagnostics.nix) verify failure reasons, contribution identities, destination paths, and source filenames on both pinned revisions.
+
+```bash
+nix eval --show-trace ./dev#lib.failures.x86_64-linux.stable.missingDestination
+nix eval --show-trace ./dev#lib.failures.x86_64-linux.stable.unknownReceiver
 ```
 
 The [conditional fixture](./tests/conditional.nix) exercises enabled and disabled branches at registered options and transport containers, including unevaluated disabled payloads. The [merging fixture](./tests/merging.nix) combines several exports targeting one receiver with another sender and local definitions. The [sender-context fixture](./tests/sender-context.nix) distinguishes captured sender values from receiving submodule arguments and refinements.
@@ -315,7 +356,7 @@ nix eval --json ./dev#lib.failures.x86_64-linux.stable.valueCycle
 
 ## Current scope
 
-Contributions preserve whole-option and nested override priorities, list ordering, conditions, merges, and captured sender context. Receiving submodules use their option type's ordinary evaluation semantics. Self-targeted and reciprocal contributions are supported; actual value-dependency cycles retain native recursion errors. Destination validation and diagnostics remain follow-up work. Until destination validation is complete, every participant must provide the registered writable destinations.
+Contributions preserve whole-option and nested override priorities, list ordering, conditions, merges, and captured sender context. Receiving submodules use their option type's ordinary evaluation semantics. Self-targeted and reciprocal contributions are supported; actual value-dependency cycles retain native recursion errors. Shared registrations tolerate unused missing and read-only destinations; actual invalid contributions fail with contribution context.
 
 The implementation plan also includes migration of the existing `nixos-config` consumer. Work is tracked in GitHub Issues.
 
@@ -328,7 +369,7 @@ The implementation plan also includes migration of the existing `nixos-config` c
 2. [Preserve override priorities and ordering in contributions](https://github.com/petohorvath/nixos-cross-config/issues/2) — implemented.
 3. [Preserve conditional contributions and sender context](https://github.com/petohorvath/nixos-cross-config/issues/3) — implemented.
 4. [Support self-targeted and reciprocal node contributions](https://github.com/petohorvath/nixos-cross-config/issues/4) — implemented.
-5. [Validate destinations and report contribution origins](https://github.com/petohorvath/nixos-cross-config/issues/5)
+5. [Validate destinations and report contribution origins](https://github.com/petohorvath/nixos-cross-config/issues/5) — implemented.
 6. [Adopt the library in the consumer and migrate Vaultwarden](https://github.com/petohorvath/nixos-cross-config/issues/6)
 7. [Migrate the remaining nginx publication integrations](https://github.com/petohorvath/nixos-cross-config/issues/7)
 8. [Migrate metrics and log access contributions](https://github.com/petohorvath/nixos-cross-config/issues/8)

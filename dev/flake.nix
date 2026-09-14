@@ -68,6 +68,14 @@
             }
           )
         ) collections
+        // stable.lib.mapAttrs' (
+          channel: nixpkgs:
+          stable.lib.nameValuePair "${channel}-diagnostics" (
+            import ../tests/check-diagnostics.nix {
+              inherit nixpkgs pkgs system;
+            }
+          )
+        ) collections
         // {
           formatting =
             pkgs.runCommand "cross-config-formatting"

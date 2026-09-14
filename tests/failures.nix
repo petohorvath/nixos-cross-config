@@ -151,3 +151,4 @@ in
   incompatibleType = incompatibleType.receiver.config.networking.firewall.allowedTCPPorts;
   failedAssertion = failedAssertion.receiver.config.system.build.toplevel.drvPath;
 }
+// import ./destination-failures.nix { inherit mkNodes; }
