@@ -358,7 +358,7 @@ nix eval --json ./dev#lib.failures.x86_64-linux.stable.valueCycle
 
 Contributions preserve whole-option and nested override priorities, list ordering, conditions, merges, and captured sender context. Receiving submodules use their option type's ordinary evaluation semantics. Self-targeted and reciprocal contributions are supported; actual value-dependency cycles retain native recursion errors. Shared registrations tolerate unused missing and read-only destinations; actual invalid contributions fail with contribution context.
 
-The existing `nixos-config` consumer imports the library through its host and guest builders. Vaultwarden, InfluxDB, Grafana, and Loki publish nginx settings through the library, including Loki's basic-auth secret skeleton. Client authentication and provisioning integrations still use the legacy transport during migration. The consumer's `docs/cross-config.md` documents wiring, coexistence, and regression checks. Work is tracked in GitHub Issues.
+The existing `nixos-config` consumer imports the library through its host and guest builders. Vaultwarden, InfluxDB, Grafana, and Loki publish nginx settings through the library. Telegraf and Grafana contribute InfluxDB token-secret references and provisioning; Alloy and Grafana contribute Loki proxy password dependencies. All active service contributions use `crossConfig.nodes`; legacy collector removal remains tracked in issue #9. The consumer's `docs/cross-config.md` documents wiring and regression checks. Work is tracked in GitHub Issues.
 
 - [Domain glossary](./CONTEXT.md)
 - [Architectural decisions](./docs/adr/)
@@ -372,5 +372,5 @@ The existing `nixos-config` consumer imports the library through its host and gu
 5. [Validate destinations and report contribution origins](https://github.com/petohorvath/nixos-cross-config/issues/5) — implemented.
 6. [Adopt the library in the consumer and migrate Vaultwarden](https://github.com/petohorvath/nixos-cross-config/issues/6) — implemented.
 7. [Migrate the remaining nginx publication integrations](https://github.com/petohorvath/nixos-cross-config/issues/7) — implemented.
-8. [Migrate metrics and log access contributions](https://github.com/petohorvath/nixos-cross-config/issues/8)
+8. [Migrate metrics and log access contributions](https://github.com/petohorvath/nixos-cross-config/issues/8) — implemented.
 9. [Remove legacy forwarding after the consumer cutover](https://github.com/petohorvath/nixos-cross-config/issues/9)
