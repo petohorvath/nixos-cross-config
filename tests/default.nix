@@ -21,6 +21,10 @@ in
   hostGuest = import ./host-guest.nix { inherit checkAssertions crossConfig mkNodes; };
   literalPath = import ./literal-path.nix { inherit checkAssertions mkNodes; };
   merging = import ./merging.nix { inherit checkAssertions mkNodes; };
+  nestedProperties = import ./nested-properties.nix { inherit checkAssertions mkNodes; };
+  ordering = import ./ordering.nix { inherit checkAssertions mkNodes; };
+  priorities = import ./priorities.nix { inherit checkAssertions mkNodes; };
+  transportProperties = import ./transport-properties.nix { inherit checkAssertions mkNodes; };
   validation = builtins.mapAttrs (
     _: value:
     assert !(builtins.tryEval (builtins.deepSeq value true)).success;

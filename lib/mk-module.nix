@@ -29,7 +29,7 @@ let
             readOnly = true;
             description = "Outgoing definitions before the receiving type merges them.";
             # Inspect definitions without forcing a merge in the sender.
-            default = mkPathAttrs (path: (lib.getAttrFromPath path options).definitionsWithLocations);
+            default = mkPathAttrs (path: restoreDefinitionProperties (lib.getAttrFromPath path options));
           };
         };
     };
@@ -56,6 +56,16 @@ let
       (map (path: lib.setAttrByPath path (getValue path)))
       (lib.foldl' lib.recursiveUpdate { })
     ];
+
+  restoreDefinitionProperties =
+    option:
+    # Sender evaluation strips these wrappers before exposing definitions.
+    map (definition: {
+      inherit (definition) file;
+      value = lib.mkOverride option.highestPrio (
+        if definition ? priority then lib.mkOrder definition.priority definition.value else definition.value
+      );
+    }) option.definitionsWithLocations;
 in
 {
   options.crossConfig.nodes = lib.mkOption {
