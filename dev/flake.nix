@@ -64,16 +64,16 @@
         // stable.lib.mapAttrs' (
           channel: nixpkgs:
           stable.lib.nameValuePair "${channel}-value-cycle" (
-            import ../tests/check-value-cycle.nix {
-              inherit nixpkgs pkgs system;
+            pkgs.callPackage ../tests/check-value-cycle.nix {
+              inherit nixpkgs system;
             }
           )
         ) collections
         // stable.lib.mapAttrs' (
           channel: nixpkgs:
           stable.lib.nameValuePair "${channel}-diagnostics" (
-            import ../tests/check-diagnostics.nix {
-              inherit nixpkgs pkgs system;
+            pkgs.callPackage ../tests/check-diagnostics.nix {
+              inherit nixpkgs system;
             }
           )
         ) collections

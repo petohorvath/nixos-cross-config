@@ -1,9 +1,9 @@
 {
-  fixture,
+  fixtureName,
   nixpkgs,
   system,
 }:
-builtins.toFile "cross-config-${fixture}" ''
+builtins.toFile "cross-config-${fixtureName}" ''
   let
     crossConfig = (import ${../.}/flake.nix).outputs { };
     nixpkgs = (import ${nixpkgs}/flake.nix).outputs {
@@ -14,5 +14,5 @@ builtins.toFile "cross-config-${fixture}" ''
       system = "${system}";
     };
   in
-  import ${./.}/${fixture} { inherit mkNodes; }
+  import ${./.}/${fixtureName} { inherit mkNodes; }
 ''
