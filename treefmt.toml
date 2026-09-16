@@ -1,4 +1,4 @@
-excludes = [".git/**", ".direnv/**", "result", "result-*/**", "*.lock", "**/__pycache__/**", ".ruff_cache/**", "dev/benchmarks/results/**"]
+excludes = [".git/**", ".direnv/**", "result", "result-*/**", "*.lock"]
 
 [formatter.nix]
 command = "nixfmt"
@@ -13,8 +13,3 @@ includes = ["*.sh", ".envrc"]
 command = "prettier"
 options = ["--write"]
 includes = ["*.md", "*.yaml", "*.yml", "*.json"]
-
-[formatter.python]
-command = "ruff"
-options = ["format"]
-includes = ["*.py"]

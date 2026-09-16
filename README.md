@@ -6,7 +6,7 @@ The generated module receives `lib` from the consumer's NixOS evaluation. The [r
 
 ## Support
 
-The library targets NixOS node collections using one nixpkgs revision. Development and CI definitions cover `x86_64-linux` and `aarch64-linux`, with evaluation tests against locked NixOS 26.05 and unstable inputs. The project has no VM suite or tagged release yet. [Policy adoption](docs/development.md#policy-adoption) records pending baseline approval and hosted verification.
+The library targets NixOS node collections using one nixpkgs revision. Development and CI definitions cover `x86_64-linux` and `aarch64-linux`, with evaluation tests against locked NixOS 26.05 and unstable inputs. The project has no VM suite or tagged release yet. See [CI and policy](docs/development.md#ci-and-policy) for shared checks and enrollment.
 
 ## Quickstart
 
@@ -316,7 +316,7 @@ The receiver's generated NixOS configuration contains its contributions. Deployi
 
 ## Development
 
-The root flake supplies the shell, formatter, example, and non-VM checks. Run `nix fmt` and `nix flake check` from the repository root. [Development instructions](docs/development.md) cover prerequisites, tools, focused checks, benchmarks, and policy adoption.
+The root flake supplies the shell, formatter, example, and non-VM checks. Run `nix fmt` and `nix flake check` from the repository root. [Development instructions](docs/development.md) cover prerequisites, tools, focused checks, and CI.
 
 ## Contributing
 
@@ -329,23 +329,4 @@ Follow [CONTRIBUTING.md](CONTRIBUTING.md) for the shared policy, PR workflow, pu
 - [Development and checks](docs/development.md)
 - [Domain glossary](CONTEXT.md)
 - [Architectural decisions](docs/adr/)
-- [Writable-tag benchmarks](dev/benchmarks/README.md)
-
-## Current scope
-
-Contributions preserve whole-option and nested override priorities, list ordering, conditions, merges, and captured sender context. Receiving submodules use their option type's ordinary evaluation semantics. Self-targeted and reciprocal contributions are supported; actual value-dependency cycles retain native recursion errors. Shared registrations tolerate unused missing and read-only destinations; actual invalid contributions fail with contribution context.
-
-The existing `nixos-config` consumer imports the library through its host and guest builders, using collection identities and one shared forwarding surface. Vaultwarden, InfluxDB, Grafana, and Loki publish nginx settings through the library. Telegraf and Grafana contribute InfluxDB token-secret references and provisioning; Alloy and Grafana contribute Loki proxy password dependencies. All contributions use `crossConfig.nodes`; the legacy collector and receiver-enable controls have been removed. The consumer's `docs/cross-config.md` documents the final wiring, normal receiver deployment, and regression checks. Work is tracked in GitHub Issues.
-
-## Implementation plan
-
-1. [Forward contributions through a caller-owned node collection](https://github.com/petohorvath/nixos-cross-config/issues/1) — implemented.
-2. [Preserve override priorities and ordering in contributions](https://github.com/petohorvath/nixos-cross-config/issues/2) — implemented.
-3. [Preserve conditional contributions and sender context](https://github.com/petohorvath/nixos-cross-config/issues/3) — implemented.
-4. [Support self-targeted and reciprocal node contributions](https://github.com/petohorvath/nixos-cross-config/issues/4) — implemented.
-5. [Validate destinations and report contribution origins](https://github.com/petohorvath/nixos-cross-config/issues/5) — implemented.
-6. [Adopt the library in the consumer and migrate Vaultwarden](https://github.com/petohorvath/nixos-cross-config/issues/6) — implemented.
-7. [Migrate the remaining nginx publication integrations](https://github.com/petohorvath/nixos-cross-config/issues/7) — implemented.
-8. [Migrate metrics and log access contributions](https://github.com/petohorvath/nixos-cross-config/issues/8) — implemented.
-9. [Remove legacy forwarding after the consumer cutover](https://github.com/petohorvath/nixos-cross-config/issues/9) — implemented.
-10. [Replace deprecated evaluation in writable-tag destination checks](https://github.com/petohorvath/nixos-cross-config/issues/10) — implemented.
+- [Destination inspection design](docs/destination-inspection.md)
