@@ -53,12 +53,12 @@ Read `.options`, keeping `.config` and the option's `.value` lazy. The normal mo
 
 ## Compatibility and validation
 
-| Property | Stable `c3eea5b2156d` | Unstable `ef34387ddd75` |
-| --- | --- | --- |
-| `evalModules`, `prefix`, and `.options` documented | Yes | Yes |
-| External `evalOptionValue` deprecated | Yes | Yes |
-| `attrTag.getSubOptions` returns tag declarations with locations | Yes | Yes |
-| `attrTag` directly exposes nested configuration through `valueMeta` | No | No |
+| Property                                                            | Stable `c3eea5b2156d` | Unstable `ef34387ddd75` |
+| ------------------------------------------------------------------- | --------------------- | ----------------------- |
+| `evalModules`, `prefix`, and `.options` documented                  | Yes                   | Yes                     |
+| External `evalOptionValue` deprecated                               | Yes                   | Yes                     |
+| `attrTag.getSubOptions` returns tag declarations with locations     | Yes                   | Yes                     |
+| `attrTag` directly exposes nested configuration through `valueMeta` | No                    | No                      |
 
 The two pins have equivalent relevant `attrTag` code. Their module evaluators and type wrappers differ elsewhere, including `nullOr` metadata, so compatibility must be checked against both pins. [Stable module-system documentation](https://github.com/NixOS/nixpkgs/blob/c3eea5b2156db11c7eeeada3dc737711255b253e/doc/module-system/module-system.chapter.md), [unstable module-system documentation](https://github.com/NixOS/nixpkgs/blob/ef34387ddd751e1ab8857adf4676492d32eb24ec/doc/module-system/module-system.chapter.md), [stable types](https://github.com/NixOS/nixpkgs/blob/c3eea5b2156db11c7eeeada3dc737711255b253e/lib/types.nix#L979-L1119), [unstable types](https://github.com/NixOS/nixpkgs/blob/ef34387ddd751e1ab8857adf4676492d32eb24ec/lib/types.nix#L1117-L1289).
 

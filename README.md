@@ -2,7 +2,25 @@
 
 A NixOS library for configuration contributions between caller-supplied nodes. A sender declares settings for an existing writable option on a receiver, whose option type validates and merges those definitions.
 
-The consumer flake has zero required inputs. The generated module receives `lib` from the consumer's NixOS evaluation; test and formatter dependencies live in the separate [development flake](./dev/flake.nix).
+The generated module receives `lib` from the consumer's NixOS evaluation. The [root flake](flake.nix) owns locked development inputs; the public factory remains usable through a plain Nix import without evaluating those inputs.
+
+## Support
+
+The library targets NixOS node collections using one nixpkgs revision. Development and CI definitions cover `x86_64-linux` and `aarch64-linux`, with evaluation tests against locked NixOS 26.05 and unstable inputs. The project has no VM suite or tagged release yet. [Policy adoption](docs/development.md#policy-adoption) records pending baseline approval and hosted verification.
+
+## Quickstart
+
+With host Nix, flake commands, direnv with flake support, and shell integration configured:
+
+```bash
+direnv allow
+nix flake check --no-update-lock-file
+nix eval --json .#nixosConfigurations.proxy.config.services.nginx.virtualHosts \
+  --apply 'hosts: hosts."app.example".locations."/".proxyPass'
+# "http://192.0.2.10:8080"
+```
+
+See [development prerequisites](docs/development.md#prerequisites) for setup and the [minimal consumer](#minimal-consumer) for use in another flake.
 
 ## Factory
 
@@ -13,11 +31,11 @@ crossConfig.lib.mkModule {
 }
 ```
 
-| Argument | Contract |
-| --- | --- |
-| `name` | The participant's key in `nodes`, independent of `networking.hostName`. |
-| `nodes` | A caller-built attribute set whose participants expose their evaluated NixOS configuration as `nodes.<name>.config`. |
-| `optionPaths` | One shared list of eligible option paths, each represented as a list of literal string segments. |
+| Argument      | Contract                                                                                                             |
+| ------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `name`        | The participant's key in `nodes`, independent of `networking.hostName`.                                              |
+| `nodes`       | A caller-built attribute set whose participants expose their evaluated NixOS configuration as `nodes.<name>.config`. |
+| `optionPaths` | One shared list of eligible option paths, each represented as a list of literal string segments.                     |
 
 Every participant imports its generated module. Importing enables both sending and receiving; there is no enable option.
 
@@ -63,13 +81,13 @@ optionPaths = [
 
 A participant without `inventory.serial`, or with a read-only declaration for it, can still receive nginx contributions. Unused missing and read-only destinations are omitted from receiving definitions, including registered paths inside submodules. Defaults and receiver-local definitions remain intact. A false condition at a registered option contributes no definitions and leaves its payload unevaluated.
 
-| Contribution | Validation |
-| --- | --- |
-| Missing receiving option | The receiver's assertions fail. |
-| Read-only receiving option | The receiver's assertions fail, even without a default or another definition. |
-| Unknown receiver identity | The sender's assertions fail; building the sender exposes the error. |
-| Path outside the forwarding surface | The sender's module option check fails, including with an empty forwarding surface. |
-| Incompatible value or conflicting definitions | The receiving option type reports its native type or merge error. |
+| Contribution                                  | Validation                                                                          |
+| --------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Missing receiving option                      | The receiver's assertions fail.                                                     |
+| Read-only receiving option                    | The receiver's assertions fail, even without a default or another definition.       |
+| Unknown receiver identity                     | The sender's assertions fail; building the sender exposes the error.                |
+| Path outside the forwarding surface           | The sender's module option check fails, including with an empty forwarding surface. |
+| Incompatible value or conflicting definitions | The receiving option type reports its native type or merge error.                   |
 
 System evaluation forces assertions through `config.system.build.toplevel`. Evaluations of individual configuration values must also check `config.assertions` to detect invalid destinations. A disabled receiver entry contributes nothing; an entry that remains present must name a member of the node collection.
 
@@ -87,13 +105,13 @@ Override and ordering properties survive at each registered option and inside co
 
 Lower override priorities win. Definitions at the winning priority merge through the receiving type; incompatible scalar values still conflict.
 
-| Definition | Override priority |
-| --- | --- |
-| Option declaration's default | 1500 |
-| `lib.mkDefault value` | 1000 |
-| Ordinary assignment | 100 |
-| `lib.mkForce value` | 50 |
-| `lib.mkOverride n value` | `n` |
+| Definition                   | Override priority |
+| ---------------------------- | ----------------- |
+| Option declaration's default | 1500              |
+| `lib.mkDefault value`        | 1000              |
+| Ordinary assignment          | 100               |
+| `lib.mkForce value`          | 50                |
+| `lib.mkOverride n value`     | `n`               |
 
 A contributed default allows a receiver refinement:
 
@@ -263,10 +281,10 @@ Forcing either receiving domain exposes the cycle. Cyclic values are not dropped
 
 The runnable [example](./examples/minimal.nix) constructs an application and a proxy as NixOS container configurations. Both use the same Nixpkgs revision and import the public factory. The application contributes proxy settings for an illustrative backend at `192.0.2.10:8080`.
 
-From a checkout, the development flake exposes the example:
+From a checkout, the root flake exposes the example:
 
 ```bash
-nix eval --json ./dev#nixosConfigurations.proxy.config.services.nginx.virtualHosts \
+nix eval --json .#nixosConfigurations.proxy.config.services.nginx.virtualHosts \
   --apply 'hosts: hosts."app.example".locations."/".proxyPass'
 # "http://192.0.2.10:8080"
 ```
@@ -296,75 +314,28 @@ Node identities, the forwarding surface, receiver imports, and receiver option d
 
 The receiver's generated NixOS configuration contains its contributions. Deploying that receiver through the consumer's normal deployment process activates the result. Node construction, discovery, globals aggregation, topology, service ownership, and deployment remain consumer responsibilities. The library provides no runtime exchange protocol, deployment orchestration, or required fleet framework.
 
-## Checks
+## Development
 
-The [locked development inputs](./dev/flake.lock) select NixOS 26.05 and unstable separately. The same public fixtures run once per revision; each collection uses only that revision.
+The root flake supplies the shell, formatter, example, and non-VM checks. Run `nix fmt` and `nix flake check` from the repository root. [Development instructions](docs/development.md) cover prerequisites, tools, focused checks, benchmarks, and policy adoption.
 
-```bash
-# New files must be tracked before Git-backed flake evaluation.
-git add <new-files>
+## Contributing
 
-# One fixture, including native NixOS option typechecking.
-nix eval --json ./dev#lib.tests.x86_64-linux.stable.merging
-nix eval --json ./dev#lib.tests.x86_64-linux.stable.priorities
-nix eval --json ./dev#lib.tests.x86_64-linux.stable.conditional
-nix eval --json ./dev#lib.tests.x86_64-linux.stable.senderContext
-nix eval --json ./dev#lib.tests.x86_64-linux.stable.selfTarget
-nix eval --json ./dev#lib.tests.x86_64-linux.stable.reciprocal
-nix eval --json ./dev#lib.tests.x86_64-linux.stable.destinations
-nix eval --json ./dev#lib.tests.x86_64-linux.stable.taggedDestinations
+Follow [CONTRIBUTING.md](CONTRIBUTING.md) for the shared policy, PR workflow, public contracts, and release rules. [CHANGELOG.md](CHANGELOG.md) records unreleased changes and migration notes. Original code is licensed under [MIT](LICENSE).
 
-# Full evaluation suite on stable and unstable, plus formatting.
-nix flake check ./dev
+## Documentation
 
-# Formatting from the development flake.
-(cd dev && nix fmt -- ..)
-```
-
-The checks can also run in separate evaluator processes to reduce peak memory use:
-
-```bash
-nix build --no-link ./dev#checks.x86_64-linux.stable
-nix build --no-link ./dev#checks.x86_64-linux.unstable
-nix build --no-link ./dev#checks.x86_64-linux.stable-value-cycle
-nix build --no-link ./dev#checks.x86_64-linux.unstable-value-cycle
-nix build --no-link ./dev#checks.x86_64-linux.stable-diagnostics
-nix build --no-link ./dev#checks.x86_64-linux.unstable-diagnostics
-nix build --no-link ./dev#checks.x86_64-linux.formatting
-```
-
-Fixtures force received values, host and guest assertions, and the example's system derivation paths. Priority and ordering fixtures cover whole options, nested values, multiple senders, receiver refinements, and transport selection. Expected failures force ordinary and explicit-priority conflicts, nested conflicts, invalid option types, and a contributed assertion through the receiver's system build. An individual failure can be inspected directly:
-
-```bash
-nix eval --json ./dev#lib.failures.x86_64-linux.stable.localConflict
-```
-
-The [tagged-destination fixtures](./tests/tagged-destinations.nix) cover writable tags, receiver-local declarations and permissions, native type wrappers, priorities, laziness, and node relationships. Tagged diagnostics and native cycles run alongside the existing failure checks. The [benchmark runner](./dev/benchmarks/README.md) compares repeated writable-tag inspection and a NixOS application/proxy fixture on both pins; [validation results](./docs/validation/issue-10.md) record the completed checks and reviews.
-
-The [destination fixtures](./tests/destinations.nix) cover unused missing and read-only registrations on idle and active nodes, submodule paths, and disabled invalid contributions. [Failure fixtures](./tests/destination-failures.nix) force invalid destinations through receiver builds and unknown receivers and unregistered paths through sender builds. Separate [diagnostic checks](./tests/check-diagnostics.nix) verify failure reasons, contribution identities, destination paths, and source filenames on both pinned revisions.
-
-```bash
-nix eval --show-trace ./dev#lib.failures.x86_64-linux.stable.missingDestination
-nix eval --show-trace ./dev#lib.failures.x86_64-linux.stable.unknownReceiver
-```
-
-The [conditional fixture](./tests/conditional.nix) exercises enabled and disabled branches at registered options and transport containers, including unevaluated disabled payloads. The [merging fixture](./tests/merging.nix) combines several exports targeting one receiver with another sender and local definitions. The [sender-context fixture](./tests/sender-context.nix) distinguishes captured sender values from receiving submodule arguments and refinements.
-
-The [self-targeting](./tests/self-target.nix) and [reciprocal](./tests/reciprocal.nix) fixtures force received values on every participant. The [host and guest fixture](./tests/host-guest.nix) also covers guest-to-parent and guest-to-self contributions merged with local definitions. Separate evaluator checks require the [value-cycle fixture](./tests/value-cycle.nix) to fail with a native recursion error on both revisions. `tryEval` cannot catch that error. The failure can be inspected directly:
-
-```bash
-nix eval --json ./dev#lib.failures.x86_64-linux.stable.valueCycle
-# error: infinite recursion encountered
-```
+- [Factory and contribution reference](#factory)
+- [Minimal consumer](#minimal-consumer)
+- [Development and checks](docs/development.md)
+- [Domain glossary](CONTEXT.md)
+- [Architectural decisions](docs/adr/)
+- [Writable-tag benchmarks](dev/benchmarks/README.md)
 
 ## Current scope
 
 Contributions preserve whole-option and nested override priorities, list ordering, conditions, merges, and captured sender context. Receiving submodules use their option type's ordinary evaluation semantics. Self-targeted and reciprocal contributions are supported; actual value-dependency cycles retain native recursion errors. Shared registrations tolerate unused missing and read-only destinations; actual invalid contributions fail with contribution context.
 
 The existing `nixos-config` consumer imports the library through its host and guest builders, using collection identities and one shared forwarding surface. Vaultwarden, InfluxDB, Grafana, and Loki publish nginx settings through the library. Telegraf and Grafana contribute InfluxDB token-secret references and provisioning; Alloy and Grafana contribute Loki proxy password dependencies. All contributions use `crossConfig.nodes`; the legacy collector and receiver-enable controls have been removed. The consumer's `docs/cross-config.md` documents the final wiring, normal receiver deployment, and regression checks. Work is tracked in GitHub Issues.
-
-- [Domain glossary](./CONTEXT.md)
-- [Architectural decisions](./docs/adr/)
 
 ## Implementation plan
 

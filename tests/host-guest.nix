@@ -29,15 +29,17 @@ let
           networking.hostName = "application-container";
           networking.hosts."192.0.2.10" = [ "guest-local.example" ];
           system.stateVersion = "26.05";
-          crossConfig.nodes.host.networking.hosts."192.0.2.20" = [
-            "guest-to-parent.example"
-          ];
-          crossConfig.nodes.guest.networking.hosts."192.0.2.10" = [
-            "guest-to-self.example"
-          ];
-          crossConfig.nodes.receiver.networking.hosts."192.0.2.20" = [
-            "guest-to-host.example"
-          ];
+          crossConfig.nodes = {
+            host.networking.hosts."192.0.2.20" = [
+              "guest-to-parent.example"
+            ];
+            guest.networking.hosts."192.0.2.10" = [
+              "guest-to-self.example"
+            ];
+            receiver.networking.hosts."192.0.2.20" = [
+              "guest-to-host.example"
+            ];
+          };
         };
       };
       receiver = { };

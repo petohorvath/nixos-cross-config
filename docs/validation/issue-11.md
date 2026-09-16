@@ -64,7 +64,7 @@ rtk git diff --check
 
 All 42 focused public evaluations passed. Both diagnostic derivations exited 0, retaining all 66 expected failures and their required context fragments. Formatting and `git diff --check` also passed.
 
-| Pin | Factory and public behavior | Diagnostic cases |
-| --- | --- | --- |
-| Stable | 21/21 | 33/33 |
-| Unstable | 21/21 | 33/33 |
+| Pin      | Factory and public behavior | Diagnostic cases |
+| -------- | --------------------------- | ---------------- |
+| Stable   | 21/21                       | 33/33            |
+| Unstable | 21/21                       | 33/33            |

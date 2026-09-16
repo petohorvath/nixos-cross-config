@@ -25,10 +25,10 @@ nix eval --offline --option eval-cache false --json \
 
 All 198 evaluation results passed: 99 per pin, including the 27 new tagged cases. The stable priority suite evaluated its nine cases together; other grouped cases ran individually. All fixture evaluations completed successfully, and the tagged groups were rerun against both factories after the review's test-ordering cleanup.
 
-| Pin | Evaluation cases | Diagnostic cases | Native cycles |
-| --- | --- | --- | --- |
-| Stable | 99/99 | 33/33 | 2/2 |
-| Unstable | 99/99 | 33/33 | 2/2 |
+| Pin      | Evaluation cases | Diagnostic cases | Native cycles |
+| -------- | ---------------- | ---------------- | ------------- |
+| Stable   | 99/99            | 33/33            | 2/2           |
+| Unstable | 99/99            | 33/33            | 2/2           |
 
 Both diagnostic derivations, both cycle derivations, and formatting passed:
 

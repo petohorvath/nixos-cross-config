@@ -52,9 +52,9 @@ The temporary runner captures the build output in `/tmp/nixos-cross-config-issue
 
 Both commands exited 0. All five derivations built successfully. The cycle logs reported native recursion for both `value-cycle.nix` and `tagged-value-cycle.nix` on both pins, and all diagnostic cases retained their required context fragments. Formatting and `git diff --check` passed.
 
-| Pin | Public evaluation results | Diagnostic cases | Native cycles |
-| --- | --- | --- | --- |
-| Stable | 100/100 | 33/33 | 2/2 |
-| Unstable | 100/100 | 33/33 | 2/2 |
+| Pin      | Public evaluation results | Diagnostic cases | Native cycles |
+| -------- | ------------------------- | ---------------- | ------------- |
+| Stable   | 100/100                   | 33/33            | 2/2           |
+| Unstable | 100/100                   | 33/33            | 2/2           |
 
 An independent source comparison against the starting commit confirmed that all 13 existing top-level let bindings and the returned module match after accounting for placement, indentation, and the `removeAttrs` qualification. The argument header also matches, and no `removeAttrs` binding was introduced. The existing regression suite verifies the reorganization's behavior.

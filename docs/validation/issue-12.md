@@ -26,10 +26,10 @@ rtk git diff --check
 
 Both commands exited 0. All five derivations built successfully without downloads. The cycle logs reported native recursion for both `value-cycle.nix` and `tagged-value-cycle.nix` on both pins.
 
-| Pin | Diagnostic cases | Native cycles |
-| --- | --- | --- |
-| Stable | 33/33 | 2/2 |
-| Unstable | 33/33 | 2/2 |
+| Pin      | Diagnostic cases | Native cycles |
+| -------- | ---------------- | ------------- |
+| Stable   | 33/33            | 2/2           |
+| Unstable | 33/33            | 2/2           |
 
 ## Failure-guard probes
 
@@ -87,10 +87,10 @@ rtk nix build --offline --no-link --max-jobs 1 --print-build-logs \
   --argstr probe success --arg fixtureIndex 0
 ```
 
-| `kind` | `fixtureIndex` | Selected fixture | Successful evaluation | Invalid CLI flag |
-| --- | --- | --- | --- | --- |
-| `diagnostics` | 0 | `conflictingDestination` | Rejected on both pins | Rejected on both pins |
-| `value-cycle` | 0 | `value-cycle.nix` | Rejected on both pins | Rejected on both pins |
-| `value-cycle` | 1 | `tagged-value-cycle.nix` | Rejected on both pins | Rejected on both pins |
+| `kind`        | `fixtureIndex` | Selected fixture         | Successful evaluation | Invalid CLI flag      |
+| ------------- | -------------- | ------------------------ | --------------------- | --------------------- |
+| `diagnostics` | 0              | `conflictingDestination` | Rejected on both pins | Rejected on both pins |
+| `value-cycle` | 0              | `value-cycle.nix`        | Rejected on both pins | Rejected on both pins |
+| `value-cycle` | 1              | `tagged-value-cycle.nix` | Rejected on both pins | Rejected on both pins |
 
 All 12 builds failed with builder exit code 1 as required. Successful fixtures printed their JSON value and the applicable `Expected ... to fail` guard message. Invalid flags produced `unrecognised flag '--issue-12-invalid-option'`; diagnostic probes also reported missing diagnostic context. Cycle probes required the native recursion error from the selected process, so an unrelated CLI failure could not satisfy the check. The second-cycle probes first passed the real untagged cycle, then rejected the altered tagged fixture. The temporary runner verified these messages and exit codes and exited 0 with `12 probes passed`; its logs and JSON results are in `/tmp/nixos-cross-config-issue-12-probes.G1rasq/`.

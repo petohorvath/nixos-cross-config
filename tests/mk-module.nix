@@ -2,7 +2,7 @@
 let
   inherit (nixpkgs) lib;
   result =
-    assert ((import ../flake.nix).inputs or { }) == { };
+    assert builtins.isFunction ((import ../flake.nix).outputs { }).lib.mkModule;
     assert
       builtins.functionArgs crossConfig.lib.mkModule == {
         name = false;

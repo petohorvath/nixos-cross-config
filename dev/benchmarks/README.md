@@ -1,10 +1,11 @@
 # Writable-tag evaluation benchmarks
 
-Compare the baseline public factory with the current factory on the same frozen workloads and both locked Nixpkgs revisions. The runner requires Python 3.12 or later, Nix, Git, GNU time at `/usr/bin/time`, and locally available development inputs. It does not download inputs or build packages during measurement.
+Compare the baseline public factory with the current factory on the same frozen workloads and both locked Nixpkgs revisions. The root development shell supplies Python 3.12 or later, Nix, Git, and GNU time on `PATH`. The runner reads the root flake's locally available inputs. It does not download inputs or build packages during measurement.
 
 Run from the repository root with no competing test evaluators or builds, choosing a new output directory:
 
 ```bash
+nix develop
 python3 dev/benchmarks/run.py \
   --baseline 3fa01e7b5b92a707a857b9a85a13e8feae0dd89a \
   --pairs 7 --count 800 --output /tmp/cross-config-benchmark

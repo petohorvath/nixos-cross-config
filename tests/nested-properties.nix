@@ -24,9 +24,11 @@ let
               };
               services.nginx.virtualHosts = {
                 "shared.example" = {
-                  locations."/".proxyPass = lib.mkDefault "http://alpha:8080";
-                  locations."/forced".proxyPass = lib.mkForce "http://alpha:8081";
-                  locations."/custom".proxyPass = lib.mkOverride 75 "http://alpha:8082";
+                  locations = {
+                    "/".proxyPass = lib.mkDefault "http://alpha:8080";
+                    "/forced".proxyPass = lib.mkForce "http://alpha:8081";
+                    "/custom".proxyPass = lib.mkOverride 75 "http://alpha:8082";
+                  };
                   serverAliases = lib.mkMerge [
                     (lib.mkBefore [ "alpha.example" ])
                     (lib.mkOrder 1250 [ "late.example" ])
@@ -54,9 +56,11 @@ let
               "192.0.2.20" = lib.mkForce (lib.mkAfter [ "beta.example" ]);
             };
             services.nginx.virtualHosts."shared.example" = {
-              locations."/".proxyPass = lib.mkDefault "http://beta:9090";
-              locations."/forced".proxyPass = "http://beta:9091";
-              locations."/custom".proxyPass = lib.mkOverride 90 "http://beta:9092";
+              locations = {
+                "/".proxyPass = lib.mkDefault "http://beta:9090";
+                "/forced".proxyPass = "http://beta:9091";
+                "/custom".proxyPass = lib.mkOverride 90 "http://beta:9092";
+              };
               serverAliases = lib.mkAfter [ "beta.example" ];
             };
           };
@@ -70,9 +74,11 @@ let
           };
           services.nginx.virtualHosts = {
             "shared.example" = {
-              locations."/".proxyPass = "http://local:8000";
-              locations."/forced".proxyPass = "http://local:8001";
-              locations."/custom".proxyPass = lib.mkOverride 80 "http://local:8002";
+              locations = {
+                "/".proxyPass = "http://local:8000";
+                "/forced".proxyPass = "http://local:8001";
+                "/custom".proxyPass = lib.mkOverride 80 "http://local:8002";
+              };
               serverAliases = lib.mkMerge [
                 [ "local.example" ]
                 (lib.mkOrder 750 [ "early-local.example" ])

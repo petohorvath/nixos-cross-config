@@ -6,15 +6,15 @@ Write multi-line bodies and comments to temporary files and pass them with `--bo
 
 ## Issue operations
 
-| Operation | Command |
-| --- | --- |
-| Create / publish | `gh issue create --title "..." --body-file <file>` |
+| Operation             | Command                                                                           |
+| --------------------- | --------------------------------------------------------------------------------- |
+| Create / publish      | `gh issue create --title "..." --body-file <file>`                                |
 | Read / fetch a ticket | `gh issue view <number> --json number,title,body,labels,comments,assignees,state` |
-| List | `gh issue list --state open --json number,title,body,labels,comments,assignees` |
-| Comment | `gh issue comment <number> --body-file <file>` |
-| Apply a label | `gh issue edit <number> --add-label "..."` |
-| Remove a label | `gh issue edit <number> --remove-label "..."` |
-| Close | `gh issue close <number>` |
+| List                  | `gh issue list --state open --json number,title,body,labels,comments,assignees`   |
+| Comment               | `gh issue comment <number> --body-file <file>`                                    |
+| Apply a label         | `gh issue edit <number> --add-label "..."`                                        |
+| Remove a label        | `gh issue edit <number> --remove-label "..."`                                     |
+| Close                 | `gh issue close <number>`                                                         |
 
 Use `--label` and `--state` filters as needed. Set `--limit` high enough to include the relevant queue; the default list limit is 30. Filter structured comments with `--jq` when needed.
 

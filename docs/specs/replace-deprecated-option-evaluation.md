@@ -42,16 +42,16 @@ Keep source-attribution finding #2, unrelated convention cleanup, new tagged-opt
 
 Use the public factory as the test boundary. Add focused tagged-destination integration fixtures in `tests/tagged-destinations.nix` and register them as `taggedDestinations` in `tests/default.nix`. Both locked revisions must execute the same cases. Keep cases individually addressable so evaluation can run in separate processes. Include a NixOS receiver with a writable tagged submodule for integration and performance validation.
 
-| Behavior family | Required cases and observable assertions |
-| --- | --- |
-| Writable tags and location | Scalar tag; nested submodule value; name-dependent writability; named `attrsOf` entry; literal dotted tag; tag named `_module`. Force resulting values and assertions. |
-| Receiver-owned structure | Receiver-local option declaration; receiver-local freeform fields; read-only metadata controlled by receiver-local configuration. Preserve accepted values or reject the contribution with the expected reason. |
-| Wrapped submodules | Writable paths through `coercedTo`, `either`, `nullOr`, and `uniq`; retain the existing invalid-destination checks for those wrappers. |
+| Behavior family                   | Required cases and observable assertions                                                                                                                                                                                                    |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Writable tags and location        | Scalar tag; nested submodule value; name-dependent writability; named `attrsOf` entry; literal dotted tag; tag named `_module`. Force resulting values and assertions.                                                                      |
+| Receiver-owned structure          | Receiver-local option declaration; receiver-local freeform fields; read-only metadata controlled by receiver-local configuration. Preserve accepted values or reject the contribution with the expected reason.                             |
+| Wrapped submodules                | Writable paths through `coercedTo`, `either`, `nullOr`, and `uniq`; retain the existing invalid-destination checks for those wrappers.                                                                                                      |
 | Inactive and invalid destinations | Unused missing and read-only registrations; missing child under a writable tag; directly read-only tag; read-only child under a writable tag; disabled contribution with a throwing payload. Check that disabled values remain unevaluated. |
-| Definition semantics | Tag-level defaults; ordinary definitions; `mkDefault` and `mkForce`; ordering; outer transport selection; default and definition filenames; an empty declaration list without a default. Assert values and relevant diagnostic provenance. |
-| Inspection laziness | An `apply` callback that throws if inspection forces it; receiver-local conditions and declarations remain usable. Force assertions separately from final values when testing this boundary. |
-| Node relationships | A conditional self-contribution and reciprocal contributions through writable tags. Check each participating node's value and assertions. |
-| Failure diagnostics and cycles | Tagged missing/read-only children, invalid values, and conflicts retain applicable reason and contribution context. A tagged value cycle fails in a separate evaluator with `infinite recursion encountered`. |
+| Definition semantics              | Tag-level defaults; ordinary definitions; `mkDefault` and `mkForce`; ordering; outer transport selection; default and definition filenames; an empty declaration list without a default. Assert values and relevant diagnostic provenance.  |
+| Inspection laziness               | An `apply` callback that throws if inspection forces it; receiver-local conditions and declarations remain usable. Force assertions separately from final values when testing this boundary.                                                |
+| Node relationships                | A conditional self-contribution and reciprocal contributions through writable tags. Check each participating node's value and assertions.                                                                                                   |
+| Failure diagnostics and cycles    | Tagged missing/read-only children, invalid values, and conflicts retain applicable reason and contribution context. A tagged value cycle fails in a separate evaluator with `infinite recursion encountered`.                               |
 
 Extend the existing diagnostic and recursion-check infrastructure for expected failures. Run the existing value cycle and the new tagged cycle in separate evaluators on each pin so one failure cannot mask the other. `tryEval` is insufficient for the native recursion error. The current tagged fixtures return before the deprecated call, so merely rerunning them cannot establish coverage of the replacement.
 
@@ -96,10 +96,10 @@ On 2026-09-16, Nix 2.34.6 on Linux x86_64 evaluated 800 distinct two-node collec
 
 One warm-up per variant and pin preceded seven alternating pairs per pin: 28 measured processes and four warm-ups. Python measured elapsed wall time around each process; GNU `time` recorded CPU time and peak resident memory. Inputs came from fixed local store paths, and `nix eval --json --impure --option eval-cache false --expr` started a fresh evaluator each time.
 
-| Pin | Baseline wall median (range) | Candidate wall median (range) | Median change | Baseline peak memory median | Candidate peak memory median | Memory change |
-| --- | --- | --- | --- | --- | --- | --- |
-| Stable | 1.386 s (1.316–1.548) | 1.702 s (1.625–1.820) | +22.8% | 414.57 MiB | 450.52 MiB | +8.7% |
-| Unstable | 1.276 s (1.243–1.334) | 1.555 s (1.329–1.655) | +21.9% | 378.55 MiB | 431.96 MiB | +14.1% |
+| Pin      | Baseline wall median (range) | Candidate wall median (range) | Median change | Baseline peak memory median | Candidate peak memory median | Memory change |
+| -------- | ---------------------------- | ----------------------------- | ------------- | --------------------------- | ---------------------------- | ------------- |
+| Stable   | 1.386 s (1.316–1.548)        | 1.702 s (1.625–1.820)         | +22.8%        | 414.57 MiB                  | 450.52 MiB                   | +8.7%         |
+| Unstable | 1.276 s (1.243–1.334)        | 1.555 s (1.329–1.655)         | +21.9%        | 378.55 MiB                  | 431.96 MiB                   | +14.1%        |
 
 Median paired wall-time changes were +20.8% stable and +20.1% unstable. The stress workload demonstrates measurable added cost; it does not predict full NixOS evaluation time. The existing NixOS tagged fixtures bypass the replaced call, so the new writable-tag NixOS fixture must supply the representative measurement during implementation.
 
