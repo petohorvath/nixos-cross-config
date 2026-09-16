@@ -17,6 +17,39 @@
   ...
 }:
 let
+  module = {
+    options.crossConfig.nodes = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.submodule mkContributionModule);
+      default = { };
+      description = "Configuration contributions indexed by receiver node identity.";
+      apply = lib.mapAttrs (
+        receiver: contribution:
+        let
+          context = "while evaluating contributions from sender `${name}` to receiver `${receiver}`:";
+        in
+        builtins.addErrorContext context contribution._definitions
+      );
+    };
+
+    # Only declared receiving options enter the module's configuration structure.
+    config = lib.pipe (builtins.filter (path: !(builtins.elem path inspectionPaths)) optionPaths) [
+      (map mkReceivingDefinition)
+      (
+        definitions:
+        definitions
+        ++ lib.optional (inspectionPaths == [ ]) {
+          assertions =
+            map mkDestinationAssertion optionPaths
+            ++ lib.mapAttrsToList (receiver: contribution: {
+              assertion = builtins.seq contribution (builtins.hasAttr receiver nodes);
+              message = "nixos-cross-config: sender `${name}` targets unknown receiver `${receiver}`.";
+            }) config.crossConfig.nodes;
+        }
+      )
+      lib.mkMerge
+    ];
+  };
+
   inspectionPaths = specialArgs.__nixosCrossConfigInspectPaths or [ ];
 
   mkContributionModule =
@@ -41,21 +74,6 @@ let
             default = mkPathAttrs (path: restoreDefinitionProperties (lib.getAttrFromPath path options));
           };
         };
-    };
-
-  mkDestinationAssertion =
-    path:
-    let
-      option = findReceivingOption path;
-      definitions = collectDefinitions path;
-      reason = if option == null then "missing" else "read-only";
-    in
-    {
-      assertion = definitions == [ ] || (option != null && !(option.readOnly or false));
-      message = ''
-        nixos-cross-config: receiver `${name}` has a ${reason} destination `${lib.showOption path}`.
-        Contributions: ${lib.concatMapStringsSep ", " (definition: definition.file) definitions}
-      '';
     };
 
   mkReceivingDefinition =
@@ -94,6 +112,21 @@ let
     # Keep declaration inspection below its namespace so module arguments resolve.
     mkPath path options;
 
+  mkDestinationAssertion =
+    path:
+    let
+      option = findReceivingOption path;
+      definitions = collectDefinitions path;
+      reason = if option == null then "missing" else "read-only";
+    in
+    {
+      assertion = definitions == [ ] || (option != null && !(option.readOnly or false));
+      message = ''
+        nixos-cross-config: receiver `${name}` has a ${reason} destination `${lib.showOption path}`.
+        Contributions: ${lib.concatMapStringsSep ", " (definition: definition.file) definitions}
+      '';
+    };
+
   findReceivingOption =
     path:
     let
@@ -114,21 +147,6 @@ let
       findLocalOption destination.prefix destination.remaining (
         lib.getAttrFromPath destination.prefix localOptions
       );
-
-  findDeclaration =
-    prefix: remaining: declarations:
-    if lib.isOption declarations then
-      {
-        inherit prefix remaining;
-        option = declarations;
-      }
-    else if remaining == [ ] then
-      null
-    else
-      let
-        segment = builtins.head remaining;
-      in
-      findDeclaration (prefix ++ [ segment ]) (builtins.tail remaining) (declarations.${segment} or { });
 
   findLocalOption =
     prefix: remaining: option:
@@ -225,7 +243,7 @@ let
         findTypeOption prefix path freeformType [
           {
             file = "nixos-cross-config freeform destination inspection";
-            value = builtins.removeAttrs instance.config (builtins.attrNames instance.options);
+            value = removeAttrs instance.config (builtins.attrNames instance.options);
           }
         ] owner
       else
@@ -239,6 +257,21 @@ let
     else
       # Types without submodule metadata validate their attribute contents natively.
       owner;
+
+  findDeclaration =
+    prefix: remaining: declarations:
+    if lib.isOption declarations then
+      {
+        inherit prefix remaining;
+        option = declarations;
+      }
+    else if remaining == [ ] then
+      null
+    else
+      let
+        segment = builtins.head remaining;
+      in
+      findDeclaration (prefix ++ [ segment ]) (builtins.tail remaining) (declarations.${segment} or { });
 
   collectDefinitions =
     path:
@@ -276,35 +309,4 @@ let
       );
     }) option.definitionsWithLocations;
 in
-{
-  options.crossConfig.nodes = lib.mkOption {
-    type = lib.types.attrsOf (lib.types.submodule mkContributionModule);
-    default = { };
-    description = "Configuration contributions indexed by receiver node identity.";
-    apply = lib.mapAttrs (
-      receiver: contribution:
-      let
-        context = "while evaluating contributions from sender `${name}` to receiver `${receiver}`:";
-      in
-      builtins.addErrorContext context contribution._definitions
-    );
-  };
-
-  # Only declared receiving options enter the module's configuration structure.
-  config = lib.pipe (builtins.filter (path: !(builtins.elem path inspectionPaths)) optionPaths) [
-    (map mkReceivingDefinition)
-    (
-      definitions:
-      definitions
-      ++ lib.optional (inspectionPaths == [ ]) {
-        assertions =
-          map mkDestinationAssertion optionPaths
-          ++ lib.mapAttrsToList (receiver: contribution: {
-            assertion = builtins.seq contribution (builtins.hasAttr receiver nodes);
-            message = "nixos-cross-config: sender `${name}` targets unknown receiver `${receiver}`.";
-          }) config.crossConfig.nodes;
-      }
-    )
-    lib.mkMerge
-  ];
-}
+module

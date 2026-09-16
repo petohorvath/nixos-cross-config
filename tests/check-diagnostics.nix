@@ -1,13 +1,16 @@
 {
+  coreutils,
+  gnugrep,
+  lib,
+  nix,
   nixpkgs,
-  pkgs,
+  runCommand,
   system,
 }:
 let
-  inherit (pkgs) lib;
-  expression = import ./mk-failure-expression.nix {
+  expressionPath = import ./mk-failure-expression.nix {
     inherit nixpkgs system;
-    fixture = "failures.nix";
+    fixtureName = "failures.nix";
   };
   origin = [
     "sender `sender`"
@@ -85,8 +88,9 @@ let
     ];
   };
   mkCheck = name: expected: ''
-    if nix-instantiate --eval --strict --json --show-trace --store dummy:// \
-      ${expression} --attr ${name} >result.json 2>error.log; then
+    if nix eval --extra-experimental-features nix-command --offline \
+      --read-only --json --show-trace --store dummy:// \
+      --file ${expressionPath} ${name} >result.json 2>error.log; then
       echo "Expected ${name} to fail evaluation." >&2
       cat result.json >&2
       exit 1
@@ -101,7 +105,15 @@ let
     '') expected}
   '';
 in
-pkgs.runCommand "cross-config-diagnostics" { nativeBuildInputs = [ pkgs.nix ]; } ''
-  ${lib.concatStringsSep "\n" (lib.mapAttrsToList mkCheck cases)}
-  touch "$out"
-''
+runCommand "cross-config-diagnostics"
+  {
+    nativeBuildInputs = [
+      coreutils
+      gnugrep
+      nix
+    ];
+  }
+  ''
+    ${lib.concatStringsSep "\n" (lib.mapAttrsToList mkCheck cases)}
+    touch "$out"
+  ''

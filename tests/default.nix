@@ -23,6 +23,7 @@ in
   hostGuest = import ./host-guest.nix { inherit checkAssertions crossConfig mkNodes; };
   literalPath = import ./literal-path.nix { inherit checkAssertions mkNodes; };
   merging = import ./merging.nix { inherit checkAssertions mkNodes; };
+  mkModule = import ./mk-module.nix { inherit crossConfig nixpkgs; };
   nestedProperties = import ./nested-properties.nix { inherit checkAssertions mkNodes; };
   ordering = import ./ordering.nix { inherit checkAssertions mkNodes; };
   priorities = import ./priorities.nix { inherit checkAssertions mkNodes; };
