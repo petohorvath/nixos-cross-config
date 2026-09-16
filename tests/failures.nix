@@ -152,3 +152,4 @@ in
   failedAssertion = failedAssertion.receiver.config.system.build.toplevel.drvPath;
 }
 // import ./destination-failures.nix { inherit mkNodes; }
+// import ./tagged-failures.nix { inherit mkNodes; }

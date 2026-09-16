@@ -173,11 +173,38 @@ let
       else if tag.readOnly or false then
         tag
       else
-        findLocalOption (prefix ++ [ segment ]) (builtins.tail path) (
-          lib.modules.evalOptionValue (prefix ++ [ segment ]) tag childDefinitions
-        )
+        findLocalOption (prefix ++ [ segment ]) (builtins.tail path) (evaluateTagOption {
+          optionPath = prefix ++ [ segment ];
+          inherit tag;
+          definitions = childDefinitions;
+        })
     else
       findMetadataOption prefix path probe.checkedAndMerged.valueMeta owner;
+
+  evaluateTagOption =
+    {
+      optionPath,
+      tag,
+      definitions,
+    }:
+    let
+      evaluation = lib.evalModules {
+        modules = [
+          (
+            lib.optionalAttrs (tag.declarations != [ ]) {
+              _file = builtins.head tag.declarations;
+            }
+            // {
+              # The full path preserves submodule names and nested `_module` tags.
+              options = lib.setAttrByPath optionPath tag;
+              config = lib.setAttrByPath optionPath (lib.mkMerge (map lib.mkDefinition definitions));
+            }
+          )
+        ];
+      };
+    in
+    # Inspection consumes definitions, leaving the final value and apply lazy.
+    lib.getAttrFromPath optionPath evaluation.options;
 
   findMetadataOption =
     prefix: path: metadata: owner:

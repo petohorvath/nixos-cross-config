@@ -15,7 +15,35 @@ let
     "destination `inventory.value`"
     "fixtures/destination-sender.nix"
   ];
+  taggedOrigin = [
+    "sender `sender`"
+    "receiver `receiver`"
+    "destination `inventory.payload.value`"
+    "tagged-failures.nix"
+  ];
   cases = {
+    taggedMissingTag = [ "missing destination" ] ++ taggedOrigin;
+    taggedMissingChild = [ "missing destination" ] ++ taggedOrigin;
+    taggedReadOnlyTag = [ "read-only destination" ] ++ taggedOrigin;
+    taggedReadOnlyChild = [ "read-only destination" ] ++ taggedOrigin;
+    taggedReadOnlyName = [ "read-only destination" ] ++ taggedOrigin;
+    taggedReadOnlyLocal = [ "read-only destination" ] ++ taggedOrigin;
+    taggedReadOnlyCoerced = [ "read-only destination" ] ++ taggedOrigin;
+    taggedReadOnlyEither = [ "read-only destination" ] ++ taggedOrigin;
+    taggedReadOnlyNullable = [ "read-only destination" ] ++ taggedOrigin;
+    taggedReadOnlyUnique = [ "read-only destination" ] ++ taggedOrigin;
+    taggedIncompatible = [ "is not of type" ] ++ taggedOrigin;
+    taggedConflict = [ "conflicting definition" ] ++ taggedOrigin;
+    taggedDefaultSource = [
+      "is not of type"
+      "inventory.payload"
+      "fixtures/tagged-default.nix"
+    ];
+    taggedInspectionDefinitionSource = [
+      "is not of type"
+      "inventory.payload.locked"
+      "fixtures/tagged-invalid-local.nix"
+    ];
     missingDestination = [ "missing destination" ] ++ origin;
     missingSubmoduleDestination = [ "missing destination" ] ++ origin;
     readOnlyDestination = [ "read-only destination" ] ++ origin;

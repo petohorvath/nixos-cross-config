@@ -42,6 +42,7 @@
           import ../tests/failures.nix { inherit mkNodes; }
           // {
             valueCycle = import ../tests/value-cycle.nix { inherit mkNodes; };
+            taggedValueCycle = import ../tests/tagged-value-cycle.nix { inherit mkNodes; };
           }
         ) collections
       );

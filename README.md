@@ -312,6 +312,7 @@ nix eval --json ./dev#lib.tests.x86_64-linux.stable.senderContext
 nix eval --json ./dev#lib.tests.x86_64-linux.stable.selfTarget
 nix eval --json ./dev#lib.tests.x86_64-linux.stable.reciprocal
 nix eval --json ./dev#lib.tests.x86_64-linux.stable.destinations
+nix eval --json ./dev#lib.tests.x86_64-linux.stable.taggedDestinations
 
 # Full evaluation suite on stable and unstable, plus formatting.
 nix flake check ./dev
@@ -337,6 +338,8 @@ Fixtures force received values, host and guest assertions, and the example's sys
 ```bash
 nix eval --json ./dev#lib.failures.x86_64-linux.stable.localConflict
 ```
+
+The [tagged-destination fixtures](./tests/tagged-destinations.nix) cover writable tags, receiver-local declarations and permissions, native type wrappers, priorities, laziness, and node relationships. Tagged diagnostics and native cycles run alongside the existing failure checks. The [benchmark runner](./dev/benchmarks/README.md) compares repeated writable-tag inspection and a NixOS application/proxy fixture on both pins; [validation results](./docs/validation/issue-10.md) record the completed checks and reviews.
 
 The [destination fixtures](./tests/destinations.nix) cover unused missing and read-only registrations on idle and active nodes, submodule paths, and disabled invalid contributions. [Failure fixtures](./tests/destination-failures.nix) force invalid destinations through receiver builds and unknown receivers and unregistered paths through sender builds. Separate [diagnostic checks](./tests/check-diagnostics.nix) verify failure reasons, contribution identities, destination paths, and source filenames on both pinned revisions.
 
@@ -374,3 +377,4 @@ The existing `nixos-config` consumer imports the library through its host and gu
 7. [Migrate the remaining nginx publication integrations](https://github.com/petohorvath/nixos-cross-config/issues/7) — implemented.
 8. [Migrate metrics and log access contributions](https://github.com/petohorvath/nixos-cross-config/issues/8) — implemented.
 9. [Remove legacy forwarding after the consumer cutover](https://github.com/petohorvath/nixos-cross-config/issues/9) — implemented.
+10. [Replace deprecated evaluation in writable-tag destination checks](https://github.com/petohorvath/nixos-cross-config/issues/10) — implemented.

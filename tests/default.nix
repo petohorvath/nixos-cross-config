@@ -30,6 +30,14 @@ in
   selfTarget = import ./self-target.nix { inherit checkAssertions mkNodes; };
   senderContext = import ./sender-context.nix { inherit checkAssertions mkNodes; };
   transportProperties = import ./transport-properties.nix { inherit checkAssertions mkNodes; };
+  taggedDestinations = import ./tagged-destinations.nix {
+    inherit
+      checkAssertions
+      crossConfig
+      nixpkgs
+      system
+      ;
+  };
   validation = builtins.mapAttrs (
     _: value:
     assert !(builtins.tryEval (builtins.deepSeq value true)).success;
