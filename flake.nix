@@ -14,15 +14,27 @@
         "aarch64-linux"
       ];
       forSystems = inputs.nixpkgs.lib.genAttrs systems;
-      collections = {
+      nixpkgsInputs = {
         stable = inputs.nixpkgs;
         unstable = inputs.nixpkgs-unstable;
       };
       development = forSystems (
         system:
-        import ./nix/development.nix {
-          inherit collections system;
+        let
           pkgs = inputs.nixpkgs.legacyPackages.${system};
+          formatter = pkgs.callPackage ./formatter.nix { };
+        in
+        {
+          inherit formatter;
+          shell = pkgs.callPackage ./shell.nix { inherit formatter; };
+          checks = import ./tests/checks.nix {
+            inherit
+              formatter
+              nixpkgsInputs
+              pkgs
+              system
+              ;
+          };
         }
       );
       crossConfig.lib = { inherit mkModule; };
@@ -49,7 +61,7 @@
             import ./tests {
               inherit crossConfig nixpkgs system;
             }
-          ) collections
+          ) nixpkgsInputs
         );
         failures = forSystems (
           system:
@@ -65,7 +77,7 @@
               valueCycle = import ./tests/value-cycle.nix { inherit mkNodes; };
               taggedValueCycle = import ./tests/tagged-value-cycle.nix { inherit mkNodes; };
             }
-          ) collections
+          ) nixpkgsInputs
         );
       };
       devShells = forSystems (system: {

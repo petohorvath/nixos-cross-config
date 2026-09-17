@@ -1,5 +1,6 @@
 {
-  collections,
+  formatter,
+  nixpkgsInputs,
   pkgs,
   system,
 }:
@@ -7,26 +8,26 @@ let
   checks =
     builtins.mapAttrs (
       _: nixpkgs:
-      pkgs.callPackage ../tests/check-evaluation.nix {
+      pkgs.callPackage ./check-evaluation.nix {
         inherit nixpkgs system;
       }
-    ) collections
+    ) nixpkgsInputs
     // pkgs.lib.mapAttrs' (
       channel: nixpkgs:
       pkgs.lib.nameValuePair "${channel}-value-cycle" (
-        pkgs.callPackage ../tests/check-value-cycle.nix {
+        pkgs.callPackage ./check-value-cycle.nix {
           inherit nixpkgs system;
         }
       )
-    ) collections
+    ) nixpkgsInputs
     // pkgs.lib.mapAttrs' (
       channel: nixpkgs:
       pkgs.lib.nameValuePair "${channel}-diagnostics" (
-        pkgs.callPackage ../tests/check-diagnostics.nix {
+        pkgs.callPackage ./check-diagnostics.nix {
           inherit nixpkgs system;
         }
       )
-    ) collections
+    ) nixpkgsInputs
     // {
       formatting = mkCheck {
         name = "cross-config-formatting";
@@ -47,7 +48,6 @@ let
         '';
       };
     };
-  formatter = pkgs.callPackage ./formatter.nix { };
   mkCheck =
     {
       name,
@@ -63,20 +63,4 @@ let
     '';
   sourceDir = pkgs.lib.cleanSource ../.;
 in
-{
-  inherit checks formatter;
-  shell = pkgs.mkShellNoCC {
-    packages = [
-      pkgs.nix
-      pkgs.nil
-      pkgs.nixfmt
-      pkgs.statix
-      pkgs.deadnix
-      pkgs.git
-      pkgs.shfmt
-      pkgs.prettier
-      pkgs.actionlint
-      formatter
-    ];
-  };
-}
+checks

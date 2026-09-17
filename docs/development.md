@@ -20,7 +20,9 @@ Root `nix fmt` uses the project-owned treefmt wrapper. Nix uses nixfmt; shell fi
 
 Formatting excludes Git metadata, direnv state, build results, and lockfiles.
 
-Root `nix flake check` runs the same public fixtures against stable and unstable, their diagnostic and native-cycle checks, formatting, statix, deadnix, and workflow validation. Evaluation checks run fixtures in separate offline evaluator processes to bound memory; their JSON output preserves the focused result structure. The project has no VM targets. Plain Nix composition remains sufficient for these outputs; internal files under `nix/` provide development tooling without a policy input or import.
+Root `nix flake check` runs the same public fixtures against stable and unstable, their diagnostic and native-cycle checks, formatting, statix, deadnix, and workflow validation. Evaluation checks run fixtures in separate offline evaluator processes to bound memory; their JSON output preserves the focused result structure. The project has no VM targets.
+
+[Root `flake.nix`](../flake.nix) declares the supported systems and public outputs. [The shell](../shell.nix) and [formatter](../formatter.nix) declare their package dependencies through `pkgs.callPackage`; [check assembly](../tests/checks.nix) lives beside the test runners. Plain Nix composition keeps development tooling separate from the library without a policy input or import.
 
 ## Focused checks
 
