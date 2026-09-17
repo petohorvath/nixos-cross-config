@@ -5,7 +5,7 @@ Vocabulary for configuration contributed between nodes.
 ## Language
 
 **Node**:
-A host or guest that participates in configuration contributions.
+A named NixOS configuration for a host or guest that participates in configuration contributions.
 
 **Node collection**:
 The set of named nodes participating in configuration contributions.
@@ -13,8 +13,9 @@ The set of named nodes participating in configuration contributions.
 **Node identity**:
 A node's name within its node collection, independent of its hostname.
 
-**Forwarding surface**:
-The shared set of options eligible for contributions within a node collection.
+**Allowed option paths**:
+The shared set of option paths that a node collection permits for contributions. A receiver must declare a writable option at a path to receive a contribution there.
+_Avoid_: Forwarding surface
 
 **Sender**:
 The node that declares a configuration contribution.
@@ -23,4 +24,4 @@ The node that declares a configuration contribution.
 The node whose configuration includes a contribution. A receiver can also be the sender of that contribution.
 
 **Configuration contribution**:
-Configuration declared by a sender for the receiver's eligible writable options.
+Option definitions that a sender supplies for a receiver.

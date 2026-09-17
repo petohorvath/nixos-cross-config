@@ -12,7 +12,7 @@ Keep documentation focused on current usage, structure, and design. Record imple
 
 ## Public contract
 
-The public API is `lib.mkModule { name, nodes, optionPaths }`, the generated `crossConfig.nodes` declarations, and their documented contribution, validation, and merge behavior. The generated module uses the receiver's `lib`. Keep the factory usable through `(import ./flake.nix).outputs { }` without evaluating development inputs. Caller-owned node construction and deployment remain outside this library.
+The public API consists of `lib.mkModule`, its `name`, `nodes`, and `optionPaths` arguments, the returned module's `crossConfig.nodes` option, and the behavior documented in the [API reference](docs/api.md). The returned module uses the receiver's `lib`. Keep `lib.mkModule` usable through `(import ./flake.nix).outputs { }` without evaluating development inputs. Node construction and deployment remain the caller's responsibility.
 
 Root `devShells`, `formatter`, and `checks` provide development entrypoints. `packages.<system>.cross-config-fmt` exposes the formatter executable. Root `lib.tests` and `lib.failures` expose focused fixtures. `nixosConfigurations` evaluates the documented example. The flake's development inputs may enter consumer lock graphs; consumers may override them while keeping one nixpkgs revision within each node collection.
 

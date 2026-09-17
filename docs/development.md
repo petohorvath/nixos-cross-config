@@ -1,6 +1,6 @@
 # Development
 
-Use the root flake for development, formatting, and checks. The library's module factory still receives `lib` from the receiver and can be imported without resolving development inputs.
+Use the root flake for development, formatting, and checks. The module returned by `lib.mkModule` receives `lib` from the receiver's NixOS evaluation. The function is also available through a plain Nix import without evaluating development inputs; see the [API reference](api.md#module-creation).
 
 ## Prerequisites
 
@@ -61,7 +61,7 @@ nix build --no-link .#checks.x86_64-linux.unstable-diagnostics
 nix build --no-link .#checks.x86_64-linux.formatting
 ```
 
-Fixtures force received values, host and guest assertions, and the example's system derivation paths. Priority and ordering fixtures cover whole options, nested values, multiple senders, receiver refinements, and transport selection. Expected failures force ordinary and explicit-priority conflicts, nested conflicts, invalid option types, and a contributed assertion through the receiver's system build. An individual failure can be inspected directly:
+Fixtures evaluate received values, host and guest assertions, and the example's system derivation paths. Priority and ordering fixtures cover whole options, nested values, multiple senders, local option definitions, and selection of outgoing contributions. Expected failures check ordinary and explicit-priority conflicts, nested conflicts, invalid option types, and a contributed assertion through the receiver's system build. An individual failure can be inspected directly:
 
 ```bash
 nix eval --json .#lib.failures.x86_64-linux.stable.localConflict
@@ -76,7 +76,7 @@ nix eval --show-trace .#lib.failures.x86_64-linux.stable.missingDestination
 nix eval --show-trace .#lib.failures.x86_64-linux.stable.unknownReceiver
 ```
 
-The [conditional fixture](../tests/conditional.nix) exercises enabled and disabled branches at registered options and transport containers, including unevaluated disabled payloads. The [merging fixture](../tests/merging.nix) combines several exports targeting one receiver with another sender and local definitions. The [sender-context fixture](../tests/sender-context.nix) distinguishes captured sender values from receiving submodule arguments and refinements.
+The [conditional fixture](../tests/conditional.nix) exercises enabled and disabled branches at allowed option paths, `crossConfig.nodes`, and receiver entries, including unevaluated disabled payloads. The [merging fixture](../tests/merging.nix) combines several contributions from one sender with another sender's contributions and local definitions. The [sender-context fixture](../tests/sender-context.nix) distinguishes sender values from receiving submodule arguments and local option definitions.
 
 The [self-targeting](../tests/self-target.nix) and [reciprocal](../tests/reciprocal.nix) fixtures force received values on every participant. The [host and guest fixture](../tests/host-guest.nix) also covers guest-to-parent and guest-to-self contributions merged with local definitions. Separate evaluator checks require the [value-cycle fixture](../tests/value-cycle.nix) to fail with a native recursion error on both revisions. `tryEval` cannot catch that error. The failure can be inspected directly:
 

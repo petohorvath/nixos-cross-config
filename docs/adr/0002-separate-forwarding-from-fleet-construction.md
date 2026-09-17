@@ -1,3 +1,3 @@
-# Separate Forwarding From Fleet Construction
+# Keep node construction outside the library
 
-The library forwards configuration between nodes supplied by the caller. Globals aggregation, node discovery, topology schemas, and host or guest construction remain outside the library, although extraction candidate 6 groups them together. This boundary keeps dependencies small and allows existing fleet builders to supply the participating nodes.
+The library contributes configuration between nodes supplied by the caller. Shared data aggregation, node discovery, topology schemas, and host or guest construction remain outside the library. This boundary keeps dependencies small and allows existing tools to construct the node collection.
