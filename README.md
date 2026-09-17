@@ -1,54 +1,98 @@
 # nixos-cross-config
 
-A NixOS library for configuration contributions between caller-supplied nodes. A sender declares settings for an existing writable option on a receiver, whose option type validates and merges those definitions.
-
-The generated module receives `lib` from the consumer's NixOS evaluation. The [root flake](flake.nix) owns locked development inputs; the public factory remains usable through a plain Nix import without evaluating those inputs.
-
-## Support
-
-The library targets NixOS node collections using one nixpkgs revision. Development and CI definitions cover `x86_64-linux` and `aarch64-linux`, with evaluation tests against locked NixOS 26.05 and unstable inputs. The project has no VM suite or tagged release yet. See [CI and policy](docs/development.md#ci-and-policy) for shared checks and enrollment.
+Define NixOS options for one node from another node's modules. For example, an application node can define its nginx virtual host on a proxy node. NixOS merges these definitions with the proxy's local settings.
 
 ## Quickstart
 
-With host Nix, flake commands, direnv with flake support, and shell integration configured:
+This example evaluates two NixOS container configurations: `application` and `proxy`. Each named configuration is a **node**. The application is the **sender**, and the proxy is the **receiver**. The virtual host definition that the application supplies is a **contribution**.
+
+With Nix and the `nix-command` and `flakes` features enabled, save the following as `flake.nix` in a new directory:
+
+```nix
+{
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+  inputs.crossConfig.url = "github:petohorvath/nixos-cross-config";
+
+  outputs = { nixpkgs, crossConfig, ... }:
+    let
+      system = "x86_64-linux";
+
+      # Both nodes use the same allowed option paths.
+      optionPaths = [ [ "services" "nginx" "virtualHosts" ] ];
+
+      modules = {
+        application = {
+          crossConfig.nodes.proxy.services.nginx.virtualHosts."app.example" = {
+            locations."/".proxyPass = "http://192.0.2.10:8080";
+          };
+        };
+
+        proxy = {
+          services.nginx = {
+            enable = true;
+            virtualHosts."app.example".serverAliases = [ "www.app.example" ];
+          };
+        };
+      };
+
+      nodes = builtins.mapAttrs (name: module:
+        nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [
+            (crossConfig.lib.mkModule { inherit name nodes optionPaths; })
+            {
+              boot.isContainer = true;
+              networking.hostName = "${name}-container";
+              system.stateVersion = "26.05";
+            }
+            module
+          ];
+        }
+      ) modules;
+    in
+    {
+      nixosConfigurations = nodes;
+    };
+}
+```
+
+The `nodes` attribute set contains both evaluated configurations. Nix's recursive `let` bindings let each call to `mkModule` refer to that same set. `name` identifies the node being configured: `application` or `proxy`.
+
+The container settings keep this example independent of host hardware. The backend address is illustrative; the example evaluates configuration without starting an application or deploying either node.
+
+If the directory is in a Git repository, run `git add flake.nix` before evaluation. Run the following command from the directory containing `flake.nix`; Nix creates `flake.lock` to pin the inputs:
 
 ```bash
-direnv allow
-nix flake check --no-update-lock-file
 nix eval --json .#nixosConfigurations.proxy.config.services.nginx.virtualHosts \
   --apply 'hosts: hosts."app.example".locations."/".proxyPass'
 # "http://192.0.2.10:8080"
 ```
 
-See [development prerequisites](docs/development.md#prerequisites) for setup and the [minimal consumer](#minimal-consumer) for use in another flake.
+The result is part of the proxy's normal NixOS configuration. Its virtual host also keeps the locally defined `serverAliases = [ "www.app.example" ];`.
 
-## Factory
+The repository's [minimal example](examples/minimal.nix) uses the same setup and runs in the test suite. From a checkout, the command above evaluates that example too.
 
-```nix
-crossConfig.lib.mkModule {
-  name = "application";
-  inherit nodes optionPaths;
-}
-```
+## API
 
-| Argument      | Contract                                                                                                             |
-| ------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `name`        | The participant's key in `nodes`, independent of `networking.hostName`.                                              |
-| `nodes`       | A caller-built attribute set whose participants expose their evaluated NixOS configuration as `nodes.<name>.config`. |
-| `optionPaths` | One shared list of eligible option paths, each represented as a list of literal string segments.                     |
-
-Every participant imports its generated module. Importing enables both sending and receiving; there is no enable option.
+### `lib.mkModule`
 
 ```nix
-optionPaths = [
-  [ "services" "nginx" "virtualHosts" ]
-  [ "environment" "etc" "application.conf" "text" ]
-];
+crossConfig.lib.mkModule { inherit name nodes optionPaths; }
 ```
 
-The segment `"application.conf"` denotes one attribute containing a dot. Paths identify receiving destinations; the receiver's own modules supply their option declarations.
+This function returns a NixOS module. Add it to `nixosSystem.modules` or a module's `imports` on every participating node. All three arguments are required:
 
-Outgoing definitions use ordinary nested assignments:
+| Argument      | Value                                                                                                                                     |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`        | This node's key in `nodes`, such as `"application"`. It can differ from `networking.hostName`.                                            |
+| `nodes`       | The shared attribute set of nodes. Each entry exposes its evaluated configuration as `nodes.<name>.config`.                               |
+| `optionPaths` | The shared list of allowed option paths. Each path is a list of literal attribute names, such as `[ "services" "nginx" "virtualHosts" ]`. |
+
+Importing the module enables both sending and receiving. There is no separate enable option. The receiver's own modules must declare the options that receive contributions.
+
+### `crossConfig.nodes`
+
+In the sender's module, set `crossConfig.nodes.<receiver>.<option-path>`:
 
 ```nix
 crossConfig.nodes.proxy.services.nginx.virtualHosts."app.example" = {
@@ -56,277 +100,34 @@ crossConfig.nodes.proxy.services.nginx.virtualHosts."app.example" = {
 };
 ```
 
-The proxy can add local settings to the same virtual host:
+Read the merged result from `nodes.<receiver>.config`, as the quickstart command does. `crossConfig.nodes` declares outgoing contributions; its evaluated representation is internal.
 
-```nix
-services.nginx.virtualHosts."app.example".serverAliases = [
-  "www.app.example"
-];
-```
+Contributions and local definitions use normal NixOS merging rules. A local definition has no extra priority. Use `lib.mkDefault`, `lib.mkForce`, and list ordering helpers where needed. The [API reference](docs/api.md) explains merging, conditions, validation, and evaluation limits.
 
-Multiple senders and receiver-local definitions merge through the receiving option type. Locality grants no extra precedence: incompatible scalar definitions at equal priority fail. These are [NixOS option merging semantics](https://nixos.org/manual/nixos/stable/#sec-option-definitions).
+## Use with existing configurations
 
-`crossConfig.nodes` is a declaration interface. The observable result is `nodes.<receiver>.config`; the transport's evaluated representation is internal.
+Add the library input to the existing flake. Choose the shared `optionPaths`, and include the module returned by `mkModule` in each participating node's module list. Supply the existing node collection as `nodes`.
 
-## Destinations and diagnostics
+Keep each host's hardware configuration and existing `system.stateVersion`. The library accepts nodes built by existing host and guest helpers as long as each entry exposes `.config`. The [host and guest example in the tests](tests/host-guest.nix) shows how to include a guest created through NixOS's `containers` option.
 
-The forwarding surface is shared across heterogeneous nodes. Registration alone does not require every participant to declare an option or accept writes to it.
+## Support
 
-```nix
-optionPaths = [
-  [ "services" "nginx" "virtualHosts" ]
-  [ "inventory" "serial" ]
-];
-```
+All nodes in a collection must use one nixpkgs revision and be accessible within one Nix computation. Source modules can come from separate repositories, and each node can have its own module evaluation. Node construction and deployment remain the caller's responsibility.
 
-A participant without `inventory.serial`, or with a read-only declaration for it, can still receive nginx contributions. Unused missing and read-only destinations are omitted from receiving definitions, including registered paths inside submodules. Defaults and receiver-local definitions remain intact. A false condition at a registered option contributes no definitions and leaves its payload unevaluated.
+Development and CI definitions cover `x86_64-linux` and `aarch64-linux`, with evaluation tests against locked NixOS 26.05 and unstable inputs. The project has no VM suite or tagged release yet. See [CI and policy](docs/development.md#ci-and-policy) for shared checks and enrollment.
 
-| Contribution                                  | Validation                                                                          |
-| --------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Missing receiving option                      | The receiver's assertions fail.                                                     |
-| Read-only receiving option                    | The receiver's assertions fail, even without a default or another definition.       |
-| Unknown receiver identity                     | The sender's assertions fail; building the sender exposes the error.                |
-| Path outside the forwarding surface           | The sender's module option check fails, including with an empty forwarding surface. |
-| Incompatible value or conflicting definitions | The receiving option type reports its native type or merge error.                   |
+## Documentation
 
-System evaluation forces assertions through `config.system.build.toplevel`. Evaluations of individual configuration values must also check `config.assertions` to detect invalid destinations. A disabled receiver entry contributes nothing; an entry that remains present must name a member of the node collection.
-
-Missing-option, read-only, type, and merge failures identify the sender, receiver, registered destination, and original definition filename when available. Forwarded definitions retain source filenames with contribution context appended:
-
-```text
-/path/to/application.nix (sender `application`, receiver `proxy`, destination `services.nginx.virtualHosts`)
-```
-
-Nested errors retain the receiving type's more specific option path. `--show-trace` exposes additional evaluation context, including the sender of an out-of-surface contribution. Diagnostics preserve normal option merging; exact original line and column attribution is not guaranteed.
-
-## Definition properties
-
-Override and ordering properties survive at each registered option and inside contributed attribute sets and submodules. The receiver merges contributed and local definitions using its ordinary option semantics.
-
-Lower override priorities win. Definitions at the winning priority merge through the receiving type; incompatible scalar values still conflict.
-
-| Definition                   | Override priority |
-| ---------------------------- | ----------------- |
-| Option declaration's default | 1500              |
-| `lib.mkDefault value`        | 1000              |
-| Ordinary assignment          | 100               |
-| `lib.mkForce value`          | 50                |
-| `lib.mkOverride n value`     | `n`               |
-
-A contributed default allows a receiver refinement:
-
-```nix
-# Sender, with networking.domain registered.
-crossConfig.nodes.receiver.networking.domain =
-  lib.mkDefault "service.example";
-
-# Receiver: the resulting domain is "site.example".
-networking.domain = "site.example";
-```
-
-Nested properties follow the same rules. With `services.nginx.virtualHosts` registered, a sender can supply a default for one location:
-
-```nix
-crossConfig.nodes.proxy.services.nginx.virtualHosts."app.example" = {
-  locations."/".proxyPass = lib.mkDefault "http://192.0.2.10:8080";
-};
-```
-
-List ordering is independent of override priority. `mkBefore` uses order 500, ordinary definitions use 1000, and `mkAfter` uses 1500. `mkOrder n value` supplies a custom order. Lower orders appear first among the surviving definitions, before any option-specific `apply` processing.
-
-```nix
-# Sender, with networking.search registered.
-crossConfig.nodes.receiver.networking.search =
-  lib.mkBefore [ "service.example" ];
-
-# Receiver: the result is [ "service.example" "site.example" ].
-networking.search = [ "site.example" ];
-```
-
-Overrides can contain ordering properties, such as `lib.mkForce (lib.mkAfter [ "service.example" ])`. Multiple senders and receiver-local definitions participate in the same priority and ordering rules.
-
-Properties on `crossConfig.nodes` or `crossConfig.nodes.<receiver>` select outgoing contributions during sender evaluation. Their priorities do not become receiving-option priorities:
-
-```nix
-# Select this outgoing receiver map over weaker maps in the sender.
-crossConfig.nodes = lib.mkForce {
-  # The receiving domain remains a default that local settings can override.
-  receiver.networking.domain = lib.mkDefault "service.example";
-};
-```
-
-The receiving guarantee starts at each registered option. Properties intended to control receiving precedence belong at that option or within its nested values.
-
-## Conditional integrations
-
-`lib.mkIf` guards contributions at registered options:
-
-```nix
-# Sender, with networking.firewall.allowedTCPPorts registered.
-crossConfig.nodes.receiver.networking.firewall.allowedTCPPorts =
-  lib.mkIf config.services.openssh.enable [ 22 ];
-```
-
-A false condition contributes no definitions to the declared writable destination. Its payload values remain unevaluated; receiver-local settings and option defaults still apply.
-
-`mkIf` and `mkMerge` also work around `crossConfig.nodes`, individual receiver entries, and intermediate path attributes. These containers select outgoing contributions during sender evaluation. Conditions and merges at registered options are also processed in the sender; nested values follow the receiving option type's semantics.
-
-Several integrations can select the same receiver. `mkMerge` combines their receiver maps so each integration's definitions reach the receiving option:
-
-```nix
-# Sender, with services.nginx.virtualHosts registered.
-let
-  exports = [
-    {
-      receiver = "proxy";
-      location = "/api";
-      port = 8080;
-      enable = true;
-    }
-    {
-      receiver = "proxy";
-      location = "/metrics";
-      port = 9090;
-      enable = true;
-    }
-  ];
-in
-{
-  crossConfig.nodes = lib.mkMerge (
-    map (export: lib.mkIf export.enable {
-      ${export.receiver}.services.nginx.virtualHosts."app.example" = {
-        locations.${export.location}.proxyPass =
-          "http://192.0.2.10:${toString export.port}";
-      };
-    }) exports
-  );
-}
-```
-
-The proxy receives both locations. Disabling either export removes its contribution. Other senders and receiver-local refinements merge through the same receiving type.
-
-## Sender context and receiving submodules
-
-Expressions captured from the sender keep their lexical context. A function supplied to a receiving submodule gets that submodule's ordinary arguments, including its merged `config`. An explicit binding preserves access to the sender when a submodule also binds `config`:
-
-```nix
-# Sender module, with services.nginx.virtualHosts registered.
-{ config, lib, ... }:
-let
-  senderConfig = config;
-in
-{
-  networking.hostName = "application";
-  crossConfig.nodes.proxy.services.nginx.virtualHosts."app.example" =
-    { config, ... }: {
-      serverName = lib.mkDefault "app.example";
-      serverAliases = [
-        "${senderConfig.networking.hostName}.${config.serverName}"
-      ];
-    };
-}
-```
-
-The receiver can refine the submodule:
-
-```nix
-services.nginx.virtualHosts."app.example".serverName = "public.example";
-# The resulting serverAliases is [ "application.public.example" ].
-```
-
-Here `senderConfig.networking.hostName` belongs to the sender; `config.serverName` includes the receiver's refinement. Nested conditions can likewise depend on captured sender values or the receiving submodule's configuration. Submodule evaluation stays with the receiving option type. Receiver root imports and option declarations remain caller-owned and independent of received values.
-
-## Node relationships and value dependencies
-
-A sender can contribute to itself using its node identity. Self-targeted contributions merge with local definitions through the receiving option type:
-
-```nix
-# Node application, with networking.hosts registered.
-networking.hosts."192.0.2.10" = [ "local.example" ];
-crossConfig.nodes.application.networking.hosts."192.0.2.10" = [
-  "service.example"
-];
-# Both names appear in nodes.application.config.networking.hosts."192.0.2.10".
-```
-
-Two nodes can also contribute independent values to one another. Neither node must finish evaluation before the other starts:
-
-```nix
-# Node alpha, with networking.hosts registered.
-crossConfig.nodes.beta.networking.hosts."192.0.2.10" = [ "alpha.example" ];
-
-# Node beta, in its own module.
-crossConfig.nodes.alpha.networking.hosts."192.0.2.20" = [ "beta.example" ];
-```
-
-These relationships work for hosts and guests, including a container contributing to its parent and itself. Each participant imports the generated module with its collection identity.
-
-An actual value-dependency cycle still fails with Nix's native `infinite recursion encountered` error. For example, each sender below reads the domain that only the other sender can supply:
-
-```nix
-# Node alpha module, with networking.domain registered.
-{ config, ... }: {
-  crossConfig.nodes.beta.networking.domain = config.networking.domain;
-}
-
-# Node beta module.
-{ config, ... }: {
-  crossConfig.nodes.alpha.networking.domain = config.networking.domain;
-}
-```
-
-Forcing either receiving domain exposes the cycle. Cyclic values are not dropped or replaced with defaults. All participants remain accessible within one outer Nix computation; separate source repositories and per-node module evaluations fit this boundary.
-
-## Minimal consumer
-
-The runnable [example](./examples/minimal.nix) constructs an application and a proxy as NixOS container configurations. Both use the same Nixpkgs revision and import the public factory. The application contributes proxy settings for an illustrative backend at `192.0.2.10:8080`.
-
-From a checkout, the root flake exposes the example:
-
-```bash
-nix eval --json .#nixosConfigurations.proxy.config.services.nginx.virtualHosts \
-  --apply 'hosts: hosts."app.example".locations."/".proxyPass'
-# "http://192.0.2.10:8080"
-```
-
-A consumer flake can evaluate the same example:
-
-```nix
-{
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-  inputs.crossConfig.url = "github:petohorvath/nixos-cross-config";
-
-  outputs = { nixpkgs, crossConfig, ... }: {
-    nixosConfigurations = import "${crossConfig}/examples/minimal.nix" {
-      inherit crossConfig nixpkgs;
-    };
-  };
-}
-```
-
-The consumer's `flake.lock` pins its selected revisions. Existing host and guest builders can supply their own collection instead of the example's builder. The [host and guest fixture](./tests/host-guest.nix) includes a guest produced by NixOS's `containers` option.
-
-## Evaluation and deployment
-
-V1 targets NixOS, with one Nixpkgs revision per node collection. All participating configurations must be accessible within one outer Nix computation. Separate source repositories and per-node evaluations fit that boundary; mixed-revision collections are outside the v1 contract.
-
-Node identities, the forwarding surface, receiver imports, and receiver option declarations must remain independent of received values. This includes `readOnly` metadata; receiver-local configuration can determine it. Ordinary receiver-local values and conditions can depend on contributions. Contributions define existing options. Root module imports and option declarations stay with the caller.
-
-The receiver's generated NixOS configuration contains its contributions. Deploying that receiver through the consumer's normal deployment process activates the result. Node construction, discovery, globals aggregation, topology, service ownership, and deployment remain consumer responsibilities. The library provides no runtime exchange protocol, deployment orchestration, or required fleet framework.
+- [API reference](docs/api.md): arguments, option paths, contributions, merging, conditions, and errors.
+- [Development and checks](docs/development.md).
+- [Domain glossary](CONTEXT.md).
+- [Architectural decisions](docs/adr/).
+- [Destination inspection design](docs/destination-inspection.md): how the implementation checks receiving options.
 
 ## Development
 
-The root flake supplies the shell, formatter, example, and non-VM checks. Run `nix fmt` and `nix flake check` from the repository root. [Development instructions](docs/development.md) cover prerequisites, tools, focused checks, and CI.
+The root flake supplies the development shell, formatter, example, and checks. Run `nix fmt` and `nix flake check` from the repository root. [Development instructions](docs/development.md) cover prerequisites, tools, focused checks, and CI.
 
 ## Contributing
 
 Follow [CONTRIBUTING.md](CONTRIBUTING.md) for the shared policy, PR workflow, public contracts, and release rules. [CHANGELOG.md](CHANGELOG.md) records unreleased changes and migration notes. Original code is licensed under [MIT](LICENSE).
-
-## Documentation
-
-- [Factory and contribution reference](#factory)
-- [Minimal consumer](#minimal-consumer)
-- [Development and checks](docs/development.md)
-- [Domain glossary](CONTEXT.md)
-- [Architectural decisions](docs/adr/)
-- [Destination inspection design](docs/destination-inspection.md)

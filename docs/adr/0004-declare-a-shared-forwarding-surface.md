@@ -1,5 +1,5 @@
-# Declare A Shared Forwarding Surface
+# Declare the allowed option paths
 
-The node collection uses one explicit shared list of eligible option paths. This keeps the forwarding structure available before node configuration is evaluated, avoiding the structural dependency created by discovering that structure from other nodes' configuration values. Callers choose the list, so service-specific paths remain outside the library.
+The node collection uses one explicit shared list of allowed option paths. The list must be available before node configuration is evaluated. Discovering it from other nodes' configuration values could create a dependency cycle. Callers choose the list, so the library does not need to know which services the nodes use.
 
-Registration alone does not require every participant to declare every eligible option; a contribution targeting an absent option fails.
+Listing a path does not require every node to declare the option. A contribution to an absent option fails.
