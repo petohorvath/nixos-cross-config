@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   policy:
-    uses: petohorvath/nixos-project-policy/.github/workflows/check.yml@eecc24f9b1e87943d0266ef60c835a5ad35c78b7
+    uses: petohorvath/nixos-project-policy/.github/workflows/check.yml@v0.1.0
     with:
       project: nixos-cross-config
-      policy_revision: eecc24f9b1e87943d0266ef60c835a5ad35c78b7
+      policy_version: v0.1.0

@@ -87,6 +87,6 @@ nix eval --json .#lib.failures.x86_64-linux.stable.valueCycle
 
 ## CI and policy
 
-The [CI caller](../.github/workflows/check.yml) invokes the shared policy workflow at an immutable revision. It checks the shell, formatting, lint, and ordinary project checks on both Linux architectures. Policy code stays outside this flake's inputs and build graph.
+The [CI caller](../.github/workflows/check.yml) selects policy release `v0.1.0`. It checks the shell, formatting, lint, and ordinary project checks on both Linux architectures. Policy code stays outside this flake's inputs and build graph. Hosted checks require that immutable policy release to be published.
 
-The policy repository's central project and pin records determine enrollment and pin approval. Passing readiness checks does not record either approval. Follow the shared [maintenance procedure](https://github.com/petohorvath/nixos-project-policy/blob/eecc24f9b1e87943d0266ef60c835a5ad35c78b7/docs/maintenance.md) for enrollment and dependency updates.
+The policy release supplies the rules and checker code. Current project and pin records from the policy repository's `main` branch determine enrollment and shared pins; each CI run captures one record commit. A pin update changes this project's lockfiles without changing its policy version. Passing readiness checks does not record enrollment or pin approval. Follow the shared [maintenance procedure](https://github.com/petohorvath/nixos-project-policy/blob/v0.1.0/docs/maintenance.md) for enrollment and dependency updates.

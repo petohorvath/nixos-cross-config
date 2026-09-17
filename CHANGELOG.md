@@ -14,6 +14,7 @@
 - Move development inputs, checks, focused fixtures, and the example from `dev/flake.nix` to the root flake, preserving both locked nixpkgs revisions.
 - Name stable and unstable inputs `nixpkgs` and `nixpkgs-unstable`, with an explicit `systems` binding and public outputs in root `flake.nix`.
 - Run evaluation fixtures in separate processes so default checks bound evaluator memory while preserving their JSON results.
+- Select shared policy release `v0.1.0` for rules and CI while checking nixpkgs locks against current central shared pins.
 
 ### Removed
 

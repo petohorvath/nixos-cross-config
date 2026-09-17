@@ -1,6 +1,6 @@
 # Repository instructions
 
-Before changing code, documentation, or workflows, read the [shared policy](https://github.com/petohorvath/nixos-project-policy/blob/eecc24f9b1e87943d0266ef60c835a5ad35c78b7/POLICY.md), [CONTRIBUTING.md](CONTRIBUTING.md), and [development instructions](docs/development.md).
+Before changing code, documentation, or workflows, read the [shared policy](https://github.com/petohorvath/nixos-project-policy/blob/v0.1.0/POLICY.md), [CONTRIBUTING.md](CONTRIBUTING.md), and [development instructions](docs/development.md).
 
 Run root `nix fmt` and `nix flake check` for changes. Preserve the factory's receiver-supplied `lib` and plain-import use without development inputs. Report validation limits, including pending policy enrollment; passing local checks does not authorize a merge.
 
