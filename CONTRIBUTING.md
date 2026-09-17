@@ -1,6 +1,6 @@
 # Contributing
 
-Follow the [shared project policy](https://github.com/petohorvath/nixos-project-policy/blob/v0.1.0/POLICY.md) and the local [development instructions](docs/development.md).
+Follow the [shared project policy](https://github.com/petohorvath/nixos-project-policy/blob/v0.1.1/POLICY.md) and the local [development instructions](docs/development.md).
 
 ## Changes
 
