@@ -1,53 +1,39 @@
 {
   formatter,
-  nixpkgsInputs,
+  nixpkgs,
   pkgs,
   system,
 }:
 let
-  checks =
-    builtins.mapAttrs (
-      _: nixpkgs:
-      pkgs.callPackage ./check-evaluation.nix {
-        inherit nixpkgs system;
-      }
-    ) nixpkgsInputs
-    // pkgs.lib.mapAttrs' (
-      channel: nixpkgs:
-      pkgs.lib.nameValuePair "${channel}-value-cycle" (
-        pkgs.callPackage ./check-value-cycle.nix {
-          inherit nixpkgs system;
-        }
-      )
-    ) nixpkgsInputs
-    // pkgs.lib.mapAttrs' (
-      channel: nixpkgs:
-      pkgs.lib.nameValuePair "${channel}-diagnostics" (
-        pkgs.callPackage ./check-diagnostics.nix {
-          inherit nixpkgs system;
-        }
-      )
-    ) nixpkgsInputs
-    // {
-      formatting = mkCheck {
-        name = "cross-config-formatting";
-        packages = [ formatter ];
-        script = "cross-config-fmt --ci";
-      };
-      lint = mkCheck {
-        name = "cross-config-lint";
-        packages = [
-          pkgs.statix
-          pkgs.deadnix
-          pkgs.actionlint
-        ];
-        script = ''
-          statix check .
-          deadnix --fail .
-          actionlint .github/workflows/*.yml
-        '';
-      };
+  checks = {
+    evaluation = pkgs.callPackage ./check-evaluation.nix {
+      inherit nixpkgs system;
     };
+    value-cycle = pkgs.callPackage ./check-value-cycle.nix {
+      inherit nixpkgs system;
+    };
+    diagnostics = pkgs.callPackage ./check-diagnostics.nix {
+      inherit nixpkgs system;
+    };
+    formatting = mkCheck {
+      name = "cross-config-formatting";
+      packages = [ formatter ];
+      script = "cross-config-fmt --ci";
+    };
+    lint = mkCheck {
+      name = "cross-config-lint";
+      packages = [
+        pkgs.statix
+        pkgs.deadnix
+        pkgs.actionlint
+      ];
+      script = ''
+        statix check .
+        deadnix --fail .
+        actionlint .github/workflows/*.yml
+      '';
+    };
+  };
   mkCheck =
     {
       name,
