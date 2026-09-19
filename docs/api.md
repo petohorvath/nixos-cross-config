@@ -39,7 +39,13 @@ The returned module receives `lib` from the node's NixOS evaluation. It does not
 ((import ./nixos-cross-config/flake.nix).outputs { }).lib.mkModule
 ```
 
-Accessing `lib.mkModule` this way does not evaluate the development inputs. When used as a flake input, the library's development inputs can enter the consumer's lock graph. Consumers can override them while keeping one nixpkgs revision per node collection.
+Accessing `lib.mkModule` this way does not evaluate the development input. The root flake has one `nixpkgs` input, which consumers can share with their own selected revision:
+
+```nix
+inputs.crossConfig.inputs.nixpkgs.follows = "nixpkgs";
+```
+
+Use the same input name as the consuming flake; `crossConfig` matches the README quickstart. Keep one nixpkgs revision per node collection. The input selects the shell, formatter, packages, checks, focused fixtures, and examples; the returned module still receives its `lib` from the receiver. Compatibility uses invocation-specific overrides, so no second compatibility input enters the consumer's lock graph. See [development instructions](development.md#compatibility-checks) for exact-revision commands and the policy coverage boundary.
 
 ## Allowed option paths
 

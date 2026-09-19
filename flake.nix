@@ -1,27 +1,21 @@
 {
   description = "Configuration contributions between caller-owned NixOS nodes";
 
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
-  };
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
   outputs =
     inputs:
     let
+      inherit (inputs) nixpkgs;
       systems = [
         "x86_64-linux"
         "aarch64-linux"
       ];
-      forSystems = inputs.nixpkgs.lib.genAttrs systems;
-      nixpkgsInputs = {
-        stable = inputs.nixpkgs;
-        unstable = inputs.nixpkgs-unstable;
-      };
+      forSystems = nixpkgs.lib.genAttrs systems;
       development = forSystems (
         system:
         let
-          pkgs = inputs.nixpkgs.legacyPackages.${system};
+          pkgs = nixpkgs.legacyPackages.${system};
           formatter = pkgs.callPackage ./formatter.nix { };
         in
         {
@@ -30,7 +24,7 @@
           checks = import ./tests/checks.nix {
             inherit
               formatter
-              nixpkgsInputs
+              nixpkgs
               pkgs
               system
               ;
@@ -56,28 +50,22 @@
         inherit mkModule;
         tests = forSystems (
           system:
-          builtins.mapAttrs (
-            _: nixpkgs:
-            import ./tests {
-              inherit crossConfig nixpkgs system;
-            }
-          ) nixpkgsInputs
+          import ./tests {
+            inherit crossConfig nixpkgs system;
+          }
         );
         failures = forSystems (
           system:
-          builtins.mapAttrs (
-            _: nixpkgs:
-            let
-              mkNodes = import ./tests/mk-nodes.nix {
-                inherit crossConfig nixpkgs system;
-              };
-            in
-            import ./tests/failures.nix { inherit mkNodes; }
-            // {
-              valueCycle = import ./tests/value-cycle.nix { inherit mkNodes; };
-              taggedValueCycle = import ./tests/tagged-value-cycle.nix { inherit mkNodes; };
-            }
-          ) nixpkgsInputs
+          let
+            mkNodes = import ./tests/mk-nodes.nix {
+              inherit crossConfig nixpkgs system;
+            };
+          in
+          import ./tests/failures.nix { inherit mkNodes; }
+          // {
+            valueCycle = import ./tests/value-cycle.nix { inherit mkNodes; };
+            taggedValueCycle = import ./tests/tagged-value-cycle.nix { inherit mkNodes; };
+          }
         );
       };
       devShells = forSystems (system: {
@@ -89,8 +77,7 @@
       });
       checks = forSystems (system: development.${system}.checks);
       nixosConfigurations = import ./examples/minimal.nix {
-        inherit crossConfig;
-        inherit (inputs) nixpkgs;
+        inherit crossConfig nixpkgs;
       };
     };
 }
