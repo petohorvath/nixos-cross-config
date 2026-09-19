@@ -1,6 +1,6 @@
 # Contributing
 
-Follow the [shared project policy](https://github.com/petohorvath/nixos-project-policy/blob/v0.2.0/POLICY.md) and the local [development instructions](docs/development.md).
+Follow the [shared project policy](https://github.com/petohorvath/nixos-project-policy/blob/v0.3.0/POLICY.md) and the local [development instructions](docs/development.md).
 
 ## Changes
 
@@ -16,7 +16,7 @@ The public API consists of `lib.mkModule`, its `name`, `nodes`, and `optionPaths
 
 Root `devShells`, `formatter`, and `checks` provide development entrypoints using the selected `nixpkgs` input. `packages.<system>.cross-config-fmt` exposes the formatter executable. Root `lib.tests.<system>.<fixture>` and `lib.failures.<system>.<fixture>` expose focused fixtures. `nixosConfigurations` evaluates the documented example. Consumers may override `nixpkgs` or use `follows` while keeping one nixpkgs revision within each node collection. Compatibility selections stay outside member lockfiles and consumer dependency graphs.
 
-The root lock records the development default independently of the policy compatibility pair. Policy release `v0.2.0` supplies verified compatibility runs and separate committed-default and development-tool checks. Keep member references, central records, and required GitHub statuses aligned through the [policy maintenance procedure](docs/development.md#ci-and-policy). Report executed checks, cached results, and unverified architectures or policy integration separately; local success does not record adoption or configure merge gates.
+The root lock records the development default independently of the policy compatibility pair. Policy release `v0.3.0` supplies verified compatibility runs and separate committed-default and development-tool checks. Keep member references, central records, and required GitHub statuses aligned through the [policy maintenance procedure](docs/development.md#ci-and-policy). Report executed checks, cached results, and unverified architectures or policy integration separately; local success does not record adoption or configure merge gates.
 
 ## Releases
 
