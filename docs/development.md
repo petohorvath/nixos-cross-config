@@ -28,16 +28,16 @@ The ordinary flake checker evaluates applicable shells, formatters, packages, an
 
 ## Compatibility checks
 
-Policy `v0.2.0` runs the same compatibility checker locally and in CI. It selects exact stable and unstable revisions from a trusted policy-record checkout, verifies the effective root input, requires nonempty host checks, and runs the full root `nix flake check`. It checks that the member sources and committed lock remain unchanged and writes metadata and result evidence outside the member checkout.
+Policy `v0.3.0` runs the same compatibility checker locally and in CI. It selects exact stable and unstable revisions from a trusted policy-record checkout, verifies the effective root input, requires nonempty host checks, and runs the full root `nix flake check`. It checks that the member sources and committed lock remain unchanged and writes metadata and result evidence outside the member checkout.
 
-Use a trusted current record checkout at `../nixos-project-policy-records`. The project record must select `v0.2.0` and declare both Linux architectures; the project lock must match its committed copy. From the repository root, run each approved revision into a new evidence directory:
+Use a trusted current record checkout at `../nixos-project-policy-records`. The project record must select `v0.3.0` and declare both Linux architectures; the project lock must match its committed copy. From the repository root, run each approved revision into a new evidence directory:
 
 ```bash
-nix run --no-update-lock-file github:petohorvath/nixos-project-policy/v0.2.0 -- \
+nix run --no-update-lock-file github:petohorvath/nixos-project-policy/v0.3.0 -- \
   --policy-root ../nixos-project-policy-records \
   compatibility . --project nixos-cross-config --channel stable \
   --output ../cross-config-stable-evidence
-nix run --no-update-lock-file github:petohorvath/nixos-project-policy/v0.2.0 -- \
+nix run --no-update-lock-file github:petohorvath/nixos-project-policy/v0.3.0 -- \
   --policy-root ../nixos-project-policy-records \
   compatibility . --project nixos-cross-config --channel unstable \
   --output ../cross-config-unstable-evidence
@@ -45,7 +45,7 @@ nix run --no-update-lock-file github:petohorvath/nixos-project-policy/v0.2.0 -- 
 
 Keep the record snapshot fixed for both runs, then repeat on the other native Linux architecture. A local run covers its host architecture. The runner writes `result.json` for a completed attempt and `metadata.json` when metadata is available. Its evidence identifies selected and resolved revisions, commands, host check names, commits, and the record digest. Nix may reuse cached builds; a successful result does not mean every test process executed again. Static policy checks report `compatibility: "not-run"` and do not replace this evidence.
 
-Ordinary compatibility runs use the approved pair. A candidate must be registered for the exact clean project commit; use the runner's `--batch ID` option to select an explicit candidate. Candidate success does not approve pins. The [runner reference](https://github.com/petohorvath/nixos-project-policy/blob/v0.2.0/docs/checker.md#compatibility-execution-and-evidence) defines selection and evidence, and [CI and policy](#ci-and-policy) describes coordinated activation.
+Ordinary compatibility runs use the approved pair. A candidate must be registered for the exact clean project commit; use the runner's `--batch ID` option to select an explicit candidate. Candidate success does not approve pins. The [runner reference](https://github.com/petohorvath/nixos-project-policy/blob/v0.3.0/docs/checker.md#compatibility-execution-and-evidence) defines selection and evidence, and [CI and policy](#ci-and-policy) describes coordinated activation.
 
 The root lock records the development default independently of the compatibility pair. A shared-pin update requires new compatibility evidence without requiring a default-lock update. Compatibility selections remain outside member lockfiles and consumer dependency graphs. [ADR-0005](adr/0005-separate-nixpkgs-selection-from-compatibility-coverage.md) records this boundary.
 
@@ -170,21 +170,22 @@ nix eval --json .#lib.failures.x86_64-linux.valueCycle
 
 ## CI and policy
 
-The [CI workflow](../.github/workflows/check.yml) selects the published immutable policy release `v0.2.0` and names its caller job `Policy`. The shared workflow captures one release commit and one central-record commit, then derives ordinary and compatibility jobs from `requiredArchitectures`. This project's required coverage is `x86_64-linux` and `aarch64-linux`. Policy code stays outside the member's flake inputs and build graph.
+The [CI workflow](../.github/workflows/check.yml) selects the published immutable policy release `v0.3.0` and names its caller job `Policy`. The shared workflow captures one release commit and one central-record commit, then derives ordinary and compatibility jobs from `requiredArchitectures`. This project's required coverage is `x86_64-linux` and `aarch64-linux`. Policy code stays outside the member's flake inputs and build graph.
 
 Compliance, formatting/lint, committed-default project tests, and the two compatibility revisions run in independent jobs for each required architecture. The member caller supplies only `project` and `policy_version`; the policy owns pin selection and matrices. The project has no VM targets. Compatibility evidence is uploaded even when execution fails, and uploading evidence does not change the failed result.
 
-Member references and current central records must select the same release before the checker can generate jobs. From the member root, use a trusted record checkout selecting `v0.2.0` to obtain the planned matrix and mandatory status names:
+Member references and current central records must select the same release before the checker can generate jobs. From the member root, use a trusted record checkout selecting `v0.3.0` to obtain the planned matrix and mandatory status names:
 
 ```bash
-nix run --no-update-lock-file github:petohorvath/nixos-project-policy/v0.2.0 -- \
+nix run --no-update-lock-file github:petohorvath/nixos-project-policy/v0.3.0 -- \
   --policy-root ../nixos-project-policy-records ci --project nixos-cross-config
 ```
 
-The release defines the `Policy / ...` prefix and names, including `Compatibility (stable, <architecture>)` and `Compatibility (unstable, <architecture>)`. The `ci` result is a plan, not evidence that those jobs ran or that their gates are active. Follow the [v0.2.0 migration procedure](https://github.com/petohorvath/nixos-project-policy/blob/v0.2.0/docs/maintenance.md#migration-to-v020):
+The release derives mandatory `Policy / ...` statuses from `requiredArchitectures` and `vmTargets`, including `Compatibility (stable, <architecture>)` and `Compatibility (unstable, <architecture>)`. Project-specific gates belong in `additionalRequiredChecks`; this project has none. The `ci` result includes the complete required set and its matrices, but does not establish that jobs ran or gates are active. The mandatory names are unchanged from v0.2.0. Follow the [v0.3.0 migration procedure](https://github.com/petohorvath/nixos-project-policy/blob/v0.3.0/docs/maintenance.md#migration-to-v030):
 
 1. Coordinate policy links, the workflow reference, `policy_version`, central `policyVersion`, and both `requiredArchitectures`. Preserve the committed default and existing protections while preparing the transition.
 2. Obtain a complete member CI run with successful ordinary and stable/unstable compatibility jobs on both architectures. Inspect the workflow implementation and actual emitted statuses on the reviewable PR.
-3. Record the observed complete set in `requiredChecks`, then obtain separate authorization to update GitHub merge gates. Verify the resulting settings and obtain human approval for member activation and merge.
+3. Compare the generated complete set with observed PR statuses and GitHub merge gates. Move any project-specific gates to `additionalRequiredChecks`. Obtain separate authorization for any necessary GitHub merge-setting changes and preserve the verification evidence on the migration PR.
+4. While any member still selects a release before v0.3.0, including a pending member, retain the complete generated set in this adopted member's `requiredChecks` for older checkers. The list must exactly match the generated set. Remove that duplicate only after the last older selection is migrated or removed through a separately selected record change. Obtain human approval for activation and merge.
 
-Selecting `v0.2.0` in this checkout does not update central records, record adoption, or change GitHub settings. Readiness and compatibility success also do not perform those actions. Current compliance checks use trusted current records from policy `main`; exact replay uses the captured snapshot instead. Compatibility-pair updates and development-default updates remain separate operations.
+Selecting `v0.3.0` in this checkout does not update central records, record adoption, or change GitHub settings. Readiness and compatibility success also do not perform those actions. Current compliance checks use trusted current records from policy `main`; exact replay uses the captured snapshot instead. Compatibility-pair updates and development-default updates remain separate operations.

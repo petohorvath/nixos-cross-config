@@ -16,7 +16,7 @@
 - **Breaking:** select root tools, fixtures, checks, and examples through one `nixpkgs` input; remove the stable/unstable component from focused test/failure paths and root check names. Root `nix flake check` validates the selected revision. Native input overrides select another revision for the complete root check interface without changing the committed default.
 - Keep explicit `systems` bindings and public flake outputs, preserving the default nixpkgs revision in the root lock.
 - Run evaluation fixtures in separate processes so default checks bound evaluator memory while preserving their JSON results.
-- Select shared policy release `v0.2.0` and its `Policy` caller for independent root defaults, verified stable and unstable compatibility runs, and separate compliance, formatting/lint, and committed-default jobs.
+- Select shared policy release `v0.3.0` and its `Policy` caller, deriving required merge checks from the release and central architecture and VM records. Preserve independent root defaults, verified stable and unstable compatibility runs, and separate compliance, formatting/lint, and committed-default jobs.
 
 ### Removed
 
@@ -47,4 +47,4 @@ Update focused paths as follows; `<selection>` is `stable` or `unstable`. Each n
 
 For example, replace `.#checks.x86_64-linux.unstable-diagnostics` with `.#checks.x86_64-linux.diagnostics` and supply the exact unstable revision through `--override-input nixpkgs` and `--no-write-lock-file`. The `mkModule` signature, receiver-supplied `lib`, contribution semantics, and plain-import usage remain unchanged.
 
-Policy `v0.2.0` owns compatibility selection and execution while preserving the committed development default. Coordinate the central `policyVersion`, both `requiredArchitectures`, and the observed `Policy / ...` statuses before activating the new merge gates. Selecting the release in the member does not perform that central migration. Follow the [compatibility and policy guidance](docs/development.md#compatibility-checks) for the external runner, exact-result replay, and activation requirements.
+Policy `v0.3.0` owns compatibility selection and execution while preserving the committed development default. Coordinate the central `policyVersion` with member release references. Mandatory status names, architectures, pins, and VM targets need no change from v0.2.0 solely for this upgrade. Put project-specific gates in `additionalRequiredChecks` and retain a complete generated `requiredChecks` list while any member still selects an older release. Verify the observed statuses and GitHub merge gates as part of adoption. Selecting the release in the member does not perform that central migration. Follow the [compatibility and policy guidance](docs/development.md#compatibility-checks) for the external runner, exact-result replay, and activation requirements.
