@@ -1,10 +1,10 @@
 # Contributing
 
-Follow the [shared project policy](https://github.com/petohorvath/nixos-project-policy/blob/v0.1.1/POLICY.md) and the local [development instructions](docs/development.md).
+Follow the [shared project policy](https://github.com/petohorvath/nixos-project-policy/blob/v0.2.0/POLICY.md) and the local [development instructions](docs/development.md).
 
 ## Changes
 
-Work on a branch and open a PR with a Conventional Commit title, such as `fix: Preserve contribution source locations`. Describe the resulting behavior, compatibility effects, and validation. Run root `nix fmt --no-update-lock-file` and `nix flake check --no-update-lock-file`. Run the full root checks with exact stable and unstable revisions from one trusted policy-record snapshot using the [native override commands](docs/development.md#compatibility-checks). Add meaningful regression coverage for behavior changes. The checks do not run VMs.
+Work on a branch and open a PR with a Conventional Commit title, such as `fix: Preserve contribution source locations`. Describe the resulting behavior, compatibility effects, and validation. Run root `nix fmt --no-update-lock-file` and `nix flake check --no-update-lock-file`. Run the [policy compatibility runner](docs/development.md#compatibility-checks) for the approved stable and unstable revisions from one trusted record snapshot. Add meaningful regression coverage for behavior changes. The checks do not run VMs.
 
 Every merge needs human approval and passing required checks. Squash each PR to one Conventional Commit using its title. The maintainer may approve and merge without a second reviewer. Record explicit breaking changes in the title and changelog.
 
@@ -16,7 +16,7 @@ The public API consists of `lib.mkModule`, its `name`, `nodes`, and `optionPaths
 
 Root `devShells`, `formatter`, and `checks` provide development entrypoints using the selected `nixpkgs` input. `packages.<system>.cross-config-fmt` exposes the formatter executable. Root `lib.tests.<system>.<fixture>` and `lib.failures.<system>.<fixture>` expose focused fixtures. `nixosConfigurations` evaluates the documented example. Consumers may override `nixpkgs` or use `follows` while keeping one nixpkgs revision within each node collection. Compatibility selections stay outside member lockfiles and consumer dependency graphs.
 
-The root lock records the development default. Policy-owned compatibility and independent default changes require the [coordinated policy activation](docs/development.md#ci-and-policy). Keep the published `v0.1.1` references until a supporting release exists; its checks do not establish the required stable-and-unstable override coverage. Report executed checks, cached results, and unverified architectures or policy integration separately.
+The root lock records the development default independently of the policy compatibility pair. Policy release `v0.2.0` supplies verified compatibility runs and separate committed-default and development-tool checks. Keep member references, central records, and required GitHub statuses aligned through the [policy maintenance procedure](docs/development.md#ci-and-policy). Report executed checks, cached results, and unverified architectures or policy integration separately; local success does not record adoption or configure merge gates.
 
 ## Releases
 
