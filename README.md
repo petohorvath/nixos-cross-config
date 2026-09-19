@@ -12,6 +12,7 @@ With Nix and the `nix-command` and `flakes` features enabled, save the following
 {
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
   inputs.crossConfig.url = "github:petohorvath/nixos-cross-config";
+  inputs.crossConfig.inputs.nixpkgs.follows = "nixpkgs";
 
   outputs = { nixpkgs, crossConfig, ... }:
     let
@@ -114,7 +115,7 @@ Keep each host's hardware configuration and existing `system.stateVersion`. The 
 
 All nodes in a collection must use one nixpkgs revision and be accessible within one Nix computation. Source modules can come from separate repositories, and each node can have its own module evaluation. Node construction and deployment remain the caller's responsibility.
 
-Development and CI definitions cover `x86_64-linux` and `aarch64-linux`, with evaluation tests against locked NixOS 26.05 and unstable inputs. The project has no VM suite or tagged release yet. See [CI and policy](docs/development.md#ci-and-policy) for shared checks and enrollment.
+Development supports `x86_64-linux` and `aarch64-linux`. The root lock selects NixOS 26.05 for ordinary checks. Required stable and unstable compatibility coverage through policy-owned input overrides depends on a supporting policy release; the current `v0.1.1` workflow checks the committed default on both architectures. The project has no VM suite or tagged release yet. See [CI and policy](docs/development.md#ci-and-policy) for coverage and activation requirements.
 
 ## Documentation
 
@@ -126,7 +127,7 @@ Development and CI definitions cover `x86_64-linux` and `aarch64-linux`, with ev
 
 ## Development
 
-The root flake supplies the development shell, formatter, example, and checks. Run `nix fmt` and `nix flake check` from the repository root. [Development instructions](docs/development.md) cover prerequisites, tools, focused checks, and CI.
+The root flake supplies the development shell, formatter, package, example, and checks using one selected `nixpkgs` input. Run `nix fmt --no-update-lock-file` and `nix flake check --no-update-lock-file` from the repository root. Native input overrides select another exact revision for the whole evaluation without changing the committed lock. [Development instructions](docs/development.md) cover prerequisites, exact-revision compatibility checks, focused checks, and CI.
 
 ## Contributing
 

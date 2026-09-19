@@ -4,7 +4,7 @@ Follow the [shared project policy](https://github.com/petohorvath/nixos-project-
 
 ## Changes
 
-Work on a branch and open a PR with a Conventional Commit title, such as `fix: Preserve contribution source locations`. Describe the resulting behavior, compatibility effects, and validation. Run root `nix fmt` and `nix flake check`; both stable and unstable fixtures must continue to pass. Add meaningful regression coverage for behavior changes. The default checks do not run VMs.
+Work on a branch and open a PR with a Conventional Commit title, such as `fix: Preserve contribution source locations`. Describe the resulting behavior, compatibility effects, and validation. Run root `nix fmt --no-update-lock-file` and `nix flake check --no-update-lock-file`. Run the full root checks with exact stable and unstable revisions from one trusted policy-record snapshot using the [native override commands](docs/development.md#compatibility-checks). Add meaningful regression coverage for behavior changes. The checks do not run VMs.
 
 Every merge needs human approval and passing required checks. Squash each PR to one Conventional Commit using its title. The maintainer may approve and merge without a second reviewer. Record explicit breaking changes in the title and changelog.
 
@@ -14,7 +14,9 @@ Keep documentation focused on current usage, structure, and design. Record imple
 
 The public API consists of `lib.mkModule`, its `name`, `nodes`, and `optionPaths` arguments, the returned module's `crossConfig.nodes` option, and the behavior documented in the [API reference](docs/api.md). The returned module uses the receiver's `lib`. Keep `lib.mkModule` usable through `(import ./flake.nix).outputs { }` without evaluating development inputs. Node construction and deployment remain the caller's responsibility.
 
-Root `devShells`, `formatter`, and `checks` provide development entrypoints. `packages.<system>.cross-config-fmt` exposes the formatter executable. Root `lib.tests` and `lib.failures` expose focused fixtures. `nixosConfigurations` evaluates the documented example. The flake's development inputs may enter consumer lock graphs; consumers may override them while keeping one nixpkgs revision within each node collection.
+Root `devShells`, `formatter`, and `checks` provide development entrypoints using the selected `nixpkgs` input. `packages.<system>.cross-config-fmt` exposes the formatter executable. Root `lib.tests.<system>.<fixture>` and `lib.failures.<system>.<fixture>` expose focused fixtures. `nixosConfigurations` evaluates the documented example. Consumers may override `nixpkgs` or use `follows` while keeping one nixpkgs revision within each node collection. Compatibility selections stay outside member lockfiles and consumer dependency graphs.
+
+The root lock records the development default. Policy-owned compatibility and independent default changes require the [coordinated policy activation](docs/development.md#ci-and-policy). Keep the published `v0.1.1` references until a supporting release exists; its checks do not establish the required stable-and-unstable override coverage. Report executed checks, cached results, and unverified architectures or policy integration separately.
 
 ## Releases
 
