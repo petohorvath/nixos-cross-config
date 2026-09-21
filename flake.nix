@@ -73,7 +73,7 @@
         failures = forSystems (
           system:
           let
-            mkNodes = import ./tests/mk-nodes.nix {
+            mkNodes = import ./tests/helpers/mk-nodes.nix {
               inherit crossConfig nixpkgs system;
             };
           in

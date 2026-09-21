@@ -26,6 +26,8 @@ The ordinary flake checker evaluates applicable shells, formatters, packages, an
 
 [Root `flake.nix`](../flake.nix) declares the supported systems and public outputs. [The shell](../shell.nix) and [formatter](../formatter.nix) declare their package dependencies through `pkgs.callPackage`; [check assembly](../tests/checks.nix) lives beside the test runners. Plain Nix composition keeps development tooling separate from the library without a policy input or import.
 
+Behavior suites live directly under `tests/`, alongside their check runners. Shared node constructors and offline evaluation helpers live in [tests/helpers](../tests/helpers/). Concrete fixture modules and evaluated scenarios live in [tests/fixtures](../tests/fixtures/).
+
 ## Compatibility checks
 
 Policy `v0.3.0` runs the same compatibility checker locally and in CI. It selects exact stable and unstable revisions from a trusted policy-record checkout, verifies the effective root input, requires nonempty host checks, and runs the full root `nix flake check`. It checks that the member sources and committed lock remain unchanged and writes metadata and result evidence outside the member checkout.

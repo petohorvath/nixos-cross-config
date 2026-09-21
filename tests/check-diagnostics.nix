@@ -9,7 +9,7 @@
   system,
 }:
 let
-  expressionPath = import ./mk-failure-expression.nix {
+  expressionPath = import ./helpers/mk-failure-expression.nix {
     inherit flakeParts nixpkgs system;
     fixtureName = "failures.nix";
   };
