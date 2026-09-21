@@ -25,6 +25,7 @@ let
     nodeCollection = { };
     optionPaths = [ ];
   };
+  paths = value: (evaluate (settings // { optionPaths = value; })).config.crossConfig.optionPaths;
 in
 {
   missingName = (evaluate (builtins.removeAttrs settings [ "name" ])).config.assertions;
@@ -33,48 +34,27 @@ in
   missingPaths = (evaluate (builtins.removeAttrs settings [ "optionPaths" ])).config.assertions;
   invalidName = (evaluate (settings // { name = 42; })).config.assertions;
   invalidCollection = (evaluate (settings // { nodeCollection = [ ]; })).config.assertions;
-  invalidPaths =
-    (evaluate (settings // { optionPaths = "inventory.values"; })).config.crossConfig.optionPaths;
-  invalidPath =
-    (evaluate (settings // { optionPaths = [ "inventory.values" ]; })).config.crossConfig.optionPaths;
-  invalidSegment =
-    (evaluate (
-      settings
-      // {
-        optionPaths = [
-          [
-            "inventory"
-            42
-          ]
-        ];
-      }
-    )).config.crossConfig.optionPaths;
-  emptyRegistration =
-    (evaluate (settings // { optionPaths = [ [ ] ]; })).config.crossConfig.optionPaths;
-  reservedCrossConfig =
-    (evaluate (
-      settings
-      // {
-        optionPaths = [
-          [
-            "crossConfig"
-            "nodes"
-          ]
-        ];
-      }
-    )).config.crossConfig.optionPaths;
-  reservedModule =
-    (evaluate (
-      settings
-      // {
-        optionPaths = [
-          [
-            "_module"
-            "args"
-          ]
-        ];
-      }
-    )).config.crossConfig.optionPaths;
+  invalidPaths = paths "inventory.values";
+  invalidPath = paths [ "inventory.values" ];
+  invalidSegment = paths [
+    [
+      "inventory"
+      42
+    ]
+  ];
+  emptyRegistration = paths [ [ ] ];
+  reservedCrossConfig = paths [
+    [
+      "crossConfig"
+      "nodes"
+    ]
+  ];
+  reservedModule = paths [
+    [
+      "_module"
+      "args"
+    ]
+  ];
   reservedWithoutName =
     (evaluate {
       inherit (settings) nodeCollection;

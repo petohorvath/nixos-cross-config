@@ -5,91 +5,62 @@
   nixpkgs,
 }:
 let
-  localConflict = mkNodes {
-    optionPaths = [
-      [
-        "networking"
-        "domain"
-      ]
-    ];
-    modules = {
-      sender.crossConfig.nodes.receiver.networking.domain = "sender.example";
-      receiver.networking.domain = "local.example";
-    };
+  localConflict = domainFailure {
+    sender.crossConfig.nodes.receiver.networking.domain = "sender.example";
+    receiver.networking.domain = "local.example";
   };
-  senderConflict = mkNodes {
-    optionPaths = [
-      [
-        "networking"
-        "domain"
-      ]
-    ];
-    modules = {
-      alpha.crossConfig.nodes.receiver.networking.domain = "alpha.example";
-      beta.crossConfig.nodes.receiver.networking.domain = "beta.example";
-      receiver = { };
-    };
+  senderConflict = domainFailure {
+    alpha.crossConfig.nodes.receiver.networking.domain = "alpha.example";
+    beta.crossConfig.nodes.receiver.networking.domain = "beta.example";
+    receiver = { };
   };
-  forcedLocalConflict = mkNodes {
-    optionPaths = [
-      [
-        "networking"
-        "domain"
-      ]
-    ];
-    modules = {
-      sender =
-        { lib, ... }:
-        {
-          crossConfig.nodes.receiver.networking.domain = lib.mkForce "sender.example";
-        };
-      receiver =
-        { lib, ... }:
-        {
-          networking.domain = lib.mkForce "local.example";
-        };
-    };
+  forcedLocalConflict = domainFailure {
+    sender =
+      { lib, ... }:
+      {
+        crossConfig.nodes.receiver.networking.domain = lib.mkForce "sender.example";
+      };
+    receiver =
+      { lib, ... }:
+      {
+        networking.domain = lib.mkForce "local.example";
+      };
   };
-  customSenderConflict = mkNodes {
-    optionPaths = [
-      [
-        "networking"
-        "domain"
-      ]
-    ];
-    modules = {
-      alpha =
-        { lib, ... }:
-        {
-          crossConfig.nodes.receiver.networking.domain = lib.mkOverride 75 "alpha.example";
-        };
-      beta =
-        { lib, ... }:
-        {
-          crossConfig.nodes.receiver.networking.domain = lib.mkOverride 75 "beta.example";
-        };
-      receiver.networking.domain = "discarded.example";
-    };
+  customSenderConflict = domainFailure {
+    alpha =
+      { lib, ... }:
+      {
+        crossConfig.nodes.receiver.networking.domain = lib.mkOverride 75 "alpha.example";
+      };
+    beta =
+      { lib, ... }:
+      {
+        crossConfig.nodes.receiver.networking.domain = lib.mkOverride 75 "beta.example";
+      };
+    receiver.networking.domain = "discarded.example";
   };
-  sameSenderConflict = mkNodes {
-    optionPaths = [
-      [
-        "networking"
-        "domain"
-      ]
-    ];
-    modules = {
-      sender =
-        { lib, ... }:
-        {
-          crossConfig.nodes.receiver.networking.domain = lib.mkMerge [
-            (lib.mkOverride 75 "first.example")
-            (lib.mkOverride 75 "second.example")
-          ];
-        };
-      receiver = { };
-    };
+  sameSenderConflict = domainFailure {
+    sender =
+      { lib, ... }:
+      {
+        crossConfig.nodes.receiver.networking.domain = lib.mkMerge [
+          (lib.mkOverride 75 "first.example")
+          (lib.mkOverride 75 "second.example")
+        ];
+      };
+    receiver = { };
   };
+  domainFailure =
+    modules:
+    (mkNodes {
+      optionPaths = [
+        [
+          "networking"
+          "domain"
+        ]
+      ];
+      inherit modules;
+    }).receiver.config.networking.domain;
   nestedConflict = mkNodes {
     optionPaths = [
       [
@@ -146,11 +117,13 @@ let
   };
 in
 {
-  localConflict = localConflict.receiver.config.networking.domain;
-  senderConflict = senderConflict.receiver.config.networking.domain;
-  forcedLocalConflict = forcedLocalConflict.receiver.config.networking.domain;
-  customSenderConflict = customSenderConflict.receiver.config.networking.domain;
-  sameSenderConflict = sameSenderConflict.receiver.config.networking.domain;
+  inherit
+    customSenderConflict
+    forcedLocalConflict
+    localConflict
+    sameSenderConflict
+    senderConflict
+    ;
   nestedConflict =
     nestedConflict.receiver.config.services.nginx.virtualHosts."shared.example".locations."/".proxyPass;
   incompatibleType = incompatibleType.receiver.config.networking.firewall.allowedTCPPorts;

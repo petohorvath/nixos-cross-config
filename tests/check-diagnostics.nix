@@ -26,112 +26,39 @@ let
     "tagged-failures.nix"
   ];
   cases = {
-    flakeMissingPaths = [
-      "crossConfig.optionPaths"
-      "was accessed but has no value defined"
-    ];
-    flakeInvalidCollection = [
-      "crossConfig.nodeCollection"
-      "is not of type"
-    ];
+    flakeMissingPaths = missingSetting "optionPaths";
+    flakeInvalidCollection = invalidSetting "nodeCollection";
     flakeConflictingCollections = [
       "crossConfig.nodeCollection"
       "multiple times"
     ];
-    flakeInvalidPaths = [
-      "crossConfig.optionPaths"
-      "is not of type"
-    ];
-    flakeInvalidPath = [
-      "crossConfig.optionPaths"
-      "is not of type"
-    ];
-    flakeInvalidSegment = [
-      "crossConfig.optionPaths"
-      "is not of type"
-    ];
-    flakeEmptyRegistration = [
-      "crossConfig.optionPaths"
-      "is not of type"
-    ];
-    flakeReservedCrossConfig = [
-      "crossConfig.optionPaths"
-      "reserved root"
-      "crossConfig.nodes"
-    ];
-    flakeReservedModule = [
-      "crossConfig.optionPaths"
-      "reserved root"
-      "_module.args"
-    ];
-    missingName = [
-      "crossConfig.name"
-      "was accessed but has no value defined"
-    ];
-    missingCollection = [
-      "crossConfig.nodeCollection"
-      "was accessed but has no value defined"
-    ];
-    missingPaths = [
-      "crossConfig.optionPaths"
-      "was accessed but has no value defined"
-    ];
-    invalidName = [
-      "crossConfig.name"
-      "is not of type"
-    ];
-    invalidCollection = [
-      "crossConfig.nodeCollection"
-      "is not of type"
-    ];
-    invalidPaths = [
-      "crossConfig.optionPaths"
-      "is not of type"
-    ];
-    invalidPath = [
-      "crossConfig.optionPaths"
-      "is not of type"
-    ];
-    invalidSegment = [
-      "crossConfig.optionPaths"
-      "is not of type"
-    ];
+    flakeInvalidPaths = invalidSetting "optionPaths";
+    flakeInvalidPath = invalidSetting "optionPaths";
+    flakeInvalidSegment = invalidSetting "optionPaths";
+    flakeEmptyRegistration = invalidSetting "optionPaths";
+    flakeReservedCrossConfig = reservedRoot "crossConfig.nodes";
+    flakeReservedModule = reservedRoot "_module.args";
+    missingName = missingSetting "name";
+    missingCollection = missingSetting "nodeCollection";
+    missingPaths = missingSetting "optionPaths";
+    invalidName = invalidSetting "name";
+    invalidCollection = invalidSetting "nodeCollection";
+    invalidPaths = invalidSetting "optionPaths";
+    invalidPath = invalidSetting "optionPaths";
+    invalidSegment = invalidSetting "optionPaths";
     conflictingCollections = [
       "crossConfig.nodeCollection"
       "multiple times"
     ];
-    emptyRegistration = [
-      "crossConfig.optionPaths"
-      "is not of type"
-    ];
-    reservedCrossConfig = [
-      "crossConfig.optionPaths"
-      "reserved root"
-      "crossConfig.nodes"
-      "receiver"
-    ];
-    reservedModule = [
-      "crossConfig.optionPaths"
-      "reserved root"
-      "_module.args"
-      "receiver"
-    ];
+    emptyRegistration = invalidSetting "optionPaths";
+    reservedCrossConfig = reservedRoot "crossConfig.nodes" ++ [ "receiver" ];
+    reservedModule = reservedRoot "_module.args" ++ [ "receiver" ];
     reservedWithoutName = [
       "crossConfig.optionPaths"
       "reserved root"
     ];
-    legacyReservedCrossConfig = [
-      "crossConfig.optionPaths"
-      "reserved root"
-      "crossConfig.nodes"
-      "receiver"
-    ];
-    legacyReservedModule = [
-      "crossConfig.optionPaths"
-      "reserved root"
-      "_module.args"
-      "receiver"
-    ];
+    legacyReservedCrossConfig = reservedRoot "crossConfig.nodes" ++ [ "receiver" ];
+    legacyReservedModule = reservedRoot "_module.args" ++ [ "receiver" ];
     taggedMissingTag = [ "missing destination" ] ++ taggedOrigin;
     taggedMissingChild = [ "missing destination" ] ++ taggedOrigin;
     taggedReadOnlyTag = [ "read-only destination" ] ++ taggedOrigin;
@@ -194,6 +121,19 @@ let
       "fixtures/destination-sender.nix"
     ];
   };
+  missingSetting = name: [
+    "crossConfig.${name}"
+    "was accessed but has no value defined"
+  ];
+  invalidSetting = name: [
+    "crossConfig.${name}"
+    "is not of type"
+  ];
+  reservedRoot = path: [
+    "crossConfig.optionPaths"
+    "reserved root"
+    path
+  ];
   mkCheck = name: expected: ''
     if nix eval --extra-experimental-features nix-command --offline \
       --read-only --json --show-trace --store dummy:// \
