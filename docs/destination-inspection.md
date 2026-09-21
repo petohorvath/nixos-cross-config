@@ -4,7 +4,11 @@ Contributions define existing writable options on the receiver. The implementati
 
 ## Receiver-local declarations
 
-Top-level option declarations establish the forwarding structure independently of received values. For a path inside a submodule, `findReceivingOption` uses `extendModules` to inspect the receiver while omitting contributions at that path. This lets receiver-local module functions, instance names, configuration, and freeform types determine whether the destination exists and is writable.
+The generated receiving configuration takes its outer namespace names from the receiver's declared options. Allowed-path filtering and contribution collection happen only when evaluation enters a namespace. This keeps the outer structure independent of the allowed-path list and received values, including for custom namespaces. Missing and read-only destinations still add no receiving definitions; assertions validate actual contributions separately.
+
+The constructor continues to require the shared allowed-path list as a parameter, independently of received values, as described in [ADR 0004](adr/0004-declare-a-shared-forwarding-surface.md). The receiving structure does not reserve any namespace roots: existing writable destinations under `_module` or `crossConfig` remain eligible.
+
+For a path inside a submodule, `findReceivingOption` uses `extendModules` to inspect the receiver while omitting contributions at that path. This lets receiver-local module functions, instance names, configuration, and freeform types determine whether the destination exists and is writable. These evaluations inspect destination metadata; they do not discover allowed paths or introduce a registration evaluation stage.
 
 Traversal uses evaluated type metadata where available and retains native handling of wrappers such as `nullOr` and `unique`. A declaration-only walk through `getSubOptions` cannot establish instance-specific permissions. Root imports and declarations remain the caller's responsibility, as described in [ADR 0003](adr/0003-contribute-existing-option-definitions.md).
 
