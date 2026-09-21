@@ -5,8 +5,12 @@ let
     name: module:
     lib.evalModules {
       modules = [
-        (crossConfig.lib.mkModule { inherit name nodes optionPaths; })
+        crossConfig.nixosModules.default
         {
+          config.crossConfig = {
+            inherit name optionPaths;
+            nodeCollection = nodes;
+          };
           options.assertions = lib.mkOption {
             type = lib.types.listOf lib.types.raw;
             default = [ ];

@@ -18,8 +18,14 @@ With Nix and the `nix-command` and `flakes` features enabled, save the following
     let
       system = "x86_64-linux";
 
-      # Both nodes use the same allowed option paths.
-      optionPaths = [ [ "services" "nginx" "virtualHosts" ] ];
+      # Both nodes import the same collection settings.
+      sharedSettings = {
+        imports = [ crossConfig.nixosModules.default ];
+        crossConfig = {
+          nodeCollection = nodes;
+          optionPaths = [ [ "services" "nginx" "virtualHosts" ] ];
+        };
+      };
 
       modules = {
         application = {
@@ -40,8 +46,9 @@ With Nix and the `nix-command` and `flakes` features enabled, save the following
         nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
-            (crossConfig.lib.mkModule { inherit name nodes optionPaths; })
+            sharedSettings
             {
+              crossConfig.name = name;
               boot.isContainer = true;
               networking.hostName = "${name}-container";
               system.stateVersion = "26.05";
@@ -57,7 +64,7 @@ With Nix and the `nix-command` and `flakes` features enabled, save the following
 }
 ```
 
-The `nodes` attribute set contains both evaluated configurations. Nix's recursive `let` bindings let each call to `mkModule` refer to that same set. `name` identifies the node being configured: `application` or `proxy`.
+The `nodes` attribute set contains both evaluated configurations. The shared module supplies that collection lazily through `crossConfig.nodeCollection`. Each node sets `crossConfig.name` to its collection identity: `application` or `proxy`, independently of its hostname.
 
 The container settings keep this example independent of host hardware. The backend address is illustrative; the example evaluates configuration without starting an application or deploying either node.
 
@@ -75,21 +82,32 @@ The repository's [minimal example](examples/minimal.nix) uses the same setup and
 
 ## API
 
-### `lib.mkModule`
+### `nixosModules.default`
 
 ```nix
-crossConfig.lib.mkModule { inherit name nodes optionPaths; }
+{
+  imports = [ crossConfig.nixosModules.default ];
+  crossConfig = {
+    name = "application";
+    nodeCollection = nodes;
+    optionPaths = [ [ "services" "nginx" "virtualHosts" ] ];
+  };
+}
 ```
 
-This function returns a NixOS module. Add it to `nixosSystem.modules` or a module's `imports` on every participating node. All three arguments are required:
+Import this module on every participating node. All three settings are required:
 
-| Argument      | Value                                                                                                                                     |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`        | This node's key in `nodes`, such as `"application"`. It can differ from `networking.hostName`.                                            |
-| `nodes`       | The shared attribute set of nodes. Each entry exposes its evaluated configuration as `nodes.<name>.config`.                               |
-| `optionPaths` | The shared list of allowed option paths. Each path is a list of literal attribute names, such as `[ "services" "nginx" "virtualHosts" ]`. |
+| Option                       | Value                                                                                                                                  |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `crossConfig.name`           | This node's key in the collection, such as `"application"`. It can differ from `networking.hostName`.                                  |
+| `crossConfig.nodeCollection` | The shared, lazy attribute set of nodes. Each entry exposes its evaluated configuration as `.config`.                                  |
+| `crossConfig.optionPaths`    | The shared list of allowed paths. Each path is a nonempty list of literal string segments. An explicit `[ ]` permits no contributions. |
 
 Importing the module enables both sending and receiving. There is no separate enable option. The receiver's own modules must declare the options that receive contributions.
+
+Share the collection and registrations through imported settings modules. Path lists merge with normal option priorities, and duplicate paths deliver contributions only once. Every participant must use the same collection and normalized path set. Register paths independently of receiving configuration and put service-dependent conditions on contributions. The roots `crossConfig` and `_module` are reserved; those names remain valid below an ordinary receiving root.
+
+Existing consumers can continue calling `crossConfig.lib.mkModule { inherit name nodes optionPaths; }`. This compatibility adapter configures the same module. The [API reference](docs/api.md#compatibility-adapter) explains plain-import access and migration.
 
 ### `crossConfig.nodes`
 
@@ -107,7 +125,7 @@ Contributions and local definitions use normal NixOS merging rules. A local defi
 
 ## Use with existing configurations
 
-Add the library input to the existing flake. Choose the shared `optionPaths`, and include the module returned by `mkModule` in each participating node's module list. Supply the existing node collection as `nodes`.
+Add the library input to the existing flake and import `nixosModules.default` on each participating node. Supply the existing collection through `crossConfig.nodeCollection`, compose `crossConfig.optionPaths` in shared settings modules, and set each node's `crossConfig.name` locally.
 
 Keep each host's hardware configuration and existing `system.stateVersion`. The library accepts nodes built by existing host and guest helpers as long as each entry exposes `.config`. The [host and guest example in the tests](tests/host-guest.nix) shows how to include a guest created through NixOS's `containers` option.
 
@@ -119,7 +137,7 @@ Development supports `x86_64-linux` and `aarch64-linux`. The root lock selects N
 
 ## Documentation
 
-- [API reference](docs/api.md): arguments, option paths, contributions, merging, conditions, and errors.
+- [API reference](docs/api.md): module settings, compatibility adapter, contributions, merging, conditions, and errors.
 - [Development and checks](docs/development.md).
 - [Domain glossary](CONTEXT.md).
 - [Architectural decisions](docs/adr/).

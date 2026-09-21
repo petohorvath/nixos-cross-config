@@ -25,6 +25,74 @@ let
     "tagged-failures.nix"
   ];
   cases = {
+    missingName = [
+      "crossConfig.name"
+      "was accessed but has no value defined"
+    ];
+    missingCollection = [
+      "crossConfig.nodeCollection"
+      "was accessed but has no value defined"
+    ];
+    missingPaths = [
+      "crossConfig.optionPaths"
+      "was accessed but has no value defined"
+    ];
+    invalidName = [
+      "crossConfig.name"
+      "is not of type"
+    ];
+    invalidCollection = [
+      "crossConfig.nodeCollection"
+      "is not of type"
+    ];
+    invalidPaths = [
+      "crossConfig.optionPaths"
+      "is not of type"
+    ];
+    invalidPath = [
+      "crossConfig.optionPaths"
+      "is not of type"
+    ];
+    invalidSegment = [
+      "crossConfig.optionPaths"
+      "is not of type"
+    ];
+    conflictingCollections = [
+      "crossConfig.nodeCollection"
+      "multiple times"
+    ];
+    emptyRegistration = [
+      "crossConfig.optionPaths"
+      "is not of type"
+    ];
+    reservedCrossConfig = [
+      "crossConfig.optionPaths"
+      "reserved root"
+      "crossConfig.nodes"
+      "receiver"
+    ];
+    reservedModule = [
+      "crossConfig.optionPaths"
+      "reserved root"
+      "_module.args"
+      "receiver"
+    ];
+    reservedWithoutName = [
+      "crossConfig.optionPaths"
+      "reserved root"
+    ];
+    legacyReservedCrossConfig = [
+      "crossConfig.optionPaths"
+      "reserved root"
+      "crossConfig.nodes"
+      "receiver"
+    ];
+    legacyReservedModule = [
+      "crossConfig.optionPaths"
+      "reserved root"
+      "_module.args"
+      "receiver"
+    ];
     taggedMissingTag = [ "missing destination" ] ++ taggedOrigin;
     taggedMissingChild = [ "missing destination" ] ++ taggedOrigin;
     taggedReadOnlyTag = [ "read-only destination" ] ++ taggedOrigin;

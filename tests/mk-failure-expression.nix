@@ -14,5 +14,5 @@ builtins.toFile "cross-config-${fixtureName}" ''
       system = "${system}";
     };
   in
-  import ${./.}/${fixtureName} { inherit mkNodes; }
+  import ${./.}/${fixtureName} { inherit crossConfig mkNodes nixpkgs; }
 ''

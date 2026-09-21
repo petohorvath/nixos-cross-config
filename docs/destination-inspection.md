@@ -1,12 +1,12 @@
 # Destination inspection
 
-Contributions define existing writable options on the receiver. The implementation in [lib/mk-module.nix](../lib/mk-module.nix) checks the receiver's declarations before merging contributions. An allowed option path may be absent or read-only on a node that receives no contributions at that path. An actual contribution to that destination fails with its sender, receiver, path, and source filenames. The [API reference](api.md#validation-and-errors) describes the resulting errors.
+Contributions define existing writable options on the receiver. The implementation in [lib/module.nix](../lib/module.nix) checks the receiver's declarations before merging contributions. An allowed option path may be absent or read-only on a node that receives no contributions at that path. An actual contribution to that destination fails with its sender, receiver, path, and source filenames. The [API reference](api.md#validation-and-errors) describes the resulting errors.
 
 ## Receiver-local declarations
 
 The generated receiving configuration takes its outer namespace names from the receiver's declared options. Allowed-path filtering and contribution collection happen only when evaluation enters a namespace. This keeps the outer structure independent of the allowed-path list and received values, including for custom namespaces. Missing and read-only destinations still add no receiving definitions; assertions validate actual contributions separately.
 
-The constructor continues to require the shared allowed-path list as a parameter, independently of received values, as described in [ADR 0004](adr/0004-declare-a-shared-forwarding-surface.md). The receiving structure does not reserve any namespace roots: existing writable destinations under `_module` or `crossConfig` remain eligible.
+The shared allowed-path list comes from `crossConfig.optionPaths`. Normal option merging and priorities select registrations before normalization removes duplicate paths. The setup namespace `crossConfig` and module-system namespace `_module` stay outside generated receiving definitions, and registrations under those roots fail explicitly. These names remain valid inside ordinary receiving options. [ADR 0004](adr/0004-declare-a-shared-forwarding-surface.md) records why path registrations must remain independent of receiving configuration even though they are now module options.
 
 For a path inside a submodule, `findReceivingOption` uses `extendModules` to inspect the receiver while omitting contributions at that path. This lets receiver-local module functions, instance names, configuration, and freeform types determine whether the destination exists and is writable. These evaluations inspect destination metadata; they do not discover allowed paths or introduce a registration evaluation stage.
 

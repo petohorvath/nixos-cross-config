@@ -4,6 +4,7 @@
 
 ### Added
 
+- `nixosModules.default` as the primary consumer interface, with required node identity, lazy node collection, and composable allowed-path options. Keep `lib.mkModule` as a compatibility adapter and retain plain-import access to both interfaces.
 - Root development shells for x86_64 Linux and aarch64 Linux, with direnv activation and tools from the selected nixpkgs revision.
 - Root formatting for Nix, shell, Markdown, YAML, and JSON, plus statix, deadnix, and workflow checks.
 - A `cross-config-fmt` package exposing the root formatter executable.
@@ -11,6 +12,7 @@
 
 ### Changed
 
+- **Breaking:** reject allowed paths rooted at `crossConfig` or `_module` through both interfaces; nested attributes and tags with these names remain supported. Validate required settings and nonempty string-segment paths, and normalize duplicate registrations so contributions arrive once.
 - Explain usage with a complete README example and API summary, and move detailed behavior to a separate API reference.
 - Move the development shell, checks, focused fixtures, and the example from `dev/flake.nix` to the root flake.
 - **Breaking:** select root tools, fixtures, checks, and examples through one `nixpkgs` input; remove the stable/unstable component from focused test/failure paths and root check names. Root `nix flake check` validates the selected revision. Native input overrides select another revision for the complete root check interface without changing the committed default.
@@ -25,6 +27,12 @@
 - **Breaking:** the root `nixpkgs-unstable` input. Compatibility revisions are supplied through native root input overrides.
 
 ### Migration
+
+Replace `crossConfig.lib.mkModule { inherit name nodes optionPaths; }` in a node's imports with `crossConfig.nixosModules.default`. Set `crossConfig.name = name`, `crossConfig.nodeCollection = nodes`, and `crossConfig.optionPaths = optionPaths` through ordinary modules. The constructor remains available for incremental migration; outgoing `crossConfig.nodes` syntax is unchanged.
+
+Share the collection and registrations through common imported settings modules. Path lists follow normal priorities and merge before deduplication. Supply `[ ]` explicitly when no contributions are allowed. Registrations must be independent of receiving configuration; register service destinations unconditionally and condition contributions instead. See the [API reference](docs/api.md#allowed-option-paths) for literal segments, normalization, and dependency limits.
+
+Move any destination rooted at `crossConfig` or `_module` beneath an ordinary receiving namespace and update its registrations and contributors. This restriction applies even through the compatibility adapter and to unused paths. Nested names are unaffected. The new export is additive, but the destination restriction is a breaking public-contract change; after an initial release, a 0.x release containing it requires a minor version bump.
 
 Replace `nix develop ./dev` with root `nix develop`, and run root `nix fmt --no-update-lock-file` instead of formatting from `dev/`. The separate development flake has been removed. Root `nix flake check --no-update-lock-file` validates the committed `nixpkgs` default. For another exact selection, set `NIXPKGS_REV` to its full commit and run:
 

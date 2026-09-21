@@ -21,11 +21,13 @@ let
         ];
         containers.application.config = {
           imports = [
-            (crossConfig.lib.mkModule {
-              name = "guest";
-              inherit nodes optionPaths;
-            })
+            crossConfig.nixosModules.default
           ];
+          crossConfig = {
+            name = "guest";
+            inherit optionPaths;
+            nodeCollection = nodes;
+          };
           networking.hostName = "application-container";
           networking.hosts."192.0.2.10" = [ "guest-local.example" ];
           system.stateVersion = "26.05";

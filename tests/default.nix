@@ -13,7 +13,7 @@ let
   mkNodes = import ./mk-nodes.nix {
     inherit crossConfig nixpkgs system;
   };
-  failures = import ./failures.nix { inherit mkNodes; };
+  failures = import ./failures.nix { inherit crossConfig mkNodes nixpkgs; };
 in
 {
   conditional = import ./conditional.nix { inherit checkAssertions mkNodes; };
@@ -23,7 +23,9 @@ in
   hostGuest = import ./host-guest.nix { inherit checkAssertions crossConfig mkNodes; };
   literalPath = import ./literal-path.nix { inherit checkAssertions mkNodes; };
   merging = import ./merging.nix { inherit checkAssertions mkNodes; };
-  mkModule = import ./mk-module.nix { inherit crossConfig nixpkgs; };
+  mkModule = import ./mk-module.nix { inherit nixpkgs; };
+  module = import ./module.nix { inherit nixpkgs; };
+  moduleSettings = import ./module-settings.nix { inherit crossConfig nixpkgs; };
   nestedProperties = import ./nested-properties.nix { inherit checkAssertions mkNodes; };
   ordering = import ./ordering.nix { inherit checkAssertions mkNodes; };
   priorities = import ./priorities.nix { inherit checkAssertions mkNodes; };
