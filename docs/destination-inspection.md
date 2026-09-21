@@ -1,6 +1,6 @@
 # Destination inspection
 
-Contributions define existing writable options on the receiver. The implementation in [lib/module.nix](../lib/module.nix) checks the receiver's declarations before merging contributions. An allowed option path may be absent or read-only on a node that receives no contributions at that path. An actual contribution to that destination fails with its sender, receiver, path, and source filenames. The [API reference](api.md#validation-and-errors) describes the resulting errors.
+Contributions define existing writable options on the receiver. The implementation in [nixos/module.nix](../nixos/module.nix) checks the receiver's declarations before merging contributions. An allowed option path may be absent or read-only on a node that receives no contributions at that path. An actual contribution to that destination fails with its sender, receiver, path, and source filenames. The [API reference](api.md#validation-and-errors) describes the resulting errors.
 
 ## Receiver-local declarations
 

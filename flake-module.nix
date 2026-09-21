@@ -2,7 +2,7 @@
 { config, lib, ... }:
 let
   flakeConfig = config;
-  settings = import ./settings.nix { inherit lib; };
+  settings = import ./lib/settings.nix { inherit lib; };
 in
 {
   options.crossConfig = settings.options // {
@@ -16,7 +16,7 @@ in
   config.flake.nixosModules.crossConfig =
     { lib, ... }:
     {
-      imports = [ ./module.nix ];
+      imports = [ ./nixos/module.nix ];
       crossConfig = {
         nodeCollection = lib.mkDefault flakeConfig.crossConfig.nodeCollection;
         optionPaths = lib.mkDefault flakeConfig.crossConfig.optionPaths;

@@ -20,7 +20,7 @@ let
       node = nodes.${name};
       sourcePath = toString ./fixtures/factory-node.nix;
     in
-    assert node.options.crossConfig.nodes.declarations == [ (toString ../lib/module.nix) ];
+    assert node.options.crossConfig.nodes.declarations == [ (toString ../nixos/module.nix) ];
     assert node.options.crossConfig.nodes.receiverLibrary == name;
     assert
       node.config.inventory.observedArguments == [

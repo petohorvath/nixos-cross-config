@@ -52,7 +52,7 @@ let
   inherit (config.crossConfig) name optionPaths;
   nodes = config.crossConfig.nodeCollection;
   inspectionPaths = specialArgs.__nixosCrossConfigInspectPaths or [ ];
-  settings = import ./settings.nix {
+  settings = import ../lib/settings.nix {
     inherit lib;
     nodeName = if options.crossConfig.name.isDefined then name else null;
   };

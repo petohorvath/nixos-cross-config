@@ -39,8 +39,8 @@
       );
       crossConfig = {
         lib = { inherit mkModule; };
-        nixosModules.default = ./lib/module.nix;
-        flakeModules.default = ./lib/flake-module.nix;
+        nixosModules.default = ./nixos/module.nix;
+        flakeModules.default = ./flake-module.nix;
       };
 
       mkModule =
@@ -51,8 +51,8 @@
         }:
         { lib, ... }:
         # Use the receiver's lib for importApply-compatible source attribution.
-        lib.setDefaultModuleLocation ./lib/mk-module.nix (
-          import ./lib/mk-module.nix { inherit name nodes optionPaths; }
+        lib.setDefaultModuleLocation ./nixos/mk-module.nix (
+          import ./nixos/mk-module.nix { inherit name nodes optionPaths; }
         );
     in
     {
