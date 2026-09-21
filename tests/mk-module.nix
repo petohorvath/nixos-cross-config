@@ -33,6 +33,8 @@ let
         "from-${sender}-argument-${sender}"
         "local-${name}-argument-${name}"
       ];
+    assert node.config.crossConfig.values == [ "from-${sender}" ];
+    assert node._module.values == [ "from-${sender}" ];
     assert
       map (definition: definition.file) node.options.inventory.values.definitionsWithLocations == [
         "${sourcePath} (sender `${sender}`, receiver `${name}`, destination `inventory.values`)"
@@ -78,6 +80,14 @@ let
   optionPaths = [
     [
       "inventory"
+      "values"
+    ]
+    [
+      "crossConfig"
+      "values"
+    ]
+    [
+      "_module"
       "values"
     ]
   ];

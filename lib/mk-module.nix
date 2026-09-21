@@ -31,22 +31,17 @@ let
       );
     };
 
-    # Only declared receiving options enter the module's configuration structure.
-    config = lib.pipe (builtins.filter (path: !(builtins.elem path inspectionPaths)) optionPaths) [
-      (map mkReceivingDefinition)
-      (
-        definitions:
-        definitions
-        ++ lib.optional (inspectionPaths == [ ]) {
-          assertions =
-            map mkDestinationAssertion optionPaths
-            ++ lib.mapAttrsToList (receiver: contribution: {
-              assertion = builtins.seq contribution (builtins.hasAttr receiver nodes);
-              message = "nixos-cross-config: sender `${name}` targets unknown receiver `${receiver}`.";
-            }) config.crossConfig.nodes;
-        }
-      )
-      lib.mkMerge
+    config = lib.mkMerge [
+      # Declarations fix the outer names before any allowed paths are inspected.
+      (lib.mapAttrs mkReceivingNamespace options)
+      (lib.optionalAttrs (inspectionPaths == [ ]) {
+        assertions =
+          map mkDestinationAssertion optionPaths
+          ++ lib.mapAttrsToList (receiver: contribution: {
+            assertion = builtins.seq contribution (builtins.hasAttr receiver nodes);
+            message = "nixos-cross-config: sender `${name}` targets unknown receiver `${receiver}`.";
+          }) config.crossConfig.nodes;
+      })
     ];
   };
 
@@ -75,6 +70,20 @@ let
           };
         };
     };
+
+  mkReceivingNamespace =
+    root: _:
+    lib.pipe optionPaths [
+      (builtins.filter (path: builtins.head path == root && !(builtins.elem path inspectionPaths)))
+      (lib.concatMap (
+        path:
+        let
+          definition = mkReceivingDefinition path;
+        in
+        lib.optional (builtins.hasAttr root definition) definition.${root}
+      ))
+      lib.mkMerge
+    ];
 
   mkReceivingDefinition =
     path:
