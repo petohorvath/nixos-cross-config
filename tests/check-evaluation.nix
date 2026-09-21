@@ -1,8 +1,7 @@
 {
   flakeParts,
-  jq,
   lib,
-  nix,
+  nix-unit,
   nixpkgs,
   runCommand,
   system,
@@ -40,24 +39,23 @@ let
       system = "${system}";
     }
   '';
-  checkFixture = index: path: ''
+  checkFixture = path: ''
     echo ${lib.escapeShellArg "Checking ${lib.concatStringsSep "." path}"}
-    nix eval --extra-experimental-features nix-command --offline \
-      --read-only --json --store dummy:// --file ${expressionPath} \
-      ${lib.escapeShellArg (lib.concatStringsSep "." path)} > value.json
-    jq --argjson path ${lib.escapeShellArg (builtins.toJSON path)} \
-      '. as $value | {} | setpath($path; $value)' value.json > result-${toString index}.json
+    if ! nix-unit --eval-store "$TMPDIR/eval-store" --gc-roots-dir "$TMPDIR/gc-roots" \
+      ${expressionPath} \
+      --attr ${lib.escapeShellArg (lib.concatStringsSep "." path)}; then
+      failed=1
+    fi
   '';
 in
-# Separate evaluators bound memory while retaining the focused fixture results.
-runCommand "cross-config-evaluation-tests.json"
+# Separate evaluators bound memory across NixOS fixtures.
+runCommand "cross-config-evaluation-tests"
   {
-    nativeBuildInputs = [
-      jq
-      nix
-    ];
+    nativeBuildInputs = [ nix-unit ];
   }
   ''
-    ${lib.concatStringsSep "\n" (lib.imap0 checkFixture fixturePaths)}
-    jq -s 'reduce .[] as $result ({}; . * $result)' result-*.json > "$out"
+    failed=0
+    ${lib.concatMapStringsSep "\n" checkFixture fixturePaths}
+    test "$failed" -eq 0
+    touch "$out"
   ''

@@ -18,7 +18,8 @@
 - Move the development shell, checks, focused fixtures, and the example from `dev/flake.nix` to the root flake.
 - **Breaking:** select root tools, fixtures, checks, and examples through one `nixpkgs` input; remove the stable/unstable component from focused test/failure paths and root check names. Root `nix flake check` validates the selected revision. Native input overrides select another revision for the complete root check interface without changing the committed default.
 - Keep explicit `systems` bindings and public flake outputs, preserving the default nixpkgs revision in the root lock.
-- Run evaluation fixtures in separate processes so default checks bound evaluator memory while preserving their JSON results.
+- Run evaluation fixtures and native-cycle checks with nix-unit from the selected nixpkgs revision, with named value comparisons and expected evaluation errors. Separate processes bound evaluator memory; diagnostic checks retain full trace validation.
+- **Breaking (development interface):** `lib.tests.<system>.<fixture>` now exposes nix-unit definitions instead of asserted boolean results. The evaluation check produces a success marker instead of a JSON result tree.
 - Select shared policy release `v0.3.0` and its `Policy` caller, deriving required merge checks from the release and central architecture and VM records. Preserve independent root defaults, verified stable and unstable compatibility runs, and separate compliance, formatting/lint, and committed-default jobs.
 
 ### Removed
@@ -28,6 +29,8 @@
 - **Breaking:** the root `nixpkgs-unstable` input. Compatibility revisions are supplied through native root input overrides.
 
 ### Migration
+
+For focused tests, replace `nix eval --json .#lib.tests.<system>.<fixture>` with `nix-unit --flake .#lib.tests.<system>.<fixture>` inside the development shell. Select one case with `nix-unit --flake .#lib.tests.<system> --attr merging.testHosts`. `nix eval` does not compare the new test definitions. Raw `lib.failures` paths and root check names are unchanged; use the build log for named test results.
 
 Flake-parts consumers can opt into `flakeModules.default`, move shared registrations to flake-level `crossConfig.optionPaths`, and import `config.flake.nixosModules.crossConfig` in each node. Keep node identities and outgoing contributions at NixOS scope. Set flake-level `crossConfig.nodeCollection` for subsets or guests outside `nixosConfigurations`. Extend shared lists at flake scope; ordinary node-level definitions replace the adapter's `mkDefault` settings. This adapter is additive and requires no migration for standalone or constructor consumers. See the [flake-parts guide](docs/flake-parts.md).
 

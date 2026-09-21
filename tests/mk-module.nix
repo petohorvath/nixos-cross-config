@@ -2,17 +2,22 @@
 let
   inherit (nixpkgs) lib;
   crossConfig = (import ../flake.nix).outputs { };
-  result =
-    assert builtins.isFunction ((import ../flake.nix).outputs { }).lib.mkModule;
-    assert
-      builtins.functionArgs crossConfig.lib.mkModule == {
+  result = {
+    testPlainImport = {
+      expr = builtins.isFunction ((import ../flake.nix).outputs { }).lib.mkModule;
+      expected = true;
+    };
+    testConstructorArguments = {
+      expr = builtins.functionArgs crossConfig.lib.mkModule;
+      expected = {
         name = false;
         nodes = false;
         optionPaths = false;
       };
-    assert checkNode "alpha" "beta";
-    assert checkNode "beta" "alpha";
-    true;
+    };
+    alpha = checkNode "alpha" "beta";
+    beta = checkNode "beta" "alpha";
+  };
 
   checkNode =
     name: sender:
@@ -20,29 +25,51 @@ let
       node = nodes.${name};
       sourcePath = toString ./fixtures/factory-node.nix;
     in
-    assert node.options.crossConfig.nodes.declarations == [ (toString ../nixos/module.nix) ];
-    assert node.options.crossConfig.nodes.receiverLibrary == name;
-    assert
-      node.config.inventory.observedArguments == [
-        "ordinary-name-${name}"
-        "ordinary-nodes-${name}"
-        "ordinary-optionPaths-${name}"
-        "argument-${name}"
-      ];
-    assert
-      node.config.inventory.values == [
-        "from-${sender}-argument-${sender}"
-        "local-${name}-argument-${name}"
-      ];
-    assert node.config.inventory.crossConfig == [ "from-${sender}" ];
-    assert node.config.inventory._module == [ "from-${sender}" ];
-    assert
-      map (definition: definition.file) node.options.inventory.values.definitionsWithLocations == [
-        "${sourcePath} (sender `${sender}`, receiver `${name}`, destination `inventory.values`)"
-        sourcePath
-      ];
-    assert builtins.all (entry: entry.assertion) node.config.assertions;
-    true;
+    {
+      testDeclarations = {
+        expr = node.options.crossConfig.nodes.declarations;
+        expected = [ (toString ../nixos/module.nix) ];
+      };
+      testReceiverLibrary = {
+        expr = node.options.crossConfig.nodes.receiverLibrary;
+        expected = name;
+      };
+      testModuleArguments = {
+        expr = node.config.inventory.observedArguments;
+        expected = [
+          "ordinary-name-${name}"
+          "ordinary-nodes-${name}"
+          "ordinary-optionPaths-${name}"
+          "argument-${name}"
+        ];
+      };
+      testContributions = {
+        expr = node.config.inventory.values;
+        expected = [
+          "from-${sender}-argument-${sender}"
+          "local-${name}-argument-${name}"
+        ];
+      };
+      testNestedCrossConfig = {
+        expr = node.config.inventory.crossConfig;
+        expected = [ "from-${sender}" ];
+      };
+      testNestedModule = {
+        expr = node.config.inventory._module;
+        expected = [ "from-${sender}" ];
+      };
+      testSourceLocations = {
+        expr = map (definition: definition.file) node.options.inventory.values.definitionsWithLocations;
+        expected = [
+          "${sourcePath} (sender `${sender}`, receiver `${name}`, destination `inventory.values`)"
+          sourcePath
+        ];
+      };
+      testAssertions = {
+        expr = builtins.all (entry: entry.assertion) node.config.assertions;
+        expected = true;
+      };
+    };
 
   nodes = {
     alpha = mkNode "alpha" "beta";

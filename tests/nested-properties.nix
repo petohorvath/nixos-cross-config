@@ -95,32 +95,69 @@ let
   virtualHost = config.services.nginx.virtualHosts."shared.example";
   forcedVirtualHost = config.services.nginx.virtualHosts."forced.example";
 in
-assert
-  config.networking.hosts."192.0.2.10" == [
-    "beta.example"
-    "local.example"
-  ];
-assert
-  config.networking.hosts."192.0.2.20" == [
-    "alpha.example"
-    "beta.example"
-  ];
-assert virtualHost.locations."/".proxyPass == "http://local:8000";
-assert virtualHost.locations."/forced".proxyPass == "http://alpha:8081";
-assert virtualHost.locations."/custom".proxyPass == "http://alpha:8082";
-assert
-  virtualHost.serverAliases == [
-    "alpha.example"
-    "early-local.example"
-    "local.example"
-    "late.example"
-    "beta.example"
-  ];
-assert forcedVirtualHost.locations."/".proxyPass == "http://alpha:8083";
-assert forcedVirtualHost.serverAliases == [ ];
-assert nodes.defaults.config.networking.hosts."192.0.2.40" == [ "local.example" ];
-assert !(nodes.defaults.config.networking.hosts ? "192.0.2.30");
-assert nodes.forced.config.networking.hosts."192.0.2.30" == [ "forced.example" ];
-assert !(nodes.forced.config.networking.hosts ? "192.0.2.40");
-assert checkAssertions nodes;
-true
+{
+  testOrdinaryHosts = {
+    expr = config.networking.hosts."192.0.2.10";
+    expected = [
+      "beta.example"
+      "local.example"
+    ];
+  };
+  testForcedHosts = {
+    expr = config.networking.hosts."192.0.2.20";
+    expected = [
+      "alpha.example"
+      "beta.example"
+    ];
+  };
+  testLocalProxy = {
+    expr = virtualHost.locations."/".proxyPass;
+    expected = "http://local:8000";
+  };
+  testForcedProxy = {
+    expr = virtualHost.locations."/forced".proxyPass;
+    expected = "http://alpha:8081";
+  };
+  testCustomProxy = {
+    expr = virtualHost.locations."/custom".proxyPass;
+    expected = "http://alpha:8082";
+  };
+  testOrderedAliases = {
+    expr = virtualHost.serverAliases;
+    expected = [
+      "alpha.example"
+      "early-local.example"
+      "local.example"
+      "late.example"
+      "beta.example"
+    ];
+  };
+  testForcedVirtualHost = {
+    expr = forcedVirtualHost.locations."/".proxyPass;
+    expected = "http://alpha:8083";
+  };
+  testDiscardedAliases = {
+    expr = forcedVirtualHost.serverAliases;
+    expected = [ ];
+  };
+  testLocalHosts = {
+    expr = nodes.defaults.config.networking.hosts."192.0.2.40";
+    expected = [ "local.example" ];
+  };
+  testDiscardedDefault = {
+    expr = nodes.defaults.config.networking.hosts ? "192.0.2.30";
+    expected = false;
+  };
+  testForcedOption = {
+    expr = nodes.forced.config.networking.hosts."192.0.2.30";
+    expected = [ "forced.example" ];
+  };
+  testDiscardedLocal = {
+    expr = nodes.forced.config.networking.hosts ? "192.0.2.40";
+    expected = false;
+  };
+  testAssertions = {
+    expr = checkAssertions nodes;
+    expected = true;
+  };
+}

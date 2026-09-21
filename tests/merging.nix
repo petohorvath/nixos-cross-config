@@ -78,25 +78,51 @@ let
   config = nodes.receiver.config;
   virtualHost = config.services.nginx.virtualHosts."shared.example";
 in
-assert
-  builtins.sort builtins.lessThan config.networking.hosts."192.0.2.10" == [
-    "alpha.example"
-    "beta.example"
-    "gamma.example"
-    "local.example"
-  ];
-assert
-  builtins.sort builtins.lessThan config.networking.firewall.allowedTCPPorts == [
-    443
-    8080
-    8081
-    9090
-  ];
-assert virtualHost.serverAliases == [ "alias.example" ];
-assert virtualHost.locations."/alpha".proxyPass == "http://192.0.2.10:8080";
-assert virtualHost.locations."/gamma".proxyPass == "http://192.0.2.10:8081";
-assert !(virtualHost.locations ? "/disabled");
-assert virtualHost.locations."/beta".proxyPass == "http://192.0.2.20:9090";
-assert virtualHost.locations."/local".root == "/srv/local";
-assert checkAssertions nodes;
-true
+{
+  testHosts = {
+    expr = builtins.sort builtins.lessThan config.networking.hosts."192.0.2.10";
+    expected = [
+      "alpha.example"
+      "beta.example"
+      "gamma.example"
+      "local.example"
+    ];
+  };
+  testPorts = {
+    expr = builtins.sort builtins.lessThan config.networking.firewall.allowedTCPPorts;
+    expected = [
+      443
+      8080
+      8081
+      9090
+    ];
+  };
+  testLocalAliases = {
+    expr = virtualHost.serverAliases;
+    expected = [ "alias.example" ];
+  };
+  testAlphaLocation = {
+    expr = virtualHost.locations."/alpha".proxyPass;
+    expected = "http://192.0.2.10:8080";
+  };
+  testGammaLocation = {
+    expr = virtualHost.locations."/gamma".proxyPass;
+    expected = "http://192.0.2.10:8081";
+  };
+  testDisabledLocation = {
+    expr = virtualHost.locations ? "/disabled";
+    expected = false;
+  };
+  testBetaLocation = {
+    expr = virtualHost.locations."/beta".proxyPass;
+    expected = "http://192.0.2.20:9090";
+  };
+  testLocalLocation = {
+    expr = virtualHost.locations."/local".root;
+    expected = "/srv/local";
+  };
+  testAssertions = {
+    expr = checkAssertions nodes;
+    expected = true;
+  };
+}

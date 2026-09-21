@@ -45,19 +45,33 @@ let
       ];
     };
 in
-assert
-  nodes.alpha.config.inventory.values == [
-    "from-beta"
-    "local-alpha"
-  ];
-assert
-  nodes.beta.config.inventory.values == [
-    "from-alpha"
-    "local-beta"
-  ];
-assert nodes.alpha.options.crossConfig.nodes.receiverLibrary == "alpha";
-assert nodes.beta.options.crossConfig.nodes.receiverLibrary == "beta";
-assert builtins.all (node: builtins.all (entry: entry.assertion) node.config.assertions) (
-  builtins.attrValues nodes
-);
-true
+{
+  testAlphaValues = {
+    expr = nodes.alpha.config.inventory.values;
+    expected = [
+      "from-beta"
+      "local-alpha"
+    ];
+  };
+  testBetaValues = {
+    expr = nodes.beta.config.inventory.values;
+    expected = [
+      "from-alpha"
+      "local-beta"
+    ];
+  };
+  testAlphaLibrary = {
+    expr = nodes.alpha.options.crossConfig.nodes.receiverLibrary;
+    expected = "alpha";
+  };
+  testBetaLibrary = {
+    expr = nodes.beta.options.crossConfig.nodes.receiverLibrary;
+    expected = "beta";
+  };
+  testAssertions = {
+    expr = builtins.all (node: builtins.all (entry: entry.assertion) node.config.assertions) (
+      builtins.attrValues nodes
+    );
+    expected = true;
+  };
+}

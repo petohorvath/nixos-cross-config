@@ -27,15 +27,23 @@ let
     };
   };
 in
-assert
-  builtins.sort builtins.lessThan nodes.alpha.config.networking.hosts."192.0.2.20" == [
-    "alpha-local.example"
-    "beta-hostname.example"
-  ];
-assert
-  builtins.sort builtins.lessThan nodes.beta.config.networking.hosts."192.0.2.10" == [
-    "alpha-hostname.example"
-    "beta-local.example"
-  ];
-assert checkAssertions nodes;
-true
+{
+  testAlphaHosts = {
+    expr = builtins.sort builtins.lessThan nodes.alpha.config.networking.hosts."192.0.2.20";
+    expected = [
+      "alpha-local.example"
+      "beta-hostname.example"
+    ];
+  };
+  testBetaHosts = {
+    expr = builtins.sort builtins.lessThan nodes.beta.config.networking.hosts."192.0.2.10";
+    expected = [
+      "alpha-hostname.example"
+      "beta-local.example"
+    ];
+  };
+  testAssertions = {
+    expr = checkAssertions nodes;
+    expected = true;
+  };
+}

@@ -52,22 +52,35 @@ let
     };
   };
 in
-assert
-  nodes.mapReceiver.config.networking.search == [
-    "local.example"
-    "selected.example"
-  ];
-assert
-  nodes.entryReceiver.config.networking.search == [
-    "selected.example"
-    "local.example"
-  ];
-assert
-  nodes.defaults.config.networking.search == [
-    "map-default.example"
-    "local.example"
-    "entry-default.example"
-  ];
-assert nodes.unselected.config.networking.search == [ "local.example" ];
-assert checkAssertions nodes;
-true
+{
+  testMapPriority = {
+    expr = nodes.mapReceiver.config.networking.search;
+    expected = [
+      "local.example"
+      "selected.example"
+    ];
+  };
+  testEntryPriority = {
+    expr = nodes.entryReceiver.config.networking.search;
+    expected = [
+      "selected.example"
+      "local.example"
+    ];
+  };
+  testDefaults = {
+    expr = nodes.defaults.config.networking.search;
+    expected = [
+      "map-default.example"
+      "local.example"
+      "entry-default.example"
+    ];
+  };
+  testUnselected = {
+    expr = nodes.unselected.config.networking.search;
+    expected = [ "local.example" ];
+  };
+  testAssertions = {
+    expr = checkAssertions nodes;
+    expected = true;
+  };
+}

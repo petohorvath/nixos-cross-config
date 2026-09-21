@@ -12,7 +12,7 @@ nix fmt --no-update-lock-file
 nix flake check --no-update-lock-file --print-build-logs
 ```
 
-`nix develop` is the explicit shell entrypoint. The default shell supports `x86_64-linux` and `aarch64-linux` and supplies Nix, nil, nixfmt, statix, deadnix, Git, shfmt, Prettier, actionlint, and the root formatter. All tools come from the selected `nixpkgs` input. Overriding that input also selects the shell and formatter tools. No KVM access or VM execution is required.
+`nix develop` is the explicit shell entrypoint. The default shell supports `x86_64-linux` and `aarch64-linux` and supplies Nix, nix-unit, nil, nixfmt, statix, deadnix, Git, shfmt, Prettier, actionlint, and the root formatter. All tools come from the selected `nixpkgs` input. Overriding that input also selects the shell and formatter tools. No KVM access or VM execution is required.
 
 ## Formatting and lint
 
@@ -20,7 +20,7 @@ Root `nix fmt` uses the project-owned treefmt wrapper. Nix uses nixfmt; shell fi
 
 Formatting excludes Git metadata, direnv state, build results, and lockfiles.
 
-Root `nix flake check` runs the public fixtures, diagnostic and native-cycle checks, formatting, statix, deadnix, and workflow validation against the selected `nixpkgs` input. Evaluation checks run fixtures in separate offline evaluator processes to bound memory; their JSON output preserves the focused result structure. The project has no VM targets.
+Root `nix flake check` runs the public fixtures and native-cycle checks with nix-unit, alongside diagnostic checks, formatting, statix, deadnix, and workflow validation against the selected `nixpkgs` input. Evaluation checks run fixture groups in separate processes to bound memory, using store-path inputs and a temporary evaluation store inside the build sandbox. nix-unit reports each named test and shows value differences or unexpected evaluation errors; the evaluation check continues through all fixture groups before failing. The project has no VM targets.
 
 The ordinary flake checker evaluates applicable shells, formatters, packages, and NixOS examples and builds every declared check for the host system. Evaluating those outputs does not enter shells or build example systems. The selected input supplies tools and configurations throughout that evaluation.
 
@@ -111,19 +111,24 @@ The root [locked input](../flake.lock), `nixpkgs`, selects NixOS 26.05 by defaul
 # New files must be tracked before Git-backed flake evaluation.
 git add <new-files>
 
+# Run inside nix develop or the direnv shell.
 # One fixture, including native NixOS option typechecking.
-nix eval --json .#lib.tests.x86_64-linux.merging
-nix eval --json .#lib.tests.x86_64-linux.priorities
-nix eval --json .#lib.tests.x86_64-linux.conditional
-nix eval --json .#lib.tests.x86_64-linux.senderContext
-nix eval --json .#lib.tests.x86_64-linux.selfTarget
-nix eval --json .#lib.tests.x86_64-linux.reciprocal
-nix eval --json .#lib.tests.x86_64-linux.destinations
-nix eval --json .#lib.tests.x86_64-linux.taggedDestinations
-nix eval --json .#lib.tests.x86_64-linux.module
-nix eval --json .#lib.tests.x86_64-linux.moduleSettings
-nix eval --json .#lib.tests.x86_64-linux.flakeModule.defaultCollection
-nix eval --json .#lib.tests.x86_64-linux.flakeModule.explicitCollection
+nix-unit --flake .#lib.tests.x86_64-linux.merging
+nix-unit --flake .#lib.tests.x86_64-linux.priorities
+nix-unit --flake .#lib.tests.x86_64-linux.conditional
+nix-unit --flake .#lib.tests.x86_64-linux.senderContext
+nix-unit --flake .#lib.tests.x86_64-linux.selfTarget
+nix-unit --flake .#lib.tests.x86_64-linux.reciprocal
+nix-unit --flake .#lib.tests.x86_64-linux.destinations
+nix-unit --flake .#lib.tests.x86_64-linux.taggedDestinations
+nix-unit --flake .#lib.tests.x86_64-linux.module
+nix-unit --flake .#lib.tests.x86_64-linux.moduleSettings
+nix-unit --flake .#lib.tests.x86_64-linux.flakeModule.defaultCollection
+nix-unit --flake .#lib.tests.x86_64-linux.flakeModule.explicitCollection
+
+# One named test or expected failure.
+nix-unit --flake .#lib.tests.x86_64-linux --attr merging.testHosts
+nix-unit --flake .#lib.tests.x86_64-linux --attr validation.localConflict
 
 # Evaluation, diagnostics, cycles, formatting, and lint for the selected input.
 nix flake check --no-update-lock-file
@@ -144,11 +149,13 @@ nix build --no-link .#checks.x86_64-linux.formatting
 For an individual fixture or check at another exact revision, use the same selection as the compatibility command:
 
 ```bash
-nix eval --json --override-input nixpkgs "github:NixOS/nixpkgs/$NIXPKGS_REV" \
-  --no-write-lock-file .#lib.tests.x86_64-linux.merging
+nix-unit --override-input nixpkgs "github:NixOS/nixpkgs/$NIXPKGS_REV" \
+  --flake .#lib.tests.x86_64-linux.merging
 nix build --no-link --override-input nixpkgs "github:NixOS/nixpkgs/$NIXPKGS_REV" \
   --no-write-lock-file .#checks.x86_64-linux.diagnostics
 ```
+
+The `lib.tests.<system>` tree contains nix-unit suites. Test attributes start with `test` and pair `expr` with `expected`, or with `expectedError` for rejection cases. Use nix-unit to execute comparisons; `nix eval` only inspects the definitions and does not verify expectations. nix-unit comes from the selected nixpkgs package set without an additional flake input. Its native input overrides do not write the lockfile.
 
 Fixtures evaluate received values, host and guest assertions, and the example's system derivation paths. Priority and ordering fixtures cover whole options, nested values, multiple senders, local option definitions, and selection of outgoing contributions. Expected failures check ordinary and explicit-priority conflicts, nested conflicts, invalid option types, and a contributed assertion through the receiver's system build. An individual failure can be inspected directly:
 
@@ -162,7 +169,7 @@ The [flake-module fixture](../tests/flake-module.nix) assembles consumers with a
 
 The [tagged-destination fixtures](../tests/tagged-destinations.nix) cover writable tags, receiver-local declarations and permissions, native type wrappers, priorities, laziness, and node relationships. Tagged diagnostics and native cycles run alongside the existing failure checks. The [destination inspection design](destination-inspection.md) explains how receiver-local option metadata is evaluated.
 
-The [destination fixtures](../tests/destinations.nix) cover unused missing and read-only registrations on idle and active nodes, submodule paths, and disabled invalid contributions. [Failure fixtures](../tests/destination-failures.nix) force invalid destinations through receiver builds and unknown receivers and unregistered paths through sender builds. Separate [diagnostic checks](../tests/check-diagnostics.nix) verify failure reasons, contribution identities, destination paths, and source filenames under the selected revision. Expected-failure fixtures stay lazy and fail only when deliberately forced by focused evaluation or the diagnostic runner.
+The [destination fixtures](../tests/destinations.nix) cover unused missing and read-only registrations on idle and active nodes, submodule paths, and disabled invalid contributions. [Failure fixtures](../tests/destination-failures.nix) force invalid destinations through receiver builds and unknown receivers and unregistered paths through sender builds. Separate [diagnostic checks](../tests/check-diagnostics.nix) retain `nix eval --show-trace` to verify failure reasons, contribution identities, destination paths, and source filenames under the selected revision. These checks inspect trace context beyond the error message matched by nix-unit. Expected-failure fixtures stay lazy and fail only when deliberately forced by focused evaluation or the diagnostic runner.
 
 ```bash
 nix eval --show-trace .#lib.failures.x86_64-linux.missingDestination
@@ -171,7 +178,7 @@ nix eval --show-trace .#lib.failures.x86_64-linux.unknownReceiver
 
 The [conditional fixture](../tests/conditional.nix) exercises enabled and disabled branches at allowed option paths, `crossConfig.nodes`, and receiver entries, including unevaluated disabled payloads. The [merging fixture](../tests/merging.nix) combines several contributions from one sender with another sender's contributions and local definitions. The [sender-context fixture](../tests/sender-context.nix) distinguishes sender values from receiving submodule arguments and local option definitions.
 
-The [self-targeting](../tests/self-target.nix) and [reciprocal](../tests/reciprocal.nix) fixtures force received values on every participant. The [host and guest fixture](../tests/host-guest.nix) also covers guest-to-parent and guest-to-self contributions merged with local definitions. Separate evaluator checks require the [value-cycle fixture](../tests/value-cycle.nix) to fail with a native recursion error under the selected revision. `tryEval` cannot catch that error. The failure can be inspected directly:
+The [self-targeting](../tests/self-target.nix) and [reciprocal](../tests/reciprocal.nix) fixtures force received values on every participant. The [host and guest fixture](../tests/host-guest.nix) also covers guest-to-parent and guest-to-self contributions merged with local definitions. Separate nix-unit processes require the [ordinary](../tests/value-cycle.nix) and [tagged](../tests/tagged-value-cycle.nix) value-cycle fixtures to fail with the native `EvalError` and an infinite-recursion message under the selected revision. The failure can be inspected directly:
 
 ```bash
 nix eval --json .#lib.failures.x86_64-linux.valueCycle

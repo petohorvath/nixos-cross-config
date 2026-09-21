@@ -11,15 +11,27 @@ let
       let
         result = import ./fixtures/tagged-nixos.nix { inherit crossConfig nixpkgs system; };
       in
-      assert
-        result.publication == {
-          domain = "application.example";
-          upstream = "http://192.0.2.10:8080";
+      {
+        testPublication = {
+          expr = result.publication;
+          expected = {
+            domain = "application.example";
+            upstream = "http://192.0.2.10:8080";
+          };
         };
-      assert result.proxyPass == "http://192.0.2.10:8080";
-      assert builtins.elem 80 result.firewallPorts;
-      assert builtins.all (builtins.all (value: value)) (builtins.attrValues result.assertions);
-      true;
+        testProxyPass = {
+          expr = result.proxyPass;
+          expected = "http://192.0.2.10:8080";
+        };
+        testFirewallPort = {
+          expr = builtins.elem 80 result.firewallPorts;
+          expected = true;
+        };
+        testAssertions = {
+          expr = builtins.all (builtins.all (value: value)) (builtins.attrValues result.assertions);
+          expected = true;
+        };
+      };
     scalar = checkValue "contributed" {
       leafPath = [ ];
       tagOption = lib.mkOption {
@@ -202,9 +214,16 @@ let
           };
         };
       in
-      assert nodes.receiver.config.inventory.payload.value == "selected";
-      assert checkAssertions nodes;
-      true;
+      {
+        testSelectedValue = {
+          expr = nodes.receiver.config.inventory.payload.value;
+          expected = "selected";
+        };
+        testAssertions = {
+          expr = checkAssertions nodes;
+          expected = true;
+        };
+      };
     unusedAndDisabled =
       let
         inventoryModule = {
@@ -269,12 +288,28 @@ let
           };
         };
       in
-      assert nodes.idle.config.inventory.payload.value == "local";
-      assert nodes.receiver.config.inventory.payload.value == "local";
-      assert !(nodes.receiver.config.inventory ? locked);
-      assert !(nodes.receiver.config.inventory.payload ? missing);
-      assert checkAssertions nodes;
-      true;
+      {
+        testIdleValue = {
+          expr = nodes.idle.config.inventory.payload.value;
+          expected = "local";
+        };
+        testReceiverValue = {
+          expr = nodes.receiver.config.inventory.payload.value;
+          expected = "local";
+        };
+        testLockedTag = {
+          expr = nodes.receiver.config.inventory ? locked;
+          expected = false;
+        };
+        testMissingChild = {
+          expr = nodes.receiver.config.inventory.payload ? missing;
+          expected = false;
+        };
+        testAssertions = {
+          expr = checkAssertions nodes;
+          expected = true;
+        };
+      };
     conditionalSelf =
       let
         nodes = mkNodes {
@@ -292,9 +327,16 @@ let
           };
         };
       in
-      assert nodes.alpha.config.inventory.payload.value == "from-self";
-      assert checkAssertions nodes;
-      true;
+      {
+        testSelfContribution = {
+          expr = nodes.alpha.config.inventory.payload.value;
+          expected = "from-self";
+        };
+        testAssertions = {
+          expr = checkAssertions nodes;
+          expected = true;
+        };
+      };
     reciprocal =
       let
         nodes = mkNodes {
@@ -317,10 +359,20 @@ let
           };
         };
       in
-      assert nodes.alpha.config.inventory.payload.value == "from-beta";
-      assert nodes.beta.config.inventory.payload.value == "from-alpha";
-      assert checkAssertions nodes;
-      true;
+      {
+        testAlphaValue = {
+          expr = nodes.alpha.config.inventory.payload.value;
+          expected = "from-beta";
+        };
+        testBetaValue = {
+          expr = nodes.beta.config.inventory.payload.value;
+          expected = "from-alpha";
+        };
+        testAssertions = {
+          expr = checkAssertions nodes;
+          expected = true;
+        };
+      };
     lazyApply =
       let
         inherit
@@ -333,9 +385,19 @@ let
           ;
       in
       # The assertions inspect the destination without asking for its final value.
-      assert checkAssertions nodes;
-      assert !(builtins.tryEval nodes.receiver.config.inventory.payload).success;
-      true;
+      {
+        testAssertions = {
+          expr = checkAssertions nodes;
+          expected = true;
+        };
+        testApplyFailure = {
+          expr = nodes.receiver.config.inventory.payload;
+          expectedError = {
+            type = "ThrownError";
+            msg = "Tag apply was forced during destination inspection\\.";
+          };
+        };
+      };
   }
   //
     lib.mapAttrs
@@ -362,9 +424,16 @@ let
     let
       inherit (mkTaggedNodes args) nodes path;
     in
-    assert lib.getAttrFromPath path nodes.receiver.config == expected;
-    assert checkAssertions nodes;
-    true;
+    {
+      testValue = {
+        expr = lib.getAttrFromPath path nodes.receiver.config;
+        inherit expected;
+      };
+      testAssertions = {
+        expr = checkAssertions nodes;
+        expected = true;
+      };
+    };
   submoduleOption = lib.mkOption {
     type = lib.types.submodule {
       options.value = lib.mkOption {

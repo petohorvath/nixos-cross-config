@@ -150,7 +150,14 @@ builtins.mapAttrs (
       inherit (scenario) modules;
     };
   in
-  assert nodes.receiver.config.networking.domain == scenario.expected;
-  assert checkAssertions nodes;
-  true
+  {
+    testDomain = {
+      expr = nodes.receiver.config.networking.domain;
+      inherit (scenario) expected;
+    };
+    testAssertions = {
+      expr = checkAssertions nodes;
+      expected = true;
+    };
+  }
 ) scenarios

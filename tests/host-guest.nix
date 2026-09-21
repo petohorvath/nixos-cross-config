@@ -48,22 +48,38 @@ let
     };
   };
 in
-assert nodes.guest.config.boot.isContainer;
-assert nodes.guest.config.networking.hostName == "application-container";
-assert
-  builtins.sort builtins.lessThan nodes.guest.config.networking.hosts."192.0.2.10" == [
-    "guest-local.example"
-    "guest-to-self.example"
-    "host-to-guest.example"
-  ];
-assert
-  builtins.sort builtins.lessThan nodes.host.config.networking.hosts."192.0.2.20" == [
-    "guest-to-parent.example"
-    "host-local.example"
-  ];
-assert
-  nodes.receiver.config.networking.hosts."192.0.2.20" == [
-    "guest-to-host.example"
-  ];
-assert checkAssertions nodes;
-true
+{
+  testContainer = {
+    expr = nodes.guest.config.boot.isContainer;
+    expected = true;
+  };
+  testGuestHostName = {
+    expr = nodes.guest.config.networking.hostName;
+    expected = "application-container";
+  };
+  testGuestContributions = {
+    expr = builtins.sort builtins.lessThan nodes.guest.config.networking.hosts."192.0.2.10";
+    expected = [
+      "guest-local.example"
+      "guest-to-self.example"
+      "host-to-guest.example"
+    ];
+  };
+  testParentContribution = {
+    expr = builtins.sort builtins.lessThan nodes.host.config.networking.hosts."192.0.2.20";
+    expected = [
+      "guest-to-parent.example"
+      "host-local.example"
+    ];
+  };
+  testReceiverContribution = {
+    expr = nodes.receiver.config.networking.hosts."192.0.2.20";
+    expected = [
+      "guest-to-host.example"
+    ];
+  };
+  testAssertions = {
+    expr = checkAssertions nodes;
+    expected = true;
+  };
+}

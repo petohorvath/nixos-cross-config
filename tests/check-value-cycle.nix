@@ -1,8 +1,7 @@
 {
-  coreutils,
   flakeParts,
-  gnugrep,
-  nix,
+  lib,
+  nix-unit,
   nixpkgs,
   runCommand,
   system,
@@ -21,24 +20,25 @@ let
       };
     in
     ''
-      if nix eval --extra-experimental-features nix-command --offline \
-        --read-only --json --store dummy:// --file ${expressionPath} >result.json 2>error.log; then
-        echo "Expected ${fixtureName} to fail with a value-dependency cycle." >&2
-        cat result.json >&2
-        exit 1
-      fi
-      cat error.log
-      grep -F "error: infinite recursion encountered" error.log
+      echo ${lib.escapeShellArg "Checking ${fixtureName}"}
+      nix-unit --eval-store "$TMPDIR/eval-store" --gc-roots-dir "$TMPDIR/gc-roots" \
+        --expr ${lib.escapeShellArg ''
+          {
+            testCycle = {
+              expr = builtins.deepSeq (import ${expressionPath}) true;
+              expectedError = {
+                type = "EvalError";
+                msg = "infinite recursion encountered";
+              };
+            };
+          }
+        ''}
     '';
 in
-# Native recursion errors escape tryEval, so inspect a separate evaluator.
+# nix-unit catches native recursion errors that escape builtins.tryEval.
 runCommand "cross-config-value-cycle"
   {
-    nativeBuildInputs = [
-      coreutils
-      gnugrep
-      nix
-    ];
+    nativeBuildInputs = [ nix-unit ];
   }
   ''
     ${checkCycle "value-cycle.nix"}

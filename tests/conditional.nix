@@ -80,18 +80,31 @@ let
   };
   config = nodes.receiver.config;
 in
-assert builtins.all (address: config.networking.hosts.${address} == [ "enabled-hostname" ]) [
-  "192.0.2.10"
-  "192.0.2.11"
-  "192.0.2.20"
-  "192.0.2.21"
-  "192.0.2.30"
-  "192.0.2.31"
-  "192.0.2.35"
-  "192.0.2.36"
-  "192.0.2.40"
-];
-assert config.networking.hosts."192.0.2.50" == [ "local.example" ];
-assert config.networking.search == [ "local.example" ];
-assert checkAssertions nodes;
-true
+{
+  testEnabledBranches = {
+    expr = builtins.all (address: config.networking.hosts.${address} == [ "enabled-hostname" ]) [
+      "192.0.2.10"
+      "192.0.2.11"
+      "192.0.2.20"
+      "192.0.2.21"
+      "192.0.2.30"
+      "192.0.2.31"
+      "192.0.2.35"
+      "192.0.2.36"
+      "192.0.2.40"
+    ];
+    expected = true;
+  };
+  testLocalHosts = {
+    expr = config.networking.hosts."192.0.2.50";
+    expected = [ "local.example" ];
+  };
+  testDisabledSearch = {
+    expr = config.networking.search;
+    expected = [ "local.example" ];
+  };
+  testAssertions = {
+    expr = checkAssertions nodes;
+    expected = true;
+  };
+}

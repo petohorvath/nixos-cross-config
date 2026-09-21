@@ -67,21 +67,32 @@ let
     let
       nodes = consumer.nixosConfigurations;
     in
-    assert
-      nodes.alpha.config.inventory.values == [
-        "from-beta"
-        "local-alpha"
-      ];
-    assert
-      nodes.beta.config.inventory.values == [
-        "from-alpha"
-        "local-beta"
-      ];
-    assert builtins.all (node: node.config.crossConfig.optionPaths == paths) (
-      builtins.attrValues nodes
-    );
-    assert checkAssertions nodes;
-    true;
+    {
+      testAlphaValues = {
+        expr = nodes.alpha.config.inventory.values;
+        expected = [
+          "from-beta"
+          "local-alpha"
+        ];
+      };
+      testBetaValues = {
+        expr = nodes.beta.config.inventory.values;
+        expected = [
+          "from-alpha"
+          "local-beta"
+        ];
+      };
+      testRegistrations = {
+        expr = builtins.all (node: node.config.crossConfig.optionPaths == paths) (
+          builtins.attrValues nodes
+        );
+        expected = true;
+      };
+      testAssertions = {
+        expr = checkAssertions nodes;
+        expected = true;
+      };
+    };
   defaultConsumer = mkConsumer [ { crossConfig.optionPaths = [ valuePath ]; } ] reciprocal;
   mergedConsumer =
     mkConsumer
@@ -171,27 +182,43 @@ in
       nodes = consumer.nixosConfigurations;
       virtualHost = nodes.proxy.config.services.nginx.virtualHosts."app.example";
     in
-    assert virtualHost.locations."/".proxyPass == "http://192.0.2.10:8080";
-    assert virtualHost.serverAliases == [ "www.app.example" ];
-    assert checkAssertions nodes;
-    true;
+    {
+      testProxyPass = {
+        expr = virtualHost.locations."/".proxyPass;
+        expected = "http://192.0.2.10:8080";
+      };
+      testAliases = {
+        expr = virtualHost.serverAliases;
+        expected = [ "www.app.example" ];
+      };
+      testAssertions = {
+        expr = checkAssertions nodes;
+        expected = true;
+      };
+    };
   defaultCollection = checkPair defaultConsumer [ valuePath ];
-  systemEvaluation =
-    assert builtins.all (node: builtins.isString node.config.system.build.toplevel.drvPath) (
-      builtins.attrValues defaultConsumer.nixosConfigurations
-    );
-    true;
+  systemEvaluation = {
+    testSystemEvaluation = {
+      expr = builtins.all (node: builtins.isString node.config.system.build.toplevel.drvPath) (
+        builtins.attrValues defaultConsumer.nixosConfigurations
+      );
+      expected = true;
+    };
+  };
   mergedRegistrations =
-    assert checkPair mergedConsumer [
+    (checkPair mergedConsumer [
       valuePath
       literalPath
-    ];
-    assert
-      mergedConsumer.nixosConfigurations.alpha.config.inventory."literal.values" == [
-        "literal"
-        "literal"
-      ];
-    true;
+    ])
+    // {
+      testLiteralValues = {
+        expr = mergedConsumer.nixosConfigurations.alpha.config.inventory."literal.values";
+        expected = [
+          "literal"
+          "literal"
+        ];
+      };
+    };
   sharedRegistrations =
     let
       evaluation = flakeParts.lib.evalFlakeModule { inputs.self.outPath = ../.; } {
@@ -221,20 +248,23 @@ in
         systems = [ ];
       };
     in
-    assert
-      evaluation.config.crossConfig.optionPaths == [
-        valuePath
-        literalPath
-        [
-          "inventory"
-          "_module"
-        ]
-        [
-          "inventory"
-          "crossConfig"
-        ]
-      ];
-    true;
+    {
+      testRegistrations = {
+        expr = evaluation.config.crossConfig.optionPaths;
+        expected = [
+          valuePath
+          literalPath
+          [
+            "inventory"
+            "_module"
+          ]
+          [
+            "inventory"
+            "crossConfig"
+          ]
+        ];
+      };
+    };
   explicitImports =
     let
       consumer = flakeParts.lib.mkFlake { inputs.self.outPath = ../.; } {
@@ -252,9 +282,16 @@ in
         };
       };
     in
-    assert !(consumer.nixosConfigurations.untouched.options ? crossConfig);
-    assert checkAssertions consumer.nixosConfigurations;
-    true;
+    {
+      testExplicitImport = {
+        expr = consumer.nixosConfigurations.untouched.options ? crossConfig;
+        expected = false;
+      };
+      testAssertions = {
+        expr = checkAssertions consumer.nixosConfigurations;
+        expected = true;
+      };
+    };
   explicitCollection =
     let
       nodes = {
@@ -262,28 +299,45 @@ in
         inherit (explicitConsumer) guest;
       };
     in
-    assert !(explicitConsumer.nixosConfigurations ? guest);
-    assert
-      nodes.alpha.config.inventory.values == [
-        "from-guest"
-        "local-alpha"
-      ];
-    assert
-      nodes.guest.config.inventory.values == [
-        "from-alpha"
-        "local-guest"
-      ];
-    assert checkAssertions nodes;
-    true;
-  emptyRegistrations =
-    assert builtins.all (
-      node:
-      node.config.crossConfig.optionPaths == [ ]
-      && node.config.crossConfig.nodes == { }
-      && builtins.attrNames node.config.crossConfig.nodeCollection == [ "unused" ]
-    ) (builtins.attrValues emptyConsumer.nixosConfigurations);
-    assert checkAssertions emptyConsumer.nixosConfigurations;
-    true;
+    {
+      testGuestOutsideConfigurations = {
+        expr = explicitConsumer.nixosConfigurations ? guest;
+        expected = false;
+      };
+      testAlphaValues = {
+        expr = nodes.alpha.config.inventory.values;
+        expected = [
+          "from-guest"
+          "local-alpha"
+        ];
+      };
+      testGuestValues = {
+        expr = nodes.guest.config.inventory.values;
+        expected = [
+          "from-alpha"
+          "local-guest"
+        ];
+      };
+      testAssertions = {
+        expr = checkAssertions nodes;
+        expected = true;
+      };
+    };
+  emptyRegistrations = {
+    testEmptyRegistrations = {
+      expr = builtins.all (
+        node:
+        node.config.crossConfig.optionPaths == [ ]
+        && node.config.crossConfig.nodes == { }
+        && builtins.attrNames node.config.crossConfig.nodeCollection == [ "unused" ]
+      ) (builtins.attrValues emptyConsumer.nixosConfigurations);
+      expected = true;
+    };
+    testAssertions = {
+      expr = checkAssertions emptyConsumer.nixosConfigurations;
+      expected = true;
+    };
+  };
   sharedDefaults = checkPair (mkConsumer [
     { crossConfig.optionPaths = lib.mkDefault (throw "Overridden default registrations were forced."); }
     { crossConfig.optionPaths = [ valuePath ]; }
@@ -293,19 +347,23 @@ in
     { crossConfig.optionPaths = lib.mkForce [ valuePath ]; }
   ] reciprocal) [ valuePath ];
   nodeDefaults = checkPair overriddenConsumer [ valuePath ];
-  receiverLibrary =
-    assert builtins.all
-      (
-        name:
-        defaultConsumer.nixosConfigurations.${name}.options.crossConfig.nodes.receiverLibrary == name
-        &&
-          defaultConsumer.nixosConfigurations.${name}.options.crossConfig.optionPaths.receiverLibrary == name
-      )
-      [
-        "alpha"
-        "beta"
-      ];
-    true;
+  receiverLibrary = {
+    testReceiverLibrary = {
+      expr =
+        builtins.all
+          (
+            name:
+            defaultConsumer.nixosConfigurations.${name}.options.crossConfig.nodes.receiverLibrary == name
+            &&
+              defaultConsumer.nixosConfigurations.${name}.options.crossConfig.optionPaths.receiverLibrary == name
+          )
+          [
+            "alpha"
+            "beta"
+          ];
+      expected = true;
+    };
+  };
   plainImport =
     let
       exports = (import ../flake.nix).outputs {
@@ -319,9 +377,22 @@ in
       };
       node = mkNode consumer.nixosModules.crossConfig "idle" { };
     in
-    assert builtins.isFunction exports.lib.mkModule;
-    assert builtins.isFunction (import exports.nixosModules.default);
-    assert node.config.crossConfig.optionPaths == [ ];
-    assert builtins.all (entry: entry.assertion) node.config.assertions;
-    true;
+    {
+      testPlainConstructor = {
+        expr = builtins.isFunction exports.lib.mkModule;
+        expected = true;
+      };
+      testPlainModule = {
+        expr = builtins.isFunction (import exports.nixosModules.default);
+        expected = true;
+      };
+      testEmptyPaths = {
+        expr = node.config.crossConfig.optionPaths;
+        expected = [ ];
+      };
+      testAssertions = {
+        expr = builtins.all (entry: entry.assertion) node.config.assertions;
+        expected = true;
+      };
+    };
 }
