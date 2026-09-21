@@ -148,11 +148,11 @@ let
         optionPaths = [ valuePath ];
       };
       flake = {
+        inherit (nodes) guest;
         nixosConfigurations = {
           inherit (nodes) alpha;
           unrelated = throw "A node outside the selected collection was forced.";
         };
-        guest = nodes.guest;
       };
     }
   );
