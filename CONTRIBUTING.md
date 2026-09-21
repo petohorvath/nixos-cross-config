@@ -16,6 +16,8 @@ The primary API is `nixosModules.default` with required `crossConfig.name`, `cro
 
 Root `devShells`, `formatter`, and `checks` provide development entrypoints using the selected `nixpkgs` input. `packages.<system>.cross-config-fmt` exposes the formatter executable. Root `lib.tests.<system>.<fixture>` and `lib.failures.<system>.<fixture>` expose focused fixtures. `nixosConfigurations` evaluates the documented example. Consumers may override `nixpkgs` or use `follows` while keeping one nixpkgs revision within each node collection. Compatibility selections stay outside member lockfiles and consumer dependency graphs.
 
+The optional `flakeModules.default` adapter declares shared path and collection settings at flake scope and provides the consumer's `nixosModules.crossConfig`. The configured module supplies `mkDefault` settings, uses the receiver's `lib`, and leaves identity and construction to each caller-owned node. Its collection defaults lazily to the consumer's `flake.nixosConfigurations`. Preserve plain-import access to the adapter export and keep standalone usage independent of flake-parts evaluation. Its development input follows the selected `nixpkgs` for `nixpkgs-lib`.
+
 The root lock records the development default independently of the policy compatibility pair. Policy release `v0.3.0` supplies verified compatibility runs and separate committed-default and development-tool checks. Keep member references, central records, and required GitHub statuses aligned through the [policy maintenance procedure](docs/development.md#ci-and-policy). Report executed checks, cached results, and unverified architectures or policy integration separately; local success does not record adoption or configure merge gates.
 
 ## Releases

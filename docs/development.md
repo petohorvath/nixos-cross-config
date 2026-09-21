@@ -120,6 +120,8 @@ nix eval --json .#lib.tests.x86_64-linux.destinations
 nix eval --json .#lib.tests.x86_64-linux.taggedDestinations
 nix eval --json .#lib.tests.x86_64-linux.module
 nix eval --json .#lib.tests.x86_64-linux.moduleSettings
+nix eval --json .#lib.tests.x86_64-linux.flakeModule.defaultCollection
+nix eval --json .#lib.tests.x86_64-linux.flakeModule.explicitCollection
 
 # Evaluation, diagnostics, cycles, formatting, and lint for the selected input.
 nix flake check --no-update-lock-file
@@ -153,6 +155,8 @@ nix eval --json .#lib.failures.x86_64-linux.localConflict
 ```
 
 The ordinary node helpers import `nixosModules.default` directly, so the established behavior, diagnostic, and native-cycle suites exercise the primary interface. The [module fixture](../tests/module.nix) checks reciprocal contributions under a custom namespace, receiver-supplied `lib`, assertions, and plain-import usage. [Setting fixtures](../tests/module-settings.nix) cover shared registrations, priorities, normalization, explicit empty lists, independent conditions, and lazy collections. [Setting failures](../tests/module-failures.nix) run through the same expected-failure and diagnostic runners. The [compatibility fixture](../tests/mk-module.nix) separately preserves the constructor signature, module arguments, source attribution, and plain-import behavior.
+
+The [flake-module fixture](../tests/flake-module.nix) assembles consumers with actual flake-parts through the public export. It checks reciprocal default-collection wiring, a guest outside `nixosConfigurations`, shared settings and node defaults, receiver-supplied `lib`, plain-import access, assertions, system evaluation, and the [flake-parts example](../examples/flake-parts.nix). Its cases run in separate offline evaluator processes to bound memory. [Invalid shared settings](../tests/flake-module-failures.nix) use the existing expected-failure and diagnostic checks. The development flake-parts input follows root `nixpkgs` for its library; the provider's own flake retains plain Nix composition.
 
 The [tagged-destination fixtures](../tests/tagged-destinations.nix) cover writable tags, receiver-local declarations and permissions, native type wrappers, priorities, laziness, and node relationships. Tagged diagnostics and native cycles run alongside the existing failure checks. The [destination inspection design](destination-inspection.md) explains how receiver-local option metadata is evaluated.
 

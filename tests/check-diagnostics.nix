@@ -1,5 +1,6 @@
 {
   coreutils,
+  flakeParts,
   gnugrep,
   lib,
   nix,
@@ -9,7 +10,7 @@
 }:
 let
   expressionPath = import ./mk-failure-expression.nix {
-    inherit nixpkgs system;
+    inherit flakeParts nixpkgs system;
     fixtureName = "failures.nix";
   };
   origin = [
@@ -25,6 +26,44 @@ let
     "tagged-failures.nix"
   ];
   cases = {
+    flakeMissingPaths = [
+      "crossConfig.optionPaths"
+      "was accessed but has no value defined"
+    ];
+    flakeInvalidCollection = [
+      "crossConfig.nodeCollection"
+      "is not of type"
+    ];
+    flakeConflictingCollections = [
+      "crossConfig.nodeCollection"
+      "multiple times"
+    ];
+    flakeInvalidPaths = [
+      "crossConfig.optionPaths"
+      "is not of type"
+    ];
+    flakeInvalidPath = [
+      "crossConfig.optionPaths"
+      "is not of type"
+    ];
+    flakeInvalidSegment = [
+      "crossConfig.optionPaths"
+      "is not of type"
+    ];
+    flakeEmptyRegistration = [
+      "crossConfig.optionPaths"
+      "is not of type"
+    ];
+    flakeReservedCrossConfig = [
+      "crossConfig.optionPaths"
+      "reserved root"
+      "crossConfig.nodes"
+    ];
+    flakeReservedModule = [
+      "crossConfig.optionPaths"
+      "reserved root"
+      "_module.args"
+    ];
     missingName = [
       "crossConfig.name"
       "was accessed but has no value defined"

@@ -1,5 +1,6 @@
 {
   coreutils,
+  flakeParts,
   gnugrep,
   nix,
   nixpkgs,
@@ -11,7 +12,12 @@ let
     fixtureName:
     let
       expressionPath = import ./mk-failure-expression.nix {
-        inherit fixtureName nixpkgs system;
+        inherit
+          fixtureName
+          flakeParts
+          nixpkgs
+          system
+          ;
       };
     in
     ''

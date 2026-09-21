@@ -1,4 +1,5 @@
 {
+  flakeParts,
   jq,
   lib,
   nix,
@@ -8,9 +9,20 @@
 }:
 let
   crossConfig = (import ../flake.nix).outputs { };
-  tests = import ./. { inherit crossConfig nixpkgs system; };
+  tests = import ./. {
+    inherit
+      crossConfig
+      flakeParts
+      nixpkgs
+      system
+      ;
+  };
   fixturePaths =
-    map (name: [ name ]) (lib.remove "validation" (builtins.attrNames tests))
+    map (name: [ name ]) (lib.subtractLists [ "flakeModule" "validation" ] (builtins.attrNames tests))
+    ++ map (name: [
+      "flakeModule"
+      name
+    ]) (builtins.attrNames tests.flakeModule)
     ++ map (name: [
       "validation"
       name
@@ -18,12 +30,13 @@ let
   expressionPath = builtins.toFile "cross-config-evaluation" ''
     let
       crossConfig = (import ${../.}/flake.nix).outputs { };
-      nixpkgs = (import ${nixpkgs}/flake.nix).outputs {
-        self.outPath = "${nixpkgs}";
-      };
+      inherit (import ${./evaluation-inputs.nix} {
+        flakePartsDir = "${flakeParts}";
+        nixpkgsDir = "${nixpkgs}";
+      }) flakeParts nixpkgs;
     in
     import ${../.}/tests {
-      inherit crossConfig nixpkgs;
+      inherit crossConfig flakeParts nixpkgs;
       system = "${system}";
     }
   '';

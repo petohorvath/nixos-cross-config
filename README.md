@@ -109,6 +109,12 @@ Share the collection and registrations through imported settings modules. Path l
 
 Existing consumers can continue calling `crossConfig.lib.mkModule { inherit name nodes optionPaths; }`. This compatibility adapter configures the same module. The [API reference](docs/api.md#compatibility-adapter) explains plain-import access and migration.
 
+### `flakeModules.default`
+
+Flake-parts consumers can import `crossConfig.flakeModules.default` and set `crossConfig.optionPaths` once at flake scope. The adapter provides `config.flake.nixosModules.crossConfig`; each participating node imports that configured NixOS module and sets its own `crossConfig.name`. The node collection defaults lazily to the consumer's `flake.nixosConfigurations`, or `crossConfig.nodeCollection` can select an explicit collection containing subsets or guests.
+
+The caller still constructs every node and imports the configured module explicitly. Shared settings enter NixOS as `mkDefault` definitions, so extend path lists at flake scope: an ordinary node-level list replaces the supplied default. See the [flake-parts guide](docs/flake-parts.md) and [evaluated example](examples/flake-parts.nix). Flake-parts remains optional for standalone consumers.
+
 ### `crossConfig.nodes`
 
 In the sender's module, set `crossConfig.nodes.<receiver>.<option-path>`:

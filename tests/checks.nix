@@ -1,5 +1,6 @@
 {
   formatter,
+  flakeParts,
   nixpkgs,
   pkgs,
   system,
@@ -7,13 +8,13 @@
 let
   checks = {
     evaluation = pkgs.callPackage ./check-evaluation.nix {
-      inherit nixpkgs system;
+      inherit flakeParts nixpkgs system;
     };
     value-cycle = pkgs.callPackage ./check-value-cycle.nix {
-      inherit nixpkgs system;
+      inherit flakeParts nixpkgs system;
     };
     diagnostics = pkgs.callPackage ./check-diagnostics.nix {
-      inherit nixpkgs system;
+      inherit flakeParts nixpkgs system;
     };
     formatting = mkCheck {
       name = "cross-config-formatting";
