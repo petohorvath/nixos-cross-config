@@ -15,11 +15,23 @@ let
     };
   };
 in
-assert nodes.receiver.config.networking.hostName == "receiver-hostname";
-assert
-  nodes.receiver.config.networking.hosts."192.0.2.10" == [
-    "application.example"
-  ];
-assert nodes.receiver.config.networking.hosts."192.0.2.20" == [ "local.example" ];
-assert checkAssertions nodes;
-true
+{
+  testHostName = {
+    expr = nodes.receiver.config.networking.hostName;
+    expected = "receiver-hostname";
+  };
+  testContribution = {
+    expr = nodes.receiver.config.networking.hosts."192.0.2.10";
+    expected = [
+      "application.example"
+    ];
+  };
+  testLocalValue = {
+    expr = nodes.receiver.config.networking.hosts."192.0.2.20";
+    expected = [ "local.example" ];
+  };
+  testAssertions = {
+    expr = checkAssertions nodes;
+    expected = true;
+  };
+}

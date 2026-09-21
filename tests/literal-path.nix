@@ -18,8 +18,21 @@ let
   };
   entry = nodes.receiver.config.environment.etc."application.conf";
 in
-assert entry.text == "port=8080\n";
-assert entry.mode == "0640";
-assert entry.target == "application.conf";
-assert checkAssertions nodes;
-true
+{
+  testText = {
+    expr = entry.text;
+    expected = "port=8080\n";
+  };
+  testMode = {
+    expr = entry.mode;
+    expected = "0640";
+  };
+  testTarget = {
+    expr = entry.target;
+    expected = "application.conf";
+  };
+  testAssertions = {
+    expr = checkAssertions nodes;
+    expected = true;
+  };
+}

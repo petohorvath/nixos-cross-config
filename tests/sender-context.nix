@@ -65,18 +65,45 @@ let
   config = nodes.receiver.config;
   virtualHost = config.services.nginx.virtualHosts."shared.example";
 in
-assert config.networking.domain == "receiver.example";
-assert config.networking.search == [ "sender.example" ];
-assert virtualHost.serverName == "receiver-refined.example";
-assert
-  virtualHost.serverAliases == [
-    "shared.example.sender.example"
-    "local.example"
-    "receiver-refined.example.sender-hostname"
-  ];
-assert virtualHost.locations."/captured".proxyPass == "http://sender-hostname:8080";
-assert virtualHost.locations."/nested".root == "/srv/receiver";
-assert virtualHost.locations."/nested".extraConfig == "add_header X-Root /srv/receiver;";
-assert !(virtualHost.locations ? "/disabled");
-assert checkAssertions nodes;
-true
+{
+  testReceiverDomain = {
+    expr = config.networking.domain;
+    expected = "receiver.example";
+  };
+  testSenderDomain = {
+    expr = config.networking.search;
+    expected = [ "sender.example" ];
+  };
+  testReceiverServerName = {
+    expr = virtualHost.serverName;
+    expected = "receiver-refined.example";
+  };
+  testAliases = {
+    expr = virtualHost.serverAliases;
+    expected = [
+      "shared.example.sender.example"
+      "local.example"
+      "receiver-refined.example.sender-hostname"
+    ];
+  };
+  testSenderLocation = {
+    expr = virtualHost.locations."/captured".proxyPass;
+    expected = "http://sender-hostname:8080";
+  };
+  testNestedRoot = {
+    expr = virtualHost.locations."/nested".root;
+    expected = "/srv/receiver";
+  };
+  testNestedConfig = {
+    expr = virtualHost.locations."/nested".extraConfig;
+    expected = "add_header X-Root /srv/receiver;";
+  };
+  testDisabledLocation = {
+    expr = virtualHost.locations ? "/disabled";
+    expected = false;
+  };
+  testAssertions = {
+    expr = checkAssertions nodes;
+    expected = true;
+  };
+}

@@ -41,14 +41,24 @@ let
         };
       };
     in
-    assert nodes.receiver.config.inventory.values == [ "delivered" ];
-    assert nodes.receiver.config.inventory.other == expectedOther;
-    assert builtins.all (
-      node:
-      node.config.crossConfig.optionPaths == expectedPaths
-      && builtins.all (entry: entry.assertion) node.config.assertions
-    ) (builtins.attrValues nodes);
-    true;
+    {
+      testValues = {
+        expr = nodes.receiver.config.inventory.values;
+        expected = [ "delivered" ];
+      };
+      testOtherValues = {
+        expr = nodes.receiver.config.inventory.other;
+        expected = expectedOther;
+      };
+      testRegistrations = {
+        expr = builtins.all (
+          node:
+          node.config.crossConfig.optionPaths == expectedPaths
+          && builtins.all (entry: entry.assertion) node.config.assertions
+        ) (builtins.attrValues nodes);
+        expected = true;
+      };
+    };
   checkIdleCollection =
     modules:
     let
@@ -69,11 +79,24 @@ let
         ];
       };
     in
-    assert builtins.attrNames node.config.crossConfig.nodeCollection == [ "unused" ];
-    assert node.config.crossConfig.optionPaths == [ ];
-    assert node.config.crossConfig.nodes == { };
-    assert builtins.all (entry: entry.assertion) node.config.assertions;
-    true;
+    {
+      testCollectionNames = {
+        expr = builtins.attrNames node.config.crossConfig.nodeCollection;
+        expected = [ "unused" ];
+      };
+      testEmptyPaths = {
+        expr = node.config.crossConfig.optionPaths;
+        expected = [ ];
+      };
+      testEmptyContributions = {
+        expr = node.config.crossConfig.nodes;
+        expected = { };
+      };
+      testAssertions = {
+        expr = builtins.all (entry: entry.assertion) node.config.assertions;
+        expected = true;
+      };
+    };
   nodes = mkNodes {
     optionPaths = [
       [
@@ -102,14 +125,26 @@ let
   };
 in
 {
-  duplicate =
-    assert nodes.alpha.config.inventory.values == [ "beta" ];
-    assert nodes.beta.config.inventory.values == [ "alpha" ];
-    assert nodes.alpha.config.crossConfig.optionPaths == [ valuePath ];
-    assert builtins.all (node: builtins.all (entry: entry.assertion) node.config.assertions) (
-      builtins.attrValues nodes
-    );
-    true;
+  duplicate = {
+    testAlphaValues = {
+      expr = nodes.alpha.config.inventory.values;
+      expected = [ "beta" ];
+    };
+    testBetaValues = {
+      expr = nodes.beta.config.inventory.values;
+      expected = [ "alpha" ];
+    };
+    testNormalizedPaths = {
+      expr = nodes.alpha.config.crossConfig.optionPaths;
+      expected = [ valuePath ];
+    };
+    testAssertions = {
+      expr = builtins.all (node: builtins.all (entry: entry.assertion) node.config.assertions) (
+        builtins.attrValues nodes
+      );
+      expected = true;
+    };
+  };
   splitRegistrations = checkRegistrations {
     modules = [
       {

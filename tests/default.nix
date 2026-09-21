@@ -58,9 +58,10 @@ in
       system
       ;
   };
-  validation = builtins.mapAttrs (
-    _: value:
-    assert !(builtins.tryEval (builtins.deepSeq value true)).success;
-    true
-  ) failures;
+  validation = builtins.mapAttrs (_: value: {
+    testRejected = {
+      expr = value;
+      expectedError.type = "ThrownError";
+    };
+  }) failures;
 }

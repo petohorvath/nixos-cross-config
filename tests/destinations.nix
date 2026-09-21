@@ -38,10 +38,20 @@ in
         modules.idle = { };
       };
     in
-    assert !(nodes.idle.config.services.neo4j ? unavailable);
-    assert !nodes.idle.config.services.neo4j.readOnly;
-    assert checkAssertions nodes;
-    true;
+    {
+      testMissingOption = {
+        expr = nodes.idle.config.services.neo4j ? unavailable;
+        expected = false;
+      };
+      testReadOnly = {
+        expr = nodes.idle.config.services.neo4j.readOnly;
+        expected = false;
+      };
+      testAssertions = {
+        expr = checkAssertions nodes;
+        expected = true;
+      };
+    };
 
   selfConditionalSubmodule =
     let
@@ -74,9 +84,16 @@ in
         };
       };
     in
-    assert nodes.application.config.inventory.value == "contributed";
-    assert checkAssertions nodes;
-    true;
+    {
+      testValue = {
+        expr = nodes.application.config.inventory.value;
+        expected = "contributed";
+      };
+      testAssertions = {
+        expr = checkAssertions nodes;
+        expected = true;
+      };
+    };
 
   unusedMissingWithReceivedCondition =
     let
@@ -121,11 +138,24 @@ in
         };
       };
     in
-    assert nodes.receiver.config.gate;
-    assert nodes.receiver.config.inventory.entries.example.value == "local";
-    assert !(nodes.receiver.config.inventory.entries.example ? missing);
-    assert checkAssertions nodes;
-    true;
+    {
+      testReceivedCondition = {
+        expr = nodes.receiver.config.gate;
+        expected = true;
+      };
+      testLocalValue = {
+        expr = nodes.receiver.config.inventory.entries.example.value;
+        expected = "local";
+      };
+      testMissingChild = {
+        expr = nodes.receiver.config.inventory.entries.example ? missing;
+        expected = false;
+      };
+      testAssertions = {
+        expr = checkAssertions nodes;
+        expected = true;
+      };
+    };
 
   namedSubmoduleOption =
     let
@@ -164,9 +194,16 @@ in
         };
       };
     in
-    assert nodes.receiver.config.inventory.entries.writable.value == "contributed";
-    assert checkAssertions nodes;
-    true;
+    {
+      testValue = {
+        expr = nodes.receiver.config.inventory.entries.writable.value;
+        expected = "contributed";
+      };
+      testAssertions = {
+        expr = checkAssertions nodes;
+        expected = true;
+      };
+    };
 
   receiverLocalSubmoduleDeclaration =
     let
@@ -200,10 +237,20 @@ in
         };
       };
     in
-    assert nodes.receiver.config.inventory.entries.example.value == "contributed";
-    assert builtins.attrNames nodes.receiver.config.inventory.entries.example == [ "value" ];
-    assert checkAssertions nodes;
-    true;
+    {
+      testValue = {
+        expr = nodes.receiver.config.inventory.entries.example.value;
+        expected = "contributed";
+      };
+      testDeclaredOptions = {
+        expr = builtins.attrNames nodes.receiver.config.inventory.entries.example;
+        expected = [ "value" ];
+      };
+      testAssertions = {
+        expr = checkAssertions nodes;
+        expected = true;
+      };
+    };
 
   receiverLocalFreeformType =
     let
@@ -232,13 +279,19 @@ in
         };
       };
     in
-    assert
-      nodes.receiver.config.inventory == {
-        value = "local";
-        extra = "contributed";
+    {
+      testInventory = {
+        expr = nodes.receiver.config.inventory;
+        expected = {
+          value = "local";
+          extra = "contributed";
+        };
       };
-    assert checkAssertions nodes;
-    true;
+      testAssertions = {
+        expr = checkAssertions nodes;
+        expected = true;
+      };
+    };
 
   unusedWrappedSubmoduleOption =
     let
@@ -286,18 +339,35 @@ in
               };
           };
         in
-        assert nodes.idle.config.inventory.value == "local";
-        assert !(nodes.idle.config.inventory ? missing);
-        assert checkAssertions nodes;
-        true;
+        {
+          testLocalValue = {
+            expr = nodes.idle.config.inventory.value;
+            expected = "local";
+          };
+          testMissingChild = {
+            expr = nodes.idle.config.inventory ? missing;
+            expected = false;
+          };
+          testAssertions = {
+            expr = checkAssertions nodes;
+            expected = true;
+          };
+        };
     in
-    builtins.all mkCase [
-      "coerced"
-      "either"
-      "nullable"
-      "unique"
-      "tagged"
-    ];
+    builtins.listToAttrs (
+      map
+        (name: {
+          inherit name;
+          value = mkCase name;
+        })
+        [
+          "coerced"
+          "either"
+          "nullable"
+          "unique"
+          "tagged"
+        ]
+    );
 
   unusedMissing =
     let
@@ -324,13 +394,32 @@ in
         };
       };
     in
-    assert !(nodes.idle.config ? unavailable);
-    assert !(nodes.sender.config ? unavailable);
-    assert !(nodes.receiver.config ? unavailable);
-    assert !(nodes.receiver.config.networking ? unavailable);
-    assert nodes.receiver.config.networking.firewall.allowedTCPPorts == [ 8080 ];
-    assert checkAssertions nodes;
-    true;
+    {
+      testIdleMissing = {
+        expr = nodes.idle.config ? unavailable;
+        expected = false;
+      };
+      testSenderMissing = {
+        expr = nodes.sender.config ? unavailable;
+        expected = false;
+      };
+      testReceiverMissing = {
+        expr = nodes.receiver.config ? unavailable;
+        expected = false;
+      };
+      testNestedMissing = {
+        expr = nodes.receiver.config.networking ? unavailable;
+        expected = false;
+      };
+      testPorts = {
+        expr = nodes.receiver.config.networking.firewall.allowedTCPPorts;
+        expected = [ 8080 ];
+      };
+      testAssertions = {
+        expr = checkAssertions nodes;
+        expected = true;
+      };
+    };
 
   unusedReadOnly =
     let
@@ -361,20 +450,31 @@ in
         };
       };
     in
-    assert builtins.all
-      (
-        node:
-        node.config.inventory.serial == "default-serial"
-        && node.config.inventory.model == "local-model"
-        && !node.options.inventory.unassigned.isDefined
-      )
-      [
-        nodes.idle
-        nodes.receiver
-      ];
-    assert nodes.receiver.config.networking.firewall.allowedTCPPorts == [ 8080 ];
-    assert checkAssertions nodes;
-    true;
+    {
+      testLocalReadOnlyValues = {
+        expr =
+          builtins.all
+            (
+              node:
+              node.config.inventory.serial == "default-serial"
+              && node.config.inventory.model == "local-model"
+              && !node.options.inventory.unassigned.isDefined
+            )
+            [
+              nodes.idle
+              nodes.receiver
+            ];
+        expected = true;
+      };
+      testPorts = {
+        expr = nodes.receiver.config.networking.firewall.allowedTCPPorts;
+        expected = [ 8080 ];
+      };
+      testAssertions = {
+        expr = checkAssertions nodes;
+        expected = true;
+      };
+    };
 
   unusedMissingSubmoduleOption =
     let
@@ -399,11 +499,24 @@ in
         };
       };
     in
-    assert !(nodes.idle.config.environment.etc ? "application.conf");
-    assert !(nodes.receiver.config.environment.etc ? "application.conf");
-    assert nodes.receiver.config.networking.firewall.allowedTCPPorts == [ 8080 ];
-    assert checkAssertions nodes;
-    true;
+    {
+      testIdleEntry = {
+        expr = nodes.idle.config.environment.etc ? "application.conf";
+        expected = false;
+      };
+      testReceiverEntry = {
+        expr = nodes.receiver.config.environment.etc ? "application.conf";
+        expected = false;
+      };
+      testPorts = {
+        expr = nodes.receiver.config.networking.firewall.allowedTCPPorts;
+        expected = [ 8080 ];
+      };
+      testAssertions = {
+        expr = checkAssertions nodes;
+        expected = true;
+      };
+    };
 
   disabledInvalidDestinations =
     let
@@ -434,10 +547,20 @@ in
         };
       };
     in
-    assert !(nodes.receiver.config ? unavailable);
-    assert nodes.receiver.config.inventory.serial == "default-serial";
-    assert checkAssertions nodes;
-    true;
+    {
+      testMissingDestination = {
+        expr = nodes.receiver.config ? unavailable;
+        expected = false;
+      };
+      testLocalSerial = {
+        expr = nodes.receiver.config.inventory.serial;
+        expected = "default-serial";
+      };
+      testAssertions = {
+        expr = checkAssertions nodes;
+        expected = true;
+      };
+    };
 
   unusedReadOnlySubmoduleOption =
     let
@@ -470,7 +593,14 @@ in
         };
       };
     in
-    assert nodes.receiver.config.inventory.entry.serial == "local-serial";
-    assert checkAssertions nodes;
-    true;
+    {
+      testLocalSerial = {
+        expr = nodes.receiver.config.inventory.entry.serial;
+        expected = "local-serial";
+      };
+      testAssertions = {
+        expr = checkAssertions nodes;
+        expected = true;
+      };
+    };
 }

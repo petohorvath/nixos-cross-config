@@ -63,22 +63,33 @@ let
     };
   };
 in
-assert
-  nodes.receiver.config.networking.search == [
-    "first.example"
-    "before.example"
-    "early-local.example"
-    "local.example"
-    "late.example"
-    "after.example"
-    "last.example"
-  ];
-assert
-  forcedNodes.receiver.config.networking.search == [
-    "alpha.example"
-    "local.example"
-    "beta.example"
-  ];
-assert checkAssertions nodes;
-assert checkAssertions forcedNodes;
-true
+{
+  testOrder = {
+    expr = nodes.receiver.config.networking.search;
+    expected = [
+      "first.example"
+      "before.example"
+      "early-local.example"
+      "local.example"
+      "late.example"
+      "after.example"
+      "last.example"
+    ];
+  };
+  testForcedOrder = {
+    expr = forcedNodes.receiver.config.networking.search;
+    expected = [
+      "alpha.example"
+      "local.example"
+      "beta.example"
+    ];
+  };
+  testAssertions = {
+    expr = checkAssertions nodes;
+    expected = true;
+  };
+  testForcedAssertions = {
+    expr = checkAssertions forcedNodes;
+    expected = true;
+  };
+}
