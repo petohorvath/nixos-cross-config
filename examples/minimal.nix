@@ -8,13 +8,19 @@
   system ? "x86_64-linux",
 }:
 let
-  optionPaths = [
-    [
-      "services"
-      "nginx"
-      "virtualHosts"
-    ]
-  ];
+  sharedSettings = {
+    imports = [ crossConfig.nixosModules.default ];
+    crossConfig = {
+      nodeCollection = nodes;
+      optionPaths = [
+        [
+          "services"
+          "nginx"
+          "virtualHosts"
+        ]
+      ];
+    };
+  };
   modules = {
     application.crossConfig.nodes.proxy.services.nginx.virtualHosts."app.example" = {
       locations."/".proxyPass = "http://192.0.2.10:8080";
@@ -29,8 +35,9 @@ let
     nixpkgs.lib.nixosSystem {
       inherit system;
       modules = [
-        (crossConfig.lib.mkModule { inherit name nodes optionPaths; })
+        sharedSettings
         {
+          crossConfig.name = name;
           boot.isContainer = true;
           networking.hostName = "${name}-container";
           system.stateVersion = "26.05";

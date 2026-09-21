@@ -1,6 +1,7 @@
-{ crossConfig, nixpkgs }:
+{ nixpkgs }:
 let
   inherit (nixpkgs) lib;
+  crossConfig = (import ../flake.nix).outputs { };
   result =
     assert builtins.isFunction ((import ../flake.nix).outputs { }).lib.mkModule;
     assert
@@ -19,7 +20,7 @@ let
       node = nodes.${name};
       sourcePath = toString ./fixtures/factory-node.nix;
     in
-    assert node.options.crossConfig.nodes.declarations == [ (toString ../lib/mk-module.nix) ];
+    assert node.options.crossConfig.nodes.declarations == [ (toString ../lib/module.nix) ];
     assert node.options.crossConfig.nodes.receiverLibrary == name;
     assert
       node.config.inventory.observedArguments == [
@@ -33,8 +34,8 @@ let
         "from-${sender}-argument-${sender}"
         "local-${name}-argument-${name}"
       ];
-    assert node.config.crossConfig.values == [ "from-${sender}" ];
-    assert node._module.values == [ "from-${sender}" ];
+    assert node.config.inventory.crossConfig == [ "from-${sender}" ];
+    assert node.config.inventory._module == [ "from-${sender}" ];
     assert
       map (definition: definition.file) node.options.inventory.values.definitionsWithLocations == [
         "${sourcePath} (sender `${sender}`, receiver `${name}`, destination `inventory.values`)"
@@ -83,12 +84,12 @@ let
       "values"
     ]
     [
+      "inventory"
       "crossConfig"
-      "values"
     ]
     [
+      "inventory"
       "_module"
-      "values"
     ]
   ];
 in

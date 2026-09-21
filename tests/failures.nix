@@ -1,4 +1,8 @@
-{ mkNodes }:
+{
+  crossConfig,
+  mkNodes,
+  nixpkgs,
+}:
 let
   localConflict = mkNodes {
     optionPaths = [
@@ -153,3 +157,4 @@ in
 }
 // import ./destination-failures.nix { inherit mkNodes; }
 // import ./tagged-failures.nix { inherit mkNodes; }
+// import ./module-failures.nix { inherit crossConfig nixpkgs; }

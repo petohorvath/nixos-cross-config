@@ -15,8 +15,12 @@ let
       nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
-          (crossConfig.lib.mkModule { inherit name nodes optionPaths; })
+          crossConfig.nixosModules.default
           {
+            crossConfig = {
+              inherit name optionPaths;
+              nodeCollection = nodes;
+            };
             networking.hostName = "${name}-hostname";
             system.stateVersion = "26.05";
             boot.loader.grub.enable = false;

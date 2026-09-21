@@ -81,6 +81,10 @@ let
       tagName = "_module";
       tagOption = submoduleOption;
     };
+    crossConfigTag = checkValue "contributed" {
+      tagName = "crossConfig";
+      tagOption = submoduleOption;
+    };
     emptyDeclarations = checkValue "contributed" {
       tagOption = submoduleOption // {
         declarations = [ ];

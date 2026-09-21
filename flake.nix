@@ -31,7 +31,10 @@
           };
         }
       );
-      crossConfig.lib = { inherit mkModule; };
+      crossConfig = {
+        lib = { inherit mkModule; };
+        nixosModules.default = ./lib/module.nix;
+      };
 
       mkModule =
         {
@@ -46,6 +49,7 @@
         );
     in
     {
+      inherit (crossConfig) nixosModules;
       lib = {
         inherit mkModule;
         tests = forSystems (
@@ -61,7 +65,7 @@
               inherit crossConfig nixpkgs system;
             };
           in
-          import ./tests/failures.nix { inherit mkNodes; }
+          import ./tests/failures.nix { inherit crossConfig mkNodes nixpkgs; }
           // {
             valueCycle = import ./tests/value-cycle.nix { inherit mkNodes; };
             taggedValueCycle = import ./tests/tagged-value-cycle.nix { inherit mkNodes; };

@@ -12,14 +12,14 @@ let
   valuesOption = lib.mkOption {
     type = lib.types.listOf lib.types.str;
     default = [ ];
-    description = "Contributions beneath a root also used by the module itself.";
+    description = "Contributions to a nested attribute whose name is reserved at the root.";
   };
 in
 {
   options = {
-    _module.values = valuesOption;
-    crossConfig.values = valuesOption;
     inventory = {
+      _module = valuesOption;
+      crossConfig = valuesOption;
       identity = lib.mkOption {
         type = lib.types.str;
         description = "The collection identity supplied by the node constructor.";
@@ -45,10 +45,10 @@ in
       ];
       values = [ "local-${config.inventory.identity}-${ordinaryArgument}" ];
     };
-    crossConfig.nodes.${receiver} = {
-      inventory.values = lib.mkBefore [ "from-${config.inventory.identity}-${ordinaryArgument}" ];
-      crossConfig.values = [ "from-${config.inventory.identity}" ];
-      _module.values = [ "from-${config.inventory.identity}" ];
+    crossConfig.nodes.${receiver}.inventory = {
+      values = lib.mkBefore [ "from-${config.inventory.identity}-${ordinaryArgument}" ];
+      crossConfig = [ "from-${config.inventory.identity}" ];
+      _module = [ "from-${config.inventory.identity}" ];
     };
   };
 }

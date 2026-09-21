@@ -1,8 +1,9 @@
 # API reference
 
-The public API consists of the `lib.mkModule` function and the `crossConfig.nodes` option declared by its returned module. The [README quickstart](../README.md#quickstart) shows a complete example.
+The primary interface is `nixosModules.default`, which declares `crossConfig.name`, `crossConfig.nodeCollection`, `crossConfig.optionPaths`, and the outgoing contribution option `crossConfig.nodes`. `lib.mkModule` remains a compatibility adapter. The [README quickstart](../README.md#quickstart) shows a complete example.
 
 - [Module creation](#module-creation)
+- [Compatibility adapter](#compatibility-adapter)
 - [Allowed option paths](#allowed-option-paths)
 - [Contributions and results](#contributions-and-results)
 - [Override priorities and list ordering](#override-priorities-and-list-ordering)
@@ -15,50 +16,94 @@ The public API consists of the `lib.mkModule` function and the `crossConfig.node
 ## Module creation
 
 ```nix
-crossConfig.lib.mkModule {
-  name = "application";
-  inherit nodes optionPaths;
+{
+  imports = [ crossConfig.nixosModules.default ];
+  crossConfig = {
+    name = "application";
+    nodeCollection = nodes;
+    optionPaths = [ [ "services" "nginx" "virtualHosts" ] ];
+  };
 }
 ```
 
-`mkModule` returns a NixOS module. Include it in `nixosSystem.modules` or a module's `imports` on every node in the collection. Importing it enables both sending and receiving; there is no enable option.
+Include `nixosModules.default` in `nixosSystem.modules` or a module's `imports` on every participating node. Importing it enables both sending and receiving once the required settings are supplied. Ordinary integration needs no enable option, constructor, custom module arguments, or `specialArgs`.
 
-All arguments are required:
+All three settings are required:
 
-| Argument      | Value                                                                                                                |
-| ------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `name`        | The node's key in `nodes`. This identity is independent of `networking.hostName`.                                    |
-| `nodes`       | An attribute set built by the caller. Each entry exposes its evaluated NixOS configuration as `nodes.<name>.config`. |
-| `optionPaths` | The shared list of allowed option paths. Each path is a list of literal string segments.                             |
+| Option                       | Value                                                                                                                      |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `crossConfig.name`           | A string identifying this node's key in the collection, independently of `networking.hostName`.                            |
+| `crossConfig.nodeCollection` | An opaque, lazy attribute set built by the caller. Each entry exposes its evaluated NixOS configuration through `.config`. |
+| `crossConfig.optionPaths`    | A shared list of nonempty lists of literal string segments. An explicit empty outer list permits no contributions.         |
 
-Pass the same `nodes` and `optionPaths` to every node. Use the appropriate `name` for each node.
-
-The returned module receives `lib` from the node's NixOS evaluation. It does not use the flake's development inputs to select that library. With a checkout at `./nixos-cross-config`, this expression also provides the function through a plain Nix import:
+Every participating node must use the same node collection and normalized allowed-path set. Set each identity locally and import a common settings module for the collection and registrations:
 
 ```nix
-((import ./nixos-cross-config/flake.nix).outputs { }).lib.mkModule
+let
+  sharedSettings = {
+    imports = [ crossConfig.nixosModules.default ];
+    crossConfig.nodeCollection = nodes;
+    crossConfig.optionPaths = [ [ "services" "nginx" "virtualHosts" ] ];
+  };
+in
+{
+  imports = [ sharedSettings ];
+  crossConfig.name = "application";
+}
 ```
 
-Accessing `lib.mkModule` this way does not evaluate the development input. The root flake has one `nixpkgs` input, which consumers can share with their own selected revision:
+The caller constructs `nodes`; the module does not discover nodes or combine different per-node registration sets. The collection type checks only the outer attribute set. It keeps entries lazy and does not recursively type-check, compare, copy, or merge evaluated configurations. Supply one collection definition at the winning option priority. Conflicting definitions at that priority fail; use `lib.mkDefault`, ordinary definitions, or `lib.mkForce` to select a collection.
+
+The module receives `lib` from the node's NixOS evaluation. It does not evaluate development inputs or require flake-parts. With a checkout at `./nixos-cross-config`, a plain Nix import provides the module:
+
+```nix
+((import ./nixos-cross-config/flake.nix).outputs { }).nixosModules.default
+```
+
+The root flake has one development `nixpkgs` input, which consumers can share with their own selected revision:
 
 ```nix
 inputs.crossConfig.inputs.nixpkgs.follows = "nixpkgs";
 ```
 
-Use the same input name as the consuming flake; `crossConfig` matches the README quickstart. Keep one nixpkgs revision per node collection. The input selects the shell, formatter, packages, checks, focused fixtures, and examples; the returned module still receives its `lib` from the receiver. Compatibility uses invocation-specific overrides, so no second compatibility input enters the consumer's lock graph. See [development instructions](development.md#compatibility-checks) for exact-revision commands and the policy coverage boundary.
+Use the same input name as the consuming flake; `crossConfig` matches the README quickstart. Keep one nixpkgs revision per node collection. The input selects the shell, formatter, packages, checks, focused fixtures, and examples; the module still receives its `lib` from the receiver. Compatibility uses invocation-specific overrides, so no second compatibility input enters the consumer's lock graph. See [development instructions](development.md#compatibility-checks) for exact-revision commands and the policy coverage boundary.
+
+## Compatibility adapter
+
+Existing consumers can keep the required constructor signature:
+
+```nix
+crossConfig.lib.mkModule { inherit name nodes optionPaths; }
+```
+
+The adapter imports the same lower-level module and supplies ordinary definitions for `crossConfig.name`, `crossConfig.nodeCollection`, and `crossConfig.optionPaths`. It preserves the receiver's `lib` and the existing plain-import access pattern:
+
+```nix
+((import ./nixos-cross-config/flake.nix).outputs { }).lib.mkModule
+```
+
+To migrate, replace the constructor import with `nixosModules.default`, move `name` to `crossConfig.name`, `nodes` to `crossConfig.nodeCollection`, and `optionPaths` to `crossConfig.optionPaths`. Keep outgoing `crossConfig.nodes` assignments unchanged. The new path validation and reserved-root restriction apply to both interfaces; relocate destinations beneath an ordinary receiving namespace when migrating a root named `crossConfig` or `_module`.
 
 ## Allowed option paths
 
-`optionPaths` selects which options can receive contributions:
+`crossConfig.optionPaths` selects which options can receive contributions:
 
 ```nix
-optionPaths = [
+crossConfig.optionPaths = [
   [ "services" "nginx" "virtualHosts" ]
   [ "environment" "etc" "application.conf" "text" ]
 ];
 ```
 
 Each string is one attribute name. `"application.conf"` contains a literal dot; it is one segment. Paths can identify options inside submodules. The receiver's own modules supply the option declarations.
+
+The setting has no implicit empty default. Set `crossConfig.optionPaths = [ ];` explicitly to permit no contributions. Empty inner paths, non-list paths, and non-string segments are invalid.
+
+Several shared modules can supply registrations. List definitions merge at the winning option priority and then complete paths are deduplicated, preserving their first occurrence. Repeating a list-valued destination delivers each contribution only once. An ordinary list replaces `lib.mkDefault` lists; `lib.mkForce` replaces ordinary lists. Ordering helpers such as `lib.mkBefore` order surviving registrations before deduplication.
+
+Paths whose first segment is `crossConfig` or `_module` are rejected, including unused registrations, because those namespaces configure the module and module-system internals. Nested attributes and tags with these names remain supported, for example `[ "inventory" "_module" "value" ]`.
+
+Registrations are structural configuration. Literal paths, shared list composition, override priorities, and conditions based on independent setup values are supported. Paths must remain independent of receiving configuration: even a locally defined flag inside a generated receiving namespace can introduce a dependency cycle. Register paths unconditionally where possible and put service-dependent conditions on the contributions themselves, as in [conditional contributions](#conditional-contributions). The module does not add an evaluation stage to discover registrations.
 
 The list is shared across the node collection. Listing a path does not require every node to declare that option. A node can have a missing or read-only option at a listed path while it receives contributions at other paths. A contribution to a missing or read-only option fails validation on that receiver.
 
@@ -237,7 +282,7 @@ crossConfig.nodes.beta.networking.hosts."192.0.2.10" = [ "alpha.example" ];
 crossConfig.nodes.alpha.networking.hosts."192.0.2.20" = [ "beta.example" ];
 ```
 
-This also works for hosts and guests, including a container contributing to its parent and itself. Each node imports the module returned by `mkModule` with its own node identity.
+This also works for hosts and guests, including a container contributing to its parent and itself. Each node imports `nixosModules.default` and supplies its own `crossConfig.name`, with the same collection and normalized path set.
 
 An actual cycle between values still fails with Nix's native `infinite recursion encountered` error. In the following example, each sender reads the domain that only the other sender can supply:
 
@@ -256,6 +301,8 @@ An actual cycle between values still fails with Nix's native `infinite recursion
 Evaluating either receiving domain exposes the cycle. Cyclic values are not dropped or replaced with defaults.
 
 ## Validation and errors
+
+Missing required settings and invalid setting types fail with the relevant `crossConfig` option name. Checking assertions also checks required settings on idle nodes with no contributions. Reserved-root errors identify the offending registration and the node identity when available. Setting validation applies through the compatibility adapter as well.
 
 | Contribution                                  | Validation                                                                             |
 | --------------------------------------------- | -------------------------------------------------------------------------------------- |
