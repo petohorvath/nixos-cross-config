@@ -12,37 +12,10 @@
 }:
 let
   module = {
-    options.crossConfig = {
+    options.crossConfig = settings.options // {
       name = lib.mkOption {
         type = lib.types.str;
         description = "Required node identity within the caller-owned node collection, independent of the hostname.";
-      };
-      nodeCollection = lib.mkOption {
-        type = lib.types.mkOptionType {
-          name = "nodeCollection";
-          description = "an attribute set of evaluated nodes";
-          check = builtins.isAttrs;
-          # Report only source locations: rendering conflicting values can force nodes.
-          merge =
-            location: definitions:
-            if builtins.length definitions == 1 then
-              (builtins.head definitions).value
-            else
-              throw (
-                "The option `${lib.showOption location}' is defined multiple times. "
-                + "Supply one node collection using option priorities. Definitions: "
-                + lib.concatMapStringsSep ", " (definition: definition.file) definitions
-              );
-        };
-        description = "Required opaque collection of caller-owned nodes exposing .config. All participants must share this collection.";
-      };
-      optionPaths = lib.mkOption {
-        type = (lib.types.listOf (lib.types.nonEmptyListOf lib.types.str)) // {
-          # An explicit empty list is valid, but an unset registration list is not.
-          emptyValue = { };
-        };
-        apply = paths: lib.unique (map validatePath paths);
-        description = "Required shared list of allowed destination paths, each a nonempty list of literal string segments. An empty outer list permits no contributions.";
       };
       nodes = lib.mkOption {
         type = lib.types.attrsOf (lib.types.submodule mkContributionModule);
@@ -60,7 +33,7 @@ let
 
     config = lib.mkMerge [
       # Declarations fix the outer names before any allowed paths are inspected.
-      (lib.mapAttrs mkReceivingNamespace (builtins.removeAttrs options reservedRoots))
+      (lib.mapAttrs mkReceivingNamespace (builtins.removeAttrs options settings.reservedRoots))
       (lib.optionalAttrs (inspectionPaths == [ ]) {
         # Required settings must also be checked on idle nodes with no paths.
         assertions = builtins.seq name (
@@ -79,21 +52,10 @@ let
   inherit (config.crossConfig) name optionPaths;
   nodes = config.crossConfig.nodeCollection;
   inspectionPaths = specialArgs.__nixosCrossConfigInspectPaths or [ ];
-  reservedRoots = [
-    "crossConfig"
-    "_module"
-  ];
-
-  validatePath =
-    path:
-    if builtins.elem (builtins.head path) reservedRoots then
-      throw (
-        "nixos-cross-config: crossConfig.optionPaths registration `${lib.showOption path}`"
-        + lib.optionalString options.crossConfig.name.isDefined " on node `${name}`"
-        + " uses a reserved root."
-      )
-    else
-      path;
+  settings = import ./settings.nix {
+    inherit lib;
+    nodeName = if options.crossConfig.name.isDefined then name else null;
+  };
 
   mkContributionModule =
     { options, ... }:

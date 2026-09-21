@@ -1,8 +1,9 @@
 # API reference
 
-The primary interface is `nixosModules.default`, which declares `crossConfig.name`, `crossConfig.nodeCollection`, `crossConfig.optionPaths`, and the outgoing contribution option `crossConfig.nodes`. `lib.mkModule` remains a compatibility adapter. The [README quickstart](../README.md#quickstart) shows a complete example.
+The primary interface is `nixosModules.default`, which declares `crossConfig.name`, `crossConfig.nodeCollection`, `crossConfig.optionPaths`, and the outgoing contribution option `crossConfig.nodes`. `flakeModules.default` optionally shares settings through flake-parts, and `lib.mkModule` remains a compatibility adapter. The [README quickstart](../README.md#quickstart) shows a complete standalone example.
 
 - [Module creation](#module-creation)
+- [Flake-parts adapter](#flake-parts-adapter)
 - [Compatibility adapter](#compatibility-adapter)
 - [Allowed option paths](#allowed-option-paths)
 - [Contributions and results](#contributions-and-results)
@@ -67,6 +68,29 @@ inputs.crossConfig.inputs.nixpkgs.follows = "nixpkgs";
 ```
 
 Use the same input name as the consuming flake; `crossConfig` matches the README quickstart. Keep one nixpkgs revision per node collection. The input selects the shell, formatter, packages, checks, focused fixtures, and examples; the module still receives its `lib` from the receiver. Compatibility uses invocation-specific overrides, so no second compatibility input enters the consumer's lock graph. See [development instructions](development.md#compatibility-checks) for exact-revision commands and the policy coverage boundary.
+
+## Flake-parts adapter
+
+Import `crossConfig.flakeModules.default` in a consumer's flake-parts module. It declares two system-independent options at flake scope, outside `perSystem`:
+
+| Option                       | Contract                                                                                                                                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `crossConfig.optionPaths`    | Required, with the same path shape, literal segments, list merging, priorities, first-occurrence deduplication, and reserved-root validation as the standalone option. An explicit `[ ]` permits no contributions. |
+| `crossConfig.nodeCollection` | The same opaque, lazy collection contract as the standalone option. Defaults to `config.flake.nixosConfigurations`; one explicit definition at the winning priority replaces the default.                          |
+
+The adapter provides `config.flake.nixosModules.crossConfig`, also exported as the consumer's `nixosModules.crossConfig`. Each participating node imports it explicitly and supplies its own `crossConfig.name`. Outgoing contributions stay at NixOS scope. The adapter does not construct or discover nodes, extend existing evaluated configurations, or create another collection. The [flake-parts guide](flake-parts.md) shows default and explicit collections.
+
+The configured module imports the same lower-level NixOS module as `nixosModules.default` and supplies both shared settings with the receiver's `lib.mkDefault`. Extend or override shared paths at flake scope. A normal-priority node-level path list replaces the complete supplied default; it does not append to it. Deliberate node-level overrides must still leave all participants with the same collection and normalized path set.
+
+The flake-parts evaluation supplies `lib` for flake-level options; the receiving NixOS evaluation supplies `lib` for the configured module. Shared settings remain lazy across these scopes. The [registration-dependency constraints](#allowed-option-paths) still apply: flake-level composition does not make registrations derived from receiving configuration safe.
+
+The export is available without development inputs:
+
+```nix
+((import ./nixos-cross-config/flake.nix).outputs { }).flakeModules.default
+```
+
+The root flake-parts input exists for assembled-consumer checks, with its `nixpkgs-lib` following the selected root `nixpkgs`. Accessing this export, `nixosModules.default`, or `lib.mkModule` through plain import does not evaluate either development input. Standalone consumers do not need to evaluate flake-parts.
 
 ## Compatibility adapter
 

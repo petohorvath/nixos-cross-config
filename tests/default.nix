@@ -1,5 +1,6 @@
 {
   crossConfig,
+  flakeParts,
   nixpkgs,
   system,
 }:
@@ -13,13 +14,29 @@ let
   mkNodes = import ./mk-nodes.nix {
     inherit crossConfig nixpkgs system;
   };
-  failures = import ./failures.nix { inherit crossConfig mkNodes nixpkgs; };
+  failures = import ./failures.nix {
+    inherit
+      crossConfig
+      flakeParts
+      mkNodes
+      nixpkgs
+      ;
+  };
 in
 {
   conditional = import ./conditional.nix { inherit checkAssertions mkNodes; };
   destinations = import ./destinations.nix { inherit checkAssertions mkNodes; };
   example = import ./example.nix { inherit crossConfig nixpkgs system; };
   forwarding = import ./forwarding.nix { inherit checkAssertions mkNodes; };
+  flakeModule = import ./flake-module.nix {
+    inherit
+      checkAssertions
+      crossConfig
+      flakeParts
+      nixpkgs
+      system
+      ;
+  };
   hostGuest = import ./host-guest.nix { inherit checkAssertions crossConfig mkNodes; };
   literalPath = import ./literal-path.nix { inherit checkAssertions mkNodes; };
   merging = import ./merging.nix { inherit checkAssertions mkNodes; };
