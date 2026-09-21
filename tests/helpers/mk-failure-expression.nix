@@ -6,7 +6,7 @@
 }:
 builtins.toFile "cross-config-${fixtureName}" ''
   let
-    crossConfig = (import ${../.}/flake.nix).outputs { };
+    crossConfig = (import ${../../.}/flake.nix).outputs { };
     inherit (import ${./evaluation-inputs.nix} {
       flakePartsDir = "${flakeParts}";
       nixpkgsDir = "${nixpkgs}";
@@ -16,5 +16,5 @@ builtins.toFile "cross-config-${fixtureName}" ''
       system = "${system}";
     };
   in
-  import ${./.}/${fixtureName} { inherit crossConfig flakeParts mkNodes nixpkgs; }
+  import ${../.}/${fixtureName} { inherit crossConfig flakeParts mkNodes nixpkgs; }
 ''

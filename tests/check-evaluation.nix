@@ -30,7 +30,7 @@ let
   expressionPath = builtins.toFile "cross-config-evaluation" ''
     let
       crossConfig = (import ${../.}/flake.nix).outputs { };
-      inherit (import ${./evaluation-inputs.nix} {
+      inherit (import ${./helpers/evaluation-inputs.nix} {
         flakePartsDir = "${flakeParts}";
         nixpkgsDir = "${nixpkgs}";
       }) flakeParts nixpkgs;

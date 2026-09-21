@@ -1,12 +1,14 @@
 # Destination inspection
 
-Contributions define existing writable options on the receiver. The implementation in [nixos/module.nix](../nixos/module.nix) checks the receiver's declarations before merging contributions. An allowed option path may be absent or read-only on a node that receives no contributions at that path. An actual contribution to that destination fails with its sender, receiver, path, and source filenames. The [API reference](api.md#validation-and-errors) describes the resulting errors.
+Contributions define existing writable options on the receiver. The [NixOS module](../nixos/module.nix) uses the private [destination inspector](../lib/destination-inspection.nix) to check the receiver's declarations before merging contributions. An allowed option path may be absent or read-only on a node that receives no contributions at that path. An actual contribution to that destination fails with its sender, receiver, path, and source filenames. The [API reference](api.md#validation-and-errors) describes the resulting errors.
 
 ## Receiver-local declarations
 
 The generated receiving configuration takes its outer namespace names from the receiver's declared options. Allowed-path filtering and contribution collection happen only when evaluation enters a namespace. This keeps the outer structure independent of the allowed-path list and received values, including for custom namespaces. Missing and read-only destinations still add no receiving definitions; assertions validate actual contributions separately.
 
 The shared allowed-path list comes from `crossConfig.optionPaths`. Normal option merging and priorities select registrations before normalization removes duplicate paths. The setup namespace `crossConfig` and module-system namespace `_module` stay outside generated receiving definitions, and registrations under those roots fail explicitly. These names remain valid inside ordinary receiving options. [ADR 0004](adr/0004-declare-a-shared-forwarding-surface.md) records why path registrations must remain independent of receiving configuration even though they are now module options.
+
+The inspector receives the receiver's `lib`, declarations, `extendModules`, and active inspection paths, and returns a function from an option path to its declaration or `null`. It shares [definition-property restoration](../lib/restore-definition-properties.nix) with the sending module so both preserve priorities, ordering, and source locations.
 
 For a path inside a submodule, `findReceivingOption` uses `extendModules` to inspect the receiver while omitting contributions at that path. This lets receiver-local module functions, instance names, configuration, and freeform types determine whether the destination exists and is writable. These evaluations inspect destination metadata; they do not discover allowed paths or introduce a registration evaluation stage.
 

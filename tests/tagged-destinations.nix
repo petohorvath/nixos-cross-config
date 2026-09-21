@@ -355,8 +355,8 @@ let
         unique = lib.types.uniq submoduleOption.type;
       };
 
-  mkNodes = import ./fixtures/mk-module-nodes.nix { inherit crossConfig lib; };
-  mkTaggedNodes = import ./fixtures/mk-tagged-nodes.nix { inherit lib mkNodes; };
+  mkNodes = import ./helpers/mk-module-nodes.nix { inherit crossConfig lib; };
+  mkTaggedNodes = import ./helpers/mk-tagged-nodes.nix { inherit lib mkNodes; };
   checkValue =
     expected: args:
     let

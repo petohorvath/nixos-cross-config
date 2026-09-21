@@ -1,7 +1,7 @@
 { crossConfig, nixpkgs }:
 let
   inherit (nixpkgs) lib;
-  mkNodes = import ./fixtures/mk-module-nodes.nix { inherit crossConfig lib; };
+  mkNodes = import ./helpers/mk-module-nodes.nix { inherit crossConfig lib; };
   valuePath = [
     "inventory"
     "values"

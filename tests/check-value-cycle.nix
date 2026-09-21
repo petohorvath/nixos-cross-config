@@ -11,7 +11,7 @@ let
   checkCycle =
     fixtureName:
     let
-      expressionPath = import ./mk-failure-expression.nix {
+      expressionPath = import ./helpers/mk-failure-expression.nix {
         inherit
           fixtureName
           flakeParts

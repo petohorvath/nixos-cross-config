@@ -11,7 +11,7 @@ let
       builtins.attrValues
       (builtins.all (node: builtins.all (entry: entry.assertion) node.config.assertions))
     ];
-  mkNodes = import ./mk-nodes.nix {
+  mkNodes = import ./helpers/mk-nodes.nix {
     inherit crossConfig nixpkgs system;
   };
   failures = import ./failures.nix {
