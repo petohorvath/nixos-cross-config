@@ -20,7 +20,7 @@ Root `nix fmt` uses the project-owned treefmt wrapper. Nix uses nixfmt; shell fi
 
 Formatting excludes Git metadata, direnv state, build results, and lockfiles.
 
-Root `nix flake check` runs the public fixtures and native-cycle checks with nix-unit, alongside diagnostic checks, formatting, statix, deadnix, and workflow validation against the selected `nixpkgs` input. Evaluation checks run fixture groups in separate processes to bound memory, using store-path inputs and a temporary evaluation store inside the build sandbox. nix-unit reports each named test and shows value differences or unexpected evaluation errors; the evaluation check continues through all fixture groups before failing. The project has no VM targets.
+Root `nix flake check` runs the public fixtures and native-cycle checks with nix-unit, alongside diagnostic checks, formatting, statix, deadnix, and workflow validation against the selected `nixpkgs` input. Evaluation checks run fixture groups in separate processes to bound memory, using store-path inputs and a temporary evaluation store inside the build sandbox. The writable store is needed because NixOS evaluation creates derivations and other store paths. nix-unit deeply evaluates each test expression, reports value differences or unexpected errors, and returns a failing exit status directly to the check builder. The project has no VM targets.
 
 The ordinary flake checker evaluates applicable shells, formatters, packages, and NixOS examples and builds every declared check for the host system. Evaluating those outputs does not enter shells or build example systems. The selected input supplies tools and configurations throughout that evaluation.
 
@@ -107,34 +107,18 @@ The separate final command validates the committed default. Repeat compatibility
 
 The root [locked input](../flake.lock), `nixpkgs`, selects NixOS 26.05 by default. Focused paths omit stable/unstable labels and always use that selected input; each node collection uses only one revision.
 
+Run all suites, diagnostics, native cycles, formatting, and lint with one command:
+
 ```bash
-# New files must be tracked before Git-backed flake evaluation.
-git add <new-files>
+nix flake check --no-update-lock-file --print-build-logs
+```
 
+Track new files with `git add` before Git-backed flake evaluation. Select an individual test or rejection case when investigating a failure:
+
+```bash
 # Run inside nix develop or the direnv shell.
-# One fixture, including native NixOS option typechecking.
-nix-unit --flake .#lib.tests.x86_64-linux.merging
-nix-unit --flake .#lib.tests.x86_64-linux.priorities
-nix-unit --flake .#lib.tests.x86_64-linux.conditional
-nix-unit --flake .#lib.tests.x86_64-linux.senderContext
-nix-unit --flake .#lib.tests.x86_64-linux.selfTarget
-nix-unit --flake .#lib.tests.x86_64-linux.reciprocal
-nix-unit --flake .#lib.tests.x86_64-linux.destinations
-nix-unit --flake .#lib.tests.x86_64-linux.taggedDestinations
-nix-unit --flake .#lib.tests.x86_64-linux.module
-nix-unit --flake .#lib.tests.x86_64-linux.moduleSettings
-nix-unit --flake .#lib.tests.x86_64-linux.flakeModule.defaultCollection
-nix-unit --flake .#lib.tests.x86_64-linux.flakeModule.explicitCollection
-
-# One named test or expected failure.
 nix-unit --flake .#lib.tests.x86_64-linux --attr merging.testHosts
 nix-unit --flake .#lib.tests.x86_64-linux --attr validation.localConflict
-
-# Evaluation, diagnostics, cycles, formatting, and lint for the selected input.
-nix flake check --no-update-lock-file
-
-# Format all applicable first-party files.
-nix fmt --no-update-lock-file
 ```
 
 Build individual check targets when investigating a failure:

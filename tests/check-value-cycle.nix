@@ -25,7 +25,7 @@ let
         --expr ${lib.escapeShellArg ''
           {
             testCycle = {
-              expr = builtins.deepSeq (import ${expressionPath}) true;
+              expr = import ${expressionPath};
               expectedError = {
                 type = "EvalError";
                 msg = "infinite recursion encountered";

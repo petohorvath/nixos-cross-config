@@ -60,7 +60,7 @@ in
   };
   validation = builtins.mapAttrs (_: value: {
     testRejected = {
-      expr = builtins.deepSeq value true;
+      expr = value;
       expectedError.type = "ThrownError";
     };
   }) failures;

@@ -41,11 +41,9 @@ let
   '';
   checkFixture = path: ''
     echo ${lib.escapeShellArg "Checking ${lib.concatStringsSep "." path}"}
-    if ! nix-unit --eval-store "$TMPDIR/eval-store" --gc-roots-dir "$TMPDIR/gc-roots" \
+    nix-unit --eval-store "$TMPDIR/eval-store" --gc-roots-dir "$TMPDIR/gc-roots" \
       ${expressionPath} \
-      --attr ${lib.escapeShellArg (lib.concatStringsSep "." path)}; then
-      failed=1
-    fi
+      --attr ${lib.escapeShellArg (lib.concatStringsSep "." path)}
   '';
 in
 # Separate evaluators bound memory across NixOS fixtures.
@@ -54,8 +52,6 @@ runCommand "cross-config-evaluation-tests"
     nativeBuildInputs = [ nix-unit ];
   }
   ''
-    failed=0
     ${lib.concatMapStringsSep "\n" checkFixture fixturePaths}
-    test "$failed" -eq 0
     touch "$out"
   ''
