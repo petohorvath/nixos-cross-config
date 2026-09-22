@@ -6,7 +6,7 @@
 }:
 let
   checks = {
-    tests = pkgs.callPackage ../tests/check.nix {
+    tests = pkgs.callPackage ../tests/checks.nix {
       inherit (inputs) nixpkgs;
       flakeParts = inputs.flake-parts;
       inherit system;

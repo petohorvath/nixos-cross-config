@@ -117,7 +117,7 @@ nix-unit tests/entrypoint.nix --attr destinations.testRejectsUnregisteredDestina
 
 A suite name selects its descendants; a full test name selects one case. Every selected case includes its value or error expectations, including required message fragments. nix-unit handles discovery, selection, comparisons, error matching, and reporting. It reads the current checkout, so edits to tests are available without re-entering the shell. Track new files with `git add` before Git-backed flake evaluation.
 
-[tests/entrypoint.nix](../tests/entrypoint.nix) loads the complete collection with the root locked inputs by default. The root [locked input](../flake.lock), `nixpkgs`, selects NixOS 26.05. The loader returns test definitions from `tests/suites/default.nix`; evaluating it alone does not verify expectations. `tests/check.nix` wraps nix-unit in a Nix build, and `dev/checks.nix` registers that build as the root test check. Raw configurations under [tests/fixtures](../tests/fixtures/) are private inputs to the suites.
+[tests/entrypoint.nix](../tests/entrypoint.nix) loads the complete collection with the root locked inputs by default. The root [locked input](../flake.lock), `nixpkgs`, selects NixOS 26.05. The loader returns test definitions from `tests/suites/default.nix`; evaluating it alone does not verify expectations. `tests/checks.nix` wraps nix-unit in a Nix build, and `dev/checks.nix` registers that build as the root test check. Raw configurations under [tests/fixtures](../tests/fixtures/) are private inputs to the suites.
 
 For a focused investigation at another exact revision, set `NIXPKGS_REV` to its full commit and select it for both the development tools and the test loader:
 
