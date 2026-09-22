@@ -8,11 +8,6 @@
   options,
 }:
 let
-  receiving = {
-    inherit mkReceivingNamespace;
-    assertions = map mkDestinationAssertion optionPaths;
-  };
-
   mkReceivingNamespace =
     root: _:
     lib.pipe optionPaths [
@@ -108,4 +103,7 @@ let
 
   isWritable = option: option != null && !(option.readOnly or false);
 in
-receiving
+{
+  inherit mkReceivingNamespace;
+  assertions = map mkDestinationAssertion optionPaths;
+}

@@ -11,27 +11,6 @@
   ...
 }:
 let
-  module = {
-    options.crossConfig = settings.options // {
-      name = lib.mkOption {
-        type = lib.types.str;
-        description = "Required node identity within the caller-owned node collection, independent of the hostname.";
-      };
-      nodes = lib.mkOption {
-        type = lib.types.attrsOf contributionType;
-        default = { };
-        description = "Configuration contributions indexed by receiver node identity.";
-        apply = lib.mapAttrs outgoingDefinitions;
-      };
-    };
-
-    config = lib.mkMerge [
-      # Declarations fix the outer names before any allowed paths are inspected.
-      (lib.mapAttrs receiving.mkReceivingNamespace (builtins.removeAttrs options settings.reservedRoots))
-      (lib.optionalAttrs (inspectionPaths == [ ]) { inherit assertions; })
-    ];
-  };
-
   inherit (config.crossConfig) name optionPaths;
   nodes = config.crossConfig.nodeCollection;
   inspectionPaths = specialArgs.__nixosCrossConfigInspectPaths or [ ];
@@ -70,4 +49,23 @@ let
     message = "nixos-cross-config: sender `${name}` targets unknown receiver `${receiver}`.";
   };
 in
-module
+{
+  options.crossConfig = settings.options // {
+    name = lib.mkOption {
+      type = lib.types.str;
+      description = "Required node identity within the caller-owned node collection, independent of the hostname.";
+    };
+    nodes = lib.mkOption {
+      type = lib.types.attrsOf contributionType;
+      default = { };
+      description = "Configuration contributions indexed by receiver node identity.";
+      apply = lib.mapAttrs outgoingDefinitions;
+    };
+  };
+
+  config = lib.mkMerge [
+    # Declarations fix the outer names before any allowed paths are inspected.
+    (lib.mapAttrs receiving.mkReceivingNamespace (builtins.removeAttrs options settings.reservedRoots))
+    (lib.optionalAttrs (inspectionPaths == [ ]) { inherit assertions; })
+  ];
+}

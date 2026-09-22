@@ -1,7 +1,5 @@
 { lib, optionPaths }:
 let
-  contributionType = lib.types.submodule mkContributionModule;
-
   mkContributionModule =
     { options, ... }:
     {
@@ -35,4 +33,4 @@ let
 
   restoreDefinitionProperties = import ./restore-definition-properties.nix { inherit lib; };
 in
-contributionType
+lib.types.submodule mkContributionModule
