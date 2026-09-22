@@ -4,7 +4,26 @@
   lib,
   options,
 }:
+path:
 let
+  destination = findDeclaration [ ] path options;
+  requiresLocalInspection = destination.remaining != [ ] && !(destination.option.readOnly or false);
+
+  inspectReceiverLocalOption =
+    { destination, path }:
+    let
+      # Inspect local submodule definitions without receiving our own contribution.
+      localOptions =
+        (extendModules {
+          specialArgs.__nixosCrossConfigInspectPaths = inspectionPaths ++ [ path ];
+        }).options;
+    in
+    findLocalOption {
+      inherit (destination) prefix;
+      path = destination.remaining;
+      option = lib.getAttrFromPath destination.prefix localOptions;
+    };
+
   findLocalOption =
     {
       prefix,
@@ -197,24 +216,11 @@ let
 
   restoreDefinitionProperties = import ./restore-definition-properties.nix { inherit lib; };
 in
-path:
-let
-  destination = findDeclaration [ ] path options;
-in
 if destination == null then
   null
-else if destination.remaining == [ ] || destination.option.readOnly or false then
-  destination.option
-else
-  # Inspect local submodule definitions without receiving our own contribution.
-  let
-    localOptions =
-      (extendModules {
-        specialArgs.__nixosCrossConfigInspectPaths = inspectionPaths ++ [ path ];
-      }).options;
-  in
-  findLocalOption {
-    inherit (destination) prefix;
-    path = destination.remaining;
-    option = lib.getAttrFromPath destination.prefix localOptions;
+else if requiresLocalInspection then
+  inspectReceiverLocalOption {
+    inherit destination path;
   }
+else
+  destination.option
