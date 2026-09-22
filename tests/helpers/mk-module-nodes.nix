@@ -9,7 +9,7 @@ let
         {
           config.crossConfig = {
             inherit name optionPaths;
-            nodeCollection = nodes;
+            nodeConfigurations = nodes;
           };
           options.assertions = lib.mkOption {
             type = lib.types.listOf lib.types.raw;

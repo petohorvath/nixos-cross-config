@@ -22,7 +22,7 @@ With Nix and the `nix-command` and `flakes` features enabled, save the following
       sharedSettings = {
         imports = [ crossConfig.nixosModules.default ];
         crossConfig = {
-          nodeCollection = nodes;
+          nodeConfigurations = nodes;
           optionPaths = [ [ "services" "nginx" "virtualHosts" ] ];
         };
       };
@@ -64,7 +64,7 @@ With Nix and the `nix-command` and `flakes` features enabled, save the following
 }
 ```
 
-The `nodes` attribute set contains both evaluated configurations. The shared module supplies that collection lazily through `crossConfig.nodeCollection`. Each node sets `crossConfig.name` to its collection identity: `application` or `proxy`, independently of its hostname.
+The `nodes` attribute set contains both evaluated configurations. The shared module supplies that collection lazily through `crossConfig.nodeConfigurations`. Each node sets `crossConfig.name` to its collection identity: `application` or `proxy`, independently of its hostname.
 
 The container settings keep this example independent of host hardware. The backend address is illustrative; the example evaluates configuration without starting an application or deploying either node.
 
@@ -89,7 +89,7 @@ The repository's [minimal example](examples/minimal.nix) uses the same setup and
   imports = [ crossConfig.nixosModules.default ];
   crossConfig = {
     name = "application";
-    nodeCollection = nodes;
+    nodeConfigurations = nodes;
     optionPaths = [ [ "services" "nginx" "virtualHosts" ] ];
   };
 }
@@ -97,11 +97,11 @@ The repository's [minimal example](examples/minimal.nix) uses the same setup and
 
 Import this module on every participating node. All three settings are required:
 
-| Option                       | Value                                                                                                                                  |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `crossConfig.name`           | This node's key in the collection, such as `"application"`. It can differ from `networking.hostName`.                                  |
-| `crossConfig.nodeCollection` | The shared, lazy attribute set of nodes. Each entry exposes its evaluated configuration as `.config`.                                  |
-| `crossConfig.optionPaths`    | The shared list of allowed paths. Each path is a nonempty list of literal string segments. An explicit `[ ]` permits no contributions. |
+| Option                           | Value                                                                                                                                  |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `crossConfig.name`               | This node's key in the collection, such as `"application"`. It can differ from `networking.hostName`.                                  |
+| `crossConfig.nodeConfigurations` | The shared, lazy attribute set of nodes. Each entry exposes its evaluated configuration as `.config`.                                  |
+| `crossConfig.optionPaths`        | The shared list of allowed paths. Each path is a nonempty list of literal string segments. An explicit `[ ]` permits no contributions. |
 
 Importing the module enables both sending and receiving. There is no separate enable option. The receiver's own modules must declare the options that receive contributions.
 
@@ -111,7 +111,7 @@ Existing consumers can continue calling `crossConfig.lib.mkModule { inherit name
 
 ### `flakeModules.default`
 
-Flake-parts consumers can import `crossConfig.flakeModules.default` and set `crossConfig.optionPaths` once at flake scope. The adapter provides `config.flake.nixosModules.crossConfig`; each participating node imports that configured NixOS module and sets its own `crossConfig.name`. The node collection defaults lazily to the consumer's `flake.nixosConfigurations`, or `crossConfig.nodeCollection` can select an explicit collection containing subsets or guests.
+Flake-parts consumers can import `crossConfig.flakeModules.default` and set `crossConfig.optionPaths` once at flake scope. The adapter provides `config.flake.nixosModules.crossConfig`; each participating node imports that configured NixOS module and sets its own `crossConfig.name`. The node collection defaults lazily to the consumer's `flake.nixosConfigurations`, or `crossConfig.nodeConfigurations` can select an explicit collection containing subsets or guests.
 
 The caller still constructs every node and imports the configured module explicitly. Shared settings enter NixOS as `mkDefault` definitions, so extend path lists at flake scope: an ordinary node-level list replaces the supplied default. See the [flake-parts guide](docs/flake-parts.md) and [evaluated example](examples/flake-parts.nix). Flake-parts remains optional for standalone consumers.
 
@@ -131,7 +131,7 @@ Contributions and local definitions use normal NixOS merging rules. A local defi
 
 ## Use with existing configurations
 
-Add the library input to the existing flake and import `nixosModules.default` on each participating node. Supply the existing collection through `crossConfig.nodeCollection`, compose `crossConfig.optionPaths` in shared settings modules, and set each node's `crossConfig.name` locally.
+Add the library input to the existing flake and import `nixosModules.default` on each participating node. Supply the existing collection through `crossConfig.nodeConfigurations`, compose `crossConfig.optionPaths` in shared settings modules, and set each node's `crossConfig.name` locally.
 
 Keep each host's hardware configuration and existing `system.stateVersion`. The library accepts nodes built by existing host and guest helpers as long as each entry exposes `.config`. The [host and guest example in the tests](tests/host-guest.nix) shows how to include a guest created through NixOS's `containers` option.
 

@@ -10,12 +10,14 @@ let
 in
 {
   flakeMissingPaths = (evaluate [ ]).optionPaths;
-  flakeInvalidCollection = (evaluate [ { crossConfig.nodeCollection = [ ]; } ]).nodeCollection;
+  flakeInvalidCollection =
+    (evaluate [ { crossConfig.nodeConfigurations = [ ]; } ]).nodeConfigurations;
+  flakeOldCollectionName = (evaluate [ { crossConfig.nodeCollection = { }; } ]).nodeConfigurations;
   flakeConflictingCollections =
     (evaluate [
-      { crossConfig.nodeCollection = { }; }
-      { crossConfig.nodeCollection.unused = throw "Conflicting collection entries must stay lazy."; }
-    ]).nodeCollection;
+      { crossConfig.nodeConfigurations = { }; }
+      { crossConfig.nodeConfigurations.unused = throw "Conflicting collection entries must stay lazy."; }
+    ]).nodeConfigurations;
   flakeInvalidPaths = paths "inventory.values";
   flakeInvalidPath = paths [ "inventory.values" ];
   flakeInvalidSegment = paths [

@@ -120,7 +120,7 @@ let
     {
       crossConfig = {
         optionPaths = [ ];
-        nodeCollection.unused = throw "An unused node in the opaque collection was forced.";
+        nodeConfigurations.unused = throw "An unused node in the opaque collection was forced.";
       };
     }
   ] { };
@@ -130,7 +130,7 @@ let
         {
           crossConfig = {
             optionPaths = [ literalPath ];
-            nodeCollection = throw "The overridden flake-level collection was forced.";
+            nodeConfigurations = throw "The overridden flake-level collection was forced.";
           };
         }
       ]
@@ -138,7 +138,7 @@ let
         imports = [ reciprocal ];
         crossConfig = {
           optionPaths = [ valuePath ];
-          nodeCollection = overriddenConsumer.nixosConfigurations;
+          nodeConfigurations = overriddenConsumer.nixosConfigurations;
         };
       };
   explicitConsumer = flakeParts.lib.mkFlake { inputs.self.outPath = ../.; } (
@@ -157,7 +157,7 @@ let
       imports = [ crossConfig.flakeModules.default ];
       systems = [ ];
       crossConfig = {
-        nodeCollection = nodes;
+        nodeConfigurations = nodes;
         optionPaths = [ valuePath ];
       };
       flake = {
@@ -331,7 +331,7 @@ in
         node:
         node.config.crossConfig.optionPaths == [ ]
         && node.config.crossConfig.nodes == { }
-        && builtins.attrNames node.config.crossConfig.nodeCollection == [ "unused" ]
+        && builtins.attrNames node.config.crossConfig.nodeConfigurations == [ "unused" ]
       ) (builtins.attrValues emptyConsumer.nixosConfigurations);
       expected = true;
     };
@@ -395,12 +395,23 @@ in
     };
 }
 // {
+  testRejectsOldCollectionName = {
+    expr = rejections.flakeOldCollectionName;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.nodeCollection"
+        "does not exist"
+      ];
+    };
+  };
+
   testRejectsConflictingCollections = {
     expr = rejections.flakeConflictingCollections;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
-        "crossConfig.nodeCollection"
+        "crossConfig.nodeConfigurations"
         "multiple times"
       ];
     };
@@ -420,7 +431,7 @@ in
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
-        "crossConfig.nodeCollection"
+        "crossConfig.nodeConfigurations"
         "is not of type"
       ];
     };

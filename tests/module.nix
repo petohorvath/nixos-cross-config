@@ -29,7 +29,7 @@ let
           config = {
             crossConfig = {
               inherit name;
-              nodeCollection = nodes;
+              nodeConfigurations = nodes;
               optionPaths = [
                 [
                   "inventory"

@@ -1,6 +1,6 @@
 /*
   Contributes definitions between caller-owned NixOS nodes. Each participant
-  supplies crossConfig.name, crossConfig.nodeCollection, and crossConfig.optionPaths.
+  supplies crossConfig.name, crossConfig.nodeConfigurations, and crossConfig.optionPaths.
 */
 {
   config,
@@ -34,7 +34,7 @@ let
       lib
       options
       ;
-    inherit (cfg) name nodeCollection optionPaths;
+    inherit (cfg) name nodeConfigurations optionPaths;
     inherit (settings) reservedRoots;
   };
 
@@ -43,11 +43,11 @@ let
 
   # Required settings must also be checked on idle nodes with no paths.
   assertions = builtins.seq cfg.name (
-    builtins.seq cfg.nodeCollection (destinationAssertions ++ receiverAssertions)
+    builtins.seq cfg.nodeConfigurations (destinationAssertions ++ receiverAssertions)
   );
 
   mkReceiverAssertion = receiver: contribution: {
-    assertion = builtins.seq contribution (builtins.hasAttr receiver cfg.nodeCollection);
+    assertion = builtins.seq contribution (builtins.hasAttr receiver cfg.nodeConfigurations);
     message = "nixos-cross-config: sender `${cfg.name}` targets unknown receiver `${receiver}`.";
   };
 in

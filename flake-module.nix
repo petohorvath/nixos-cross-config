@@ -6,7 +6,7 @@ let
 in
 {
   options.crossConfig = settings.options // {
-    nodeCollection = settings.options.nodeCollection // {
+    nodeConfigurations = settings.options.nodeConfigurations // {
       default = config.flake.nixosConfigurations;
       defaultText = lib.literalExpression "config.flake.nixosConfigurations";
       description = "Opaque collection of caller-owned nodes exposing .config, shared by all participants. Defaults lazily to the consumer's NixOS configurations.";
@@ -18,7 +18,7 @@ in
     {
       imports = [ ./nixos/module.nix ];
       crossConfig = {
-        nodeCollection = lib.mkDefault flakeConfig.crossConfig.nodeCollection;
+        nodeConfigurations = lib.mkDefault flakeConfig.crossConfig.nodeConfigurations;
         optionPaths = lib.mkDefault flakeConfig.crossConfig.optionPaths;
       };
     };

@@ -4,7 +4,7 @@ Import `crossConfig.flakeModules.default` to configure shared settings at flake 
 
 ## Default collection
 
-The following flake constructs two NixOS containers. The application contributes a virtual host to the proxy. The adapter's `crossConfig.nodeCollection` defaults lazily to this consumer's `flake.nixosConfigurations`, including both nodes:
+The following flake constructs two NixOS containers. The application contributes a virtual host to the proxy. The adapter's `crossConfig.nodeConfigurations` defaults lazily to this consumer's `flake.nixosConfigurations`, including both nodes:
 
 ```nix
 {
@@ -64,7 +64,7 @@ Both settings and the configured module are system-independent, so they belong o
 
 ## Explicit collection
 
-Set flake-level `crossConfig.nodeCollection` to select a subset or include caller-owned guests absent from `nixosConfigurations`. With the same inputs, replace the flake-parts module above with this body:
+Set flake-level `crossConfig.nodeConfigurations` to select a subset or include caller-owned guests absent from `nixosConfigurations`. With the same inputs, replace the flake-parts module above with this body:
 
 ```nix
 { config, ... }:
@@ -94,7 +94,7 @@ in
   systems = [ ];
   crossConfig = {
     optionPaths = [ [ "networking" "hosts" ] ];
-    nodeCollection = nodes;
+    nodeConfigurations = nodes;
   };
   flake.nixosConfigurations = { inherit (nodes) host; };
 }
