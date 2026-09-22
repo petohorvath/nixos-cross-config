@@ -25,7 +25,6 @@
           { config, pkgs, ... }:
           {
             formatter = pkgs.callPackage ./formatter.nix { };
-            packages.cross-config-fmt = config.formatter;
             devShells.default = pkgs.callPackage ./shell.nix { inherit (config) formatter; };
           };
 
@@ -63,7 +62,6 @@
         devShells
         formatter
         nixosConfigurations
-        packages
         ;
     };
 }
