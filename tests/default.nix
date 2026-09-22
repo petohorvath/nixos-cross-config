@@ -40,11 +40,22 @@ in
   hostGuest = import ./host-guest.nix { inherit checkAssertions crossConfig mkNodes; };
   literalPath = import ./literal-path.nix { inherit checkAssertions mkNodes; };
   merging = import ./merging.nix { inherit checkAssertions mkNodes; };
-  mkModule = import ./mk-module.nix { inherit nixpkgs; };
-  module = import ./module.nix { inherit nixpkgs; };
+  mkModule = import ./mk-module.nix { inherit crossConfig nixpkgs; };
+  module = import ./module.nix { inherit crossConfig nixpkgs; };
   moduleSettings = import ./module-settings.nix { inherit crossConfig nixpkgs; };
   nestedProperties = import ./nested-properties.nix { inherit checkAssertions mkNodes; };
   ordering = import ./ordering.nix { inherit checkAssertions mkNodes; };
+  plainImports =
+    let
+      crossConfig = {
+        lib = import ../lib;
+        nixosModules.default = ../nixos/module.nix;
+      };
+    in
+    {
+      mkModule = import ./mk-module.nix { inherit crossConfig nixpkgs; };
+      module = import ./module.nix { inherit crossConfig nixpkgs; };
+    };
   priorities = import ./priorities.nix { inherit checkAssertions mkNodes; };
   reciprocal = import ./reciprocal.nix { inherit checkAssertions mkNodes; };
   selfTarget = import ./self-target.nix { inherit checkAssertions mkNodes; };

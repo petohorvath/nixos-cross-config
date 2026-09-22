@@ -78,7 +78,7 @@ nix eval --json .#nixosConfigurations.proxy.config.services.nginx.virtualHosts \
 
 The result is part of the proxy's normal NixOS configuration. Its virtual host also keeps the locally defined `serverAliases = [ "www.app.example" ];`.
 
-The repository's [minimal example](examples/minimal.nix) uses the same setup and runs in the test suite. From a checkout, the command above evaluates that example too.
+The repository's [minimal example](examples/minimal.nix) uses the same setup and runs in the test suite. See [focused checks](docs/development.md#focused-checks) to run its `example` suite from a checkout.
 
 ## API
 
@@ -151,7 +151,7 @@ Development supports `x86_64-linux` and `aarch64-linux`. The root lock selects N
 
 ## Development
 
-The root flake supplies the development shell, formatter, example, and checks using one selected `nixpkgs` input. Run `nix fmt --no-update-lock-file` and `nix flake check --no-update-lock-file` from the repository root. Native input overrides select another exact revision for the whole evaluation without changing the committed lock. [Development instructions](docs/development.md) cover prerequisites, exact-revision compatibility checks, focused checks, and CI.
+The root flake supplies the development shell, formatter, and checks through a partition in `dev/`, using one selected `nixpkgs` input. The checks cover the examples. Run `nix fmt --no-update-lock-file` and `nix flake check --no-update-lock-file` from the repository root. Native input overrides select another exact revision for the whole evaluation without changing the committed lock. [Development instructions](docs/development.md) cover prerequisites, exact-revision compatibility checks, focused checks, and CI.
 
 ## Contributing
 

@@ -55,10 +55,12 @@ in
 
 The caller constructs `nodes`; the module does not discover nodes or combine different per-node registration sets. The collection type checks only the outer attribute set. It keeps entries lazy and does not recursively type-check, compare, copy, or merge evaluated configurations. Supply one collection definition at the winning option priority. Conflicting definitions at that priority fail; use `lib.mkDefault`, ordinary definitions, or `lib.mkForce` to select a collection.
 
-The module receives `lib` from the node's NixOS evaluation. It does not evaluate development inputs or require flake-parts. With a checkout at `./nixos-cross-config`, a plain Nix import provides the module:
+The module receives `lib` from the node's NixOS evaluation. It does not evaluate development inputs or require flake-parts. With a checkout at `./nixos-cross-config`, use its module path directly:
 
 ```nix
-((import ./nixos-cross-config/flake.nix).outputs { }).nixosModules.default
+{
+  imports = [ ./nixos-cross-config/nixos/module.nix ];
+}
 ```
 
 The root flake has one development `nixpkgs` input, which consumers can share with their own selected revision:
@@ -84,13 +86,15 @@ The configured module imports the same lower-level NixOS module as `nixosModules
 
 The flake-parts evaluation supplies `lib` for flake-level options; the receiving NixOS evaluation supplies `lib` for the configured module. Shared settings remain lazy across these scopes. The [registration-dependency constraints](#allowed-option-paths) still apply: flake-level composition does not make registrations derived from receiving configuration safe.
 
-The export is available without development inputs:
+Plain Nix consumers can import the adapter directly in their flake-parts module:
 
 ```nix
-((import ./nixos-cross-config/flake.nix).outputs { }).flakeModules.default
+{
+  imports = [ ./nixos-cross-config/flake-module.nix ];
+}
 ```
 
-The root flake-parts input assembles development outputs and supports assembled-consumer checks, with its `nixpkgs-lib` following the selected root `nixpkgs`. Accessing this export, `nixosModules.default`, or `lib.mkModule` through plain import does not evaluate either development input. Standalone consumers do not need to evaluate flake-parts.
+The root flake-parts input assembles the flake and supports assembled-consumer checks, with its `nixpkgs-lib` following the selected root `nixpkgs`. Direct imports of `flake-module.nix`, `nixos/module.nix`, and `lib/` do not evaluate either development input. Standalone consumers do not need to evaluate flake-parts.
 
 ## Compatibility adapter
 
@@ -100,13 +104,15 @@ Existing consumers can keep the required constructor signature:
 crossConfig.lib.mkModule { inherit name nodes optionPaths; }
 ```
 
-The adapter imports the same lower-level module and supplies ordinary definitions for `crossConfig.name`, `crossConfig.nodeCollection`, and `crossConfig.optionPaths`. It preserves the receiver's `lib` and the existing plain-import access pattern:
+The adapter imports the same lower-level module and supplies ordinary definitions for `crossConfig.name`, `crossConfig.nodeCollection`, and `crossConfig.optionPaths`. It preserves the receiver's `lib`. Plain Nix consumers obtain it from `lib/`:
 
 ```nix
-((import ./nixos-cross-config/flake.nix).outputs { }).lib.mkModule
+(import ./nixos-cross-config/lib).mkModule
 ```
 
-To migrate, replace the constructor import with `nixosModules.default`, move `name` to `crossConfig.name`, `nodes` to `crossConfig.nodeCollection`, and `optionPaths` to `crossConfig.optionPaths`. Keep outgoing `crossConfig.nodes` assignments unchanged. The new path validation and reserved-root restriction apply to both interfaces; relocate destinations beneath an ordinary receiving namespace when migrating a root named `crossConfig` or `_module`.
+The root `flake.nix` now requires normal flake inputs; calling `(import ./flake.nix).outputs { }` is no longer supported. Use the direct entry points above for plain Nix imports.
+
+To migrate from the constructor to the primary interface, replace the constructor import with `nixosModules.default`, move `name` to `crossConfig.name`, `nodes` to `crossConfig.nodeCollection`, and `optionPaths` to `crossConfig.optionPaths`. Keep outgoing `crossConfig.nodes` assignments unchanged. The new path validation and reserved-root restriction apply to both interfaces; relocate destinations beneath an ordinary receiving namespace when migrating a root named `crossConfig` or `_module`.
 
 ## Allowed option paths
 

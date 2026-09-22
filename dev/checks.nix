@@ -7,13 +7,13 @@
 }:
 let
   checks = {
-    evaluation = pkgs.callPackage ./check-evaluation.nix {
+    evaluation = pkgs.callPackage ../tests/check-evaluation.nix {
       inherit flakeParts nixpkgs system;
     };
-    value-cycle = pkgs.callPackage ./check-value-cycle.nix {
+    value-cycle = pkgs.callPackage ../tests/check-value-cycle.nix {
       inherit flakeParts nixpkgs system;
     };
-    diagnostics = pkgs.callPackage ./check-diagnostics.nix {
+    diagnostics = pkgs.callPackage ../tests/check-diagnostics.nix {
       inherit flakeParts nixpkgs system;
     };
     formatting = mkCheck {
