@@ -8,7 +8,6 @@
 - `nixosModules.default` as the primary consumer interface, with required node identity, lazy node collection, and composable allowed-path options. Keep `lib.mkModule` as a compatibility adapter and retain plain-import access to both interfaces.
 - Root development shells for x86_64 Linux and aarch64 Linux, with direnv activation and tools from the selected nixpkgs revision.
 - Root formatting for Nix, shell, Markdown, YAML, and JSON, plus statix, deadnix, and workflow checks.
-- A `cross-config-fmt` package exposing the root formatter executable.
 - An immutable shared-policy CI caller, contributor guidance, release rules, and an MIT license for original code.
 
 ### Changed
@@ -24,11 +23,14 @@
 
 ### Removed
 
+- **Breaking (development interface):** the redundant `packages.<system>.cross-config-fmt` output. The formatter remains available through `formatter.<system>`, `nix fmt`, and the default development shell.
 - The benchmark suite and remaining `dev/` directory, along with Python, Ruff, and GNU time development tooling.
 - Completed implementation plans and separate review, research, and validation logs; retain current design explanations and architectural decisions.
 - **Breaking:** the root `nixpkgs-unstable` input. Compatibility revisions are supplied through native root input overrides.
 
 ### Migration
+
+Replace references to `packages.<system>.cross-config-fmt` with `formatter.<system>`. For example, replace `nix build .#cross-config-fmt` with `nix build .#formatter.x86_64-linux` on x86_64 Linux. Use root `nix fmt --no-update-lock-file` to format the project; the `cross-config-fmt` command remains available inside `nix develop`.
 
 For focused tests, replace `nix eval --json .#lib.tests.<system>.<fixture>` with `nix-unit --flake .#lib.tests.<system>.<fixture>` inside the development shell. Select one case with `nix-unit --flake .#lib.tests.<system> --attr merging.testHosts`. `nix eval` does not compare the new test definitions. Raw `lib.failures` paths and root check names are unchanged; use the build log for named test results.
 

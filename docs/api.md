@@ -67,7 +67,7 @@ The root flake has one development `nixpkgs` input, which consumers can share wi
 inputs.crossConfig.inputs.nixpkgs.follows = "nixpkgs";
 ```
 
-Use the same input name as the consuming flake; `crossConfig` matches the README quickstart. Keep one nixpkgs revision per node collection. The input selects the shell, formatter, packages, checks, focused fixtures, and examples; the module still receives its `lib` from the receiver. Compatibility uses invocation-specific overrides, so no second compatibility input enters the consumer's lock graph. See [development instructions](development.md#compatibility-checks) for exact-revision commands and the policy coverage boundary.
+Use the same input name as the consuming flake; `crossConfig` matches the README quickstart. Keep one nixpkgs revision per node collection. The input selects the shell, formatter, checks, focused fixtures, and examples; the module still receives its `lib` from the receiver. Compatibility uses invocation-specific overrides, so no second compatibility input enters the consumer's lock graph. See [development instructions](development.md#compatibility-checks) for exact-revision commands and the policy coverage boundary.
 
 ## Flake-parts adapter
 
