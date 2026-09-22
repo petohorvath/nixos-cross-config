@@ -1,6 +1,7 @@
 {
   checkAssertions,
   crossConfig,
+  messagePattern,
   nixpkgs,
   system,
 }:
@@ -481,16 +482,14 @@ tests
     expr = rejections.taggedConflict;
     expectedError = {
       type = "ThrownError";
-      msg = "conflicting definition";
-      trace = [ "conflicting definition" ] ++ contributionOrigin;
+      msg = messagePattern ([ "conflicting definition" ] ++ contributionOrigin);
     };
   };
   testRejectsDefaultSource = {
     expr = rejections.taggedDefaultSource;
     expectedError = {
       type = "ThrownError";
-      msg = "is not of type";
-      trace = [
+      msg = messagePattern [
         "is not of type"
         "inventory.payload"
         "fixtures/tagged-default.nix"
@@ -501,16 +500,14 @@ tests
     expr = rejections.taggedIncompatible;
     expectedError = {
       type = "ThrownError";
-      msg = "is not of type";
-      trace = [ "is not of type" ] ++ contributionOrigin;
+      msg = messagePattern ([ "is not of type" ] ++ contributionOrigin);
     };
   };
   testRejectsInspectionDefinitionSource = {
     expr = rejections.taggedInspectionDefinitionSource;
     expectedError = {
       type = "ThrownError";
-      msg = "is not of type";
-      trace = [
+      msg = messagePattern [
         "is not of type"
         "inventory.payload.locked"
         "fixtures/tagged-invalid-local.nix"
@@ -521,80 +518,70 @@ tests
     expr = rejections.taggedMissingChild;
     expectedError = {
       type = "ThrownError";
-      msg = "missing destination";
-      trace = [ "missing destination" ] ++ contributionOrigin;
+      msg = messagePattern ([ "missing destination" ] ++ contributionOrigin);
     };
   };
   testRejectsMissingTag = {
     expr = rejections.taggedMissingTag;
     expectedError = {
       type = "ThrownError";
-      msg = "missing destination";
-      trace = [ "missing destination" ] ++ contributionOrigin;
+      msg = messagePattern ([ "missing destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyChild = {
     expr = rejections.taggedReadOnlyChild;
     expectedError = {
       type = "ThrownError";
-      msg = "read-only destination";
-      trace = [ "read-only destination" ] ++ contributionOrigin;
+      msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyCoerced = {
     expr = rejections.taggedReadOnlyCoerced;
     expectedError = {
       type = "ThrownError";
-      msg = "read-only destination";
-      trace = [ "read-only destination" ] ++ contributionOrigin;
+      msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyEither = {
     expr = rejections.taggedReadOnlyEither;
     expectedError = {
       type = "ThrownError";
-      msg = "read-only destination";
-      trace = [ "read-only destination" ] ++ contributionOrigin;
+      msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyLocal = {
     expr = rejections.taggedReadOnlyLocal;
     expectedError = {
       type = "ThrownError";
-      msg = "read-only destination";
-      trace = [ "read-only destination" ] ++ contributionOrigin;
+      msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyName = {
     expr = rejections.taggedReadOnlyName;
     expectedError = {
       type = "ThrownError";
-      msg = "read-only destination";
-      trace = [ "read-only destination" ] ++ contributionOrigin;
+      msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyNullable = {
     expr = rejections.taggedReadOnlyNullable;
     expectedError = {
       type = "ThrownError";
-      msg = "read-only destination";
-      trace = [ "read-only destination" ] ++ contributionOrigin;
+      msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyTag = {
     expr = rejections.taggedReadOnlyTag;
     expectedError = {
       type = "ThrownError";
-      msg = "read-only destination";
-      trace = [ "read-only destination" ] ++ contributionOrigin;
+      msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyUnique = {
     expr = rejections.taggedReadOnlyUnique;
     expectedError = {
       type = "ThrownError";
-      msg = "read-only destination";
-      trace = [ "read-only destination" ] ++ contributionOrigin;
+      msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsValueCycle = {

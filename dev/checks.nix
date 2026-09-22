@@ -1,11 +1,16 @@
 {
   formatter,
+  inputs,
   pkgs,
-  testRunner,
+  system,
 }:
 let
   checks = {
-    tests = pkgs.callPackage ../tests/check.nix { inherit testRunner; };
+    tests = pkgs.callPackage ../tests/check.nix {
+      inherit (inputs) nixpkgs;
+      flakeParts = inputs.flake-parts;
+      inherit system;
+    };
     formatting = mkCheck {
       name = "cross-config-formatting";
       packages = [ formatter ];

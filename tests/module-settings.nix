@@ -1,4 +1,8 @@
-{ crossConfig, nixpkgs }:
+{
+  crossConfig,
+  messagePattern,
+  nixpkgs,
+}:
 let
   rejections = import ./fixtures/module-settings.nix { inherit crossConfig nixpkgs; };
   inherit (nixpkgs) lib;
@@ -217,8 +221,7 @@ in
     expr = rejections.missingName;
     expectedError = {
       type = "ThrownError";
-      msg = "was accessed but has no value defined";
-      trace = [
+      msg = messagePattern [
         "crossConfig.name"
         "was accessed but has no value defined"
       ];
@@ -228,8 +231,7 @@ in
     expr = rejections.missingCollection;
     expectedError = {
       type = "ThrownError";
-      msg = "was accessed but has no value defined";
-      trace = [
+      msg = messagePattern [
         "crossConfig.nodeCollection"
         "was accessed but has no value defined"
       ];
@@ -239,8 +241,7 @@ in
     expr = rejections.missingPaths;
     expectedError = {
       type = "ThrownError";
-      msg = "was accessed but has no value defined";
-      trace = [
+      msg = messagePattern [
         "crossConfig.optionPaths"
         "was accessed but has no value defined"
       ];
@@ -250,8 +251,7 @@ in
     expr = rejections.invalidName;
     expectedError = {
       type = "ThrownError";
-      msg = "is not of type";
-      trace = [
+      msg = messagePattern [
         "crossConfig.name"
         "is not of type"
       ];
@@ -261,8 +261,7 @@ in
     expr = rejections.invalidCollection;
     expectedError = {
       type = "ThrownError";
-      msg = "is not of type";
-      trace = [
+      msg = messagePattern [
         "crossConfig.nodeCollection"
         "is not of type"
       ];
@@ -272,8 +271,7 @@ in
     expr = rejections.invalidPaths;
     expectedError = {
       type = "ThrownError";
-      msg = "is not of type";
-      trace = [
+      msg = messagePattern [
         "crossConfig.optionPaths"
         "is not of type"
       ];
@@ -283,8 +281,7 @@ in
     expr = rejections.invalidPath;
     expectedError = {
       type = "ThrownError";
-      msg = "is not of type";
-      trace = [
+      msg = messagePattern [
         "crossConfig.optionPaths"
         "is not of type"
       ];
@@ -294,8 +291,7 @@ in
     expr = rejections.invalidSegment;
     expectedError = {
       type = "ThrownError";
-      msg = "is not of type";
-      trace = [
+      msg = messagePattern [
         "crossConfig.optionPaths"
         "is not of type"
       ];
@@ -305,8 +301,7 @@ in
     expr = rejections.emptyRegistration;
     expectedError = {
       type = "ThrownError";
-      msg = "is not of type";
-      trace = [
+      msg = messagePattern [
         "crossConfig.optionPaths"
         "is not of type"
       ];
@@ -316,8 +311,7 @@ in
     expr = rejections.reservedCrossConfig;
     expectedError = {
       type = "ThrownError";
-      msg = "reserved root";
-      trace = [
+      msg = messagePattern [
         "crossConfig.optionPaths"
         "reserved root"
         "crossConfig.nodes"
@@ -329,8 +323,7 @@ in
     expr = rejections.reservedModule;
     expectedError = {
       type = "ThrownError";
-      msg = "reserved root";
-      trace = [
+      msg = messagePattern [
         "crossConfig.optionPaths"
         "reserved root"
         "_module.args"
@@ -342,8 +335,7 @@ in
     expr = rejections.reservedWithoutName;
     expectedError = {
       type = "ThrownError";
-      msg = "reserved root";
-      trace = [
+      msg = messagePattern [
         "crossConfig.optionPaths"
         "reserved root"
       ];
@@ -353,8 +345,7 @@ in
     expr = rejections.legacyReservedCrossConfig;
     expectedError = {
       type = "ThrownError";
-      msg = "reserved root";
-      trace = [
+      msg = messagePattern [
         "crossConfig.optionPaths"
         "reserved root"
         "crossConfig.nodes"
@@ -366,8 +357,7 @@ in
     expr = rejections.legacyReservedModule;
     expectedError = {
       type = "ThrownError";
-      msg = "reserved root";
-      trace = [
+      msg = messagePattern [
         "crossConfig.optionPaths"
         "reserved root"
         "_module.args"
@@ -379,8 +369,7 @@ in
     expr = rejections.conflictingCollections;
     expectedError = {
       type = "ThrownError";
-      msg = "multiple times";
-      trace = [
+      msg = messagePattern [
         "crossConfig.nodeCollection"
         "multiple times"
       ];

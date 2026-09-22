@@ -1,4 +1,8 @@
-{ checkAssertions, mkNodes }:
+{
+  checkAssertions,
+  messagePattern,
+  mkNodes,
+}:
 let
   rejections = import ./fixtures/contributions.nix { inherit mkNodes; };
   nodes = mkNodes {
@@ -167,8 +171,7 @@ in
     expr = rejections.nestedConflict;
     expectedError = {
       type = "ThrownError";
-      msg = "conflicting definition";
-      trace = [
+      msg = messagePattern [
         "conflicting definition"
         "sender `sender`"
         "receiver `receiver`"

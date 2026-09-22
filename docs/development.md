@@ -12,7 +12,7 @@ nix fmt --no-update-lock-file
 nix flake check --no-update-lock-file --print-build-logs
 ```
 
-`nix develop` is the explicit shell entrypoint. The default shell supports `x86_64-linux` and `aarch64-linux` and supplies Nix, nix-unit, nil, nixfmt, statix, deadnix, Git, shfmt, Prettier, actionlint, and the root formatter. The shell also provides the shared `cross-config-test` runner. All tools come from the selected `nixpkgs` input. Overriding that input also selects the shell and formatter tools. No KVM access or VM execution is required.
+`nix develop` is the explicit shell entrypoint. The default shell supports `x86_64-linux` and `aarch64-linux` and supplies Nix, nix-unit, nil, nixfmt, statix, deadnix, Git, shfmt, Prettier, actionlint, and the root formatter. All tools come from the selected `nixpkgs` input. Overriding that input also selects the shell and formatter tools. No KVM access or VM execution is required.
 
 The root `.envrc` contains `use flake`. Development configuration lives in `dev/`, with one root `flake.nix` and `flake.lock`; `dev/` is a flake-parts partition, not a separate flake. `.prettierrc.json` stays at the root for editor discovery.
 
@@ -22,13 +22,13 @@ Root `nix fmt` uses the project-owned treefmt wrapper. Nix uses nixfmt; shell fi
 
 Formatting excludes Git metadata, direnv state, build results, and lockfiles.
 
-Root `nix flake check` runs `checks.<system>.tests` through the shared test runner, alongside formatting, statix, deadnix, and workflow validation against the selected `nixpkgs` input. The test check includes value comparisons, expected errors, and diagnostic context from one collection. The runner returns a failing exit status for any unmet expectation. Its evaluator processes use store-path inputs and a temporary writable evaluation store inside the build sandbox. The writable store is needed because NixOS evaluation creates derivations and other store paths. The project has no VM targets.
+Root `nix flake check` runs `checks.<system>.tests` through nix-unit, alongside formatting, statix, deadnix, and workflow validation against the selected `nixpkgs` input. The test check includes value comparisons, expected errors, and diagnostic context from one collection. nix-unit returns a failing exit status for any unmet expectation. The Nix check builder invokes nix-unit separately for suite entries to bound evaluator memory, using store-path inputs and a temporary writable evaluation store inside the build sandbox. The writable store is needed because NixOS evaluation creates derivations and other store paths. The project has no VM targets.
 
 The ordinary flake checker evaluates applicable shell and formatter outputs and builds every declared check for the host system. The test suites evaluate the examples, including their system derivation paths, without building example systems. The selected input supplies tools and configurations throughout that evaluation.
 
-[Root `flake.nix`](../flake.nix) returns `mkFlake` directly, declaring the supported systems, `nixosModules.default`, `flakeModules.default`, and `lib`. Its `dev` partition supplies `checks`, `devShells`, and `formatter` through [dev/default.nix](../dev/default.nix). [The shell](../dev/shell.nix) and [formatter](../dev/formatter.nix) declare their package dependencies through `pkgs.callPackage`; [development composition](../dev/default.nix) supplies the selected inputs explicitly to the shared runner used by the shell and [check assembly](../dev/checks.nix). [Treefmt configuration](../dev/treefmt.toml) lives beside the formatter. The root library exports contain no focused fixtures or example nodes. Plain Nix consumers use `nixos/module.nix`, `flake-module.nix`, or `(import ./lib).mkModule`. The policy remains outside the input and import graph.
+[Root `flake.nix`](../flake.nix) returns `mkFlake` directly, declaring the supported systems, `nixosModules.default`, `flakeModules.default`, and `lib`. Its `dev` partition supplies `checks`, `devShells`, and `formatter` through [dev/default.nix](../dev/default.nix). [The shell](../dev/shell.nix) and [formatter](../dev/formatter.nix) declare their package dependencies through `pkgs.callPackage`; [development composition](../dev/default.nix) supplies the selected inputs explicitly through [check assembly](../dev/checks.nix) to the nix-unit check. [Treefmt configuration](../dev/treefmt.toml) lives beside the formatter. The root library exports contain no focused fixtures or example nodes. Plain Nix consumers use `nixos/module.nix`, `flake-module.nix`, or `(import ./lib).mkModule`. The policy remains outside the input and import graph.
 
-Behavior suites live directly under `tests/`, alongside the shared runner and its check builder. Shared node constructors and offline evaluation helpers live in [tests/helpers](../tests/helpers/). These helpers assemble the public flake exports with the supplied inputs, so the tests exercise the same exports consumers use. Concrete fixture modules and evaluated scenarios live in [tests/fixtures](../tests/fixtures/). Examples remain in `examples/` and run through the suites.
+Behavior suites live directly under `tests/`, alongside their check builder. Shared node constructors and offline evaluation helpers live in [tests/helpers](../tests/helpers/). These helpers assemble the public flake exports with the supplied inputs, so the tests exercise the same exports consumers use. Concrete fixture modules and evaluated scenarios live in [tests/fixtures](../tests/fixtures/). Examples remain in `examples/` and run through the suites.
 
 ## Compatibility checks
 
@@ -107,40 +107,40 @@ The separate final command validates the committed default. Repeat compatibility
 
 ## Focused checks
 
-Root `nix flake check --no-update-lock-file --print-build-logs` runs the complete test collection through `checks.<system>.tests`, alongside formatting and lint. The default development shell provides the same runner as `cross-config-test`. Run it from the repository root to execute all tests or select a suite or test by name:
+Root `nix flake check --no-update-lock-file --print-build-logs` runs the complete test collection through `checks.<system>.tests`, alongside formatting and lint. For a focused run, use nix-unit from the default development shell at the repository root:
 
 ```bash
-# Run inside nix develop or the direnv shell.
-cross-config-test
-cross-config-test --list
-cross-config-test merging
-cross-config-test destinations.testRejectsMissingDestination
+nix-unit dev/tests.nix --attr merging
+nix-unit dev/tests.nix --attr destinations.testRejectsMissingDestination
+nix-unit dev/tests.nix --attr destinations.testRejectsUnregisteredDestination
 ```
 
-A selection includes every assertion declared by each matching test, including error messages and source context. A suite name selects its descendants; a full test name selects one case. `--list` also accepts a selection and lists names without forcing test expressions. An empty collection or unmatched selection exits unsuccessfully. The runner reads the current checkout, so edits to test definitions are available without re-entering the shell. Changes to the runner itself require a new shell entry. Track new files with `git add` before Git-backed flake evaluation.
+A suite name selects its descendants; a full test name selects one case. Every selected case includes its value or error expectations, including required message fragments. nix-unit handles discovery, selection, comparisons, error matching, and reporting. It reads the current checkout, so edits to tests are available without re-entering the shell. Track new files with `git add` before Git-backed flake evaluation.
 
-The root [locked input](../flake.lock), `nixpkgs`, selects NixOS 26.05 by default. The runner receives the selected `nixpkgs`, flake-parts, and host architecture explicitly. [dev/tests.nix](../dev/tests.nix) loads the complete collection and supplies root defaults for direct inspection. Its return value is test definitions; evaluating it does not verify expectations. Raw configurations under [tests/fixtures](../tests/fixtures/) are private inputs to the suites.
+[dev/tests.nix](../dev/tests.nix) loads the complete collection with the root locked inputs by default. The root [locked input](../flake.lock), `nixpkgs`, selects NixOS 26.05. The loader returns test definitions; evaluating it alone does not verify expectations. Raw configurations under [tests/fixtures](../tests/fixtures/) are private inputs to the suites.
 
-For a focused investigation at another exact revision, set `NIXPKGS_REV` to its full commit and enter a shell using that selection:
+For a focused investigation at another exact revision, set `NIXPKGS_REV` to its full commit and select it for both the development tools and the test loader:
 
 ```bash
 nix develop --override-input nixpkgs "github:NixOS/nixpkgs/$NIXPKGS_REV" \
-  --no-write-lock-file --command cross-config-test merging
+  --no-write-lock-file --command \
+  nix-unit dev/tests.nix --attr merging \
+  --arg nixpkgs "(builtins.getFlake \"github:NixOS/nixpkgs/$NIXPKGS_REV\")"
 ```
 
-The override selects both tools and fixture evaluation without writing the lock. A focused run does not replace the full root check or policy compatibility execution.
+The shell override selects the tools; the explicit argument selects the tested configurations and the nixpkgs library used by flake-parts. Neither command writes the lock. A focused run does not replace the full root check or policy compatibility execution.
 
 ### Test definitions
 
-[tests/default.nix](../tests/default.nix) registers suites by behavior. Each test name starts with `test` and pairs `expr` with `expected`, or with `expectedError` for a rejection case. Declare the expected error type and message pattern beside the expression. Add `expectedError.trace` when the complete diagnostic must contain specific literal fragments:
+[tests/default.nix](../tests/default.nix) registers suites by behavior. Each test name starts with `test` and pairs `expr` with `expected`, or with native nix-unit `expectedError` for a rejection case. Declare the expected error type and message pattern beside the expression. The private [message-pattern helper](../tests/helpers/message-pattern.nix) builds a regex requiring every supplied literal fragment, in any order and across line breaks:
 
 ```nix
 testRejectsMissingDestination = {
   expr = rejections.missingDestination;
   expectedError = {
     type = "ThrownError";
-    msg = "missing destination";
-    trace = [
+    msg = messagePattern [
+      "missing destination"
       "sender `sender`"
       "receiver `receiver`"
       "fixtures/destination-sender.nix"
@@ -149,7 +149,7 @@ testRejectsMissingDestination = {
 };
 ```
 
-Value comparisons and typed error expectations use nix-unit internally. The runner also captures full traces for `expectedError.trace`, which is a project extension to nix-unit's definition shape. It discovers cases without forcing `expr`, isolates evaluator processes to bound memory, and uses store-path inputs and a temporary writable evaluation store for offline NixOS evaluation. A mismatch prints the test name and the relevant value difference, unexpected error, or missing diagnostic fragment, and causes the command to fail.
+All expectations use nix-unit's standard definition shape. Error tests match the underlying error message. The unregistered-destination case checks its rejection reason, option path, and original source file; additional sender wording in the evaluator stack trace is outside that expectation. A mismatch prints the test name and the relevant value difference or error mismatch, and causes the command to fail. Use nix-unit's `--show-trace` option when investigating unexpected evaluation errors.
 
 The ordinary node helpers exercise `nixosModules.default` through the public flake export. [Module](../tests/module.nix) and [setting](../tests/module-settings.nix) suites cover receiver-supplied `lib`, reciprocal contributions, shared registrations, normalization, priorities, required settings, and lazy collections. [Constructor tests](../tests/mk-module.nix) cover `lib.mkModule`; `plainImports` repeats the module and constructor suites through direct imports without development inputs.
 

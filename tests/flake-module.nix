@@ -2,6 +2,7 @@
   checkAssertions,
   crossConfig,
   flakeParts,
+  messagePattern,
   nixpkgs,
   system,
 }:
@@ -398,8 +399,7 @@ in
     expr = rejections.flakeConflictingCollections;
     expectedError = {
       type = "ThrownError";
-      msg = "multiple times";
-      trace = [
+      msg = messagePattern [
         "crossConfig.nodeCollection"
         "multiple times"
       ];
@@ -409,8 +409,7 @@ in
     expr = rejections.flakeEmptyRegistration;
     expectedError = {
       type = "ThrownError";
-      msg = "is not of type";
-      trace = [
+      msg = messagePattern [
         "crossConfig.optionPaths"
         "is not of type"
       ];
@@ -420,8 +419,7 @@ in
     expr = rejections.flakeInvalidCollection;
     expectedError = {
       type = "ThrownError";
-      msg = "is not of type";
-      trace = [
+      msg = messagePattern [
         "crossConfig.nodeCollection"
         "is not of type"
       ];
@@ -431,8 +429,7 @@ in
     expr = rejections.flakeInvalidPath;
     expectedError = {
       type = "ThrownError";
-      msg = "is not of type";
-      trace = [
+      msg = messagePattern [
         "crossConfig.optionPaths"
         "is not of type"
       ];
@@ -442,8 +439,7 @@ in
     expr = rejections.flakeInvalidPaths;
     expectedError = {
       type = "ThrownError";
-      msg = "is not of type";
-      trace = [
+      msg = messagePattern [
         "crossConfig.optionPaths"
         "is not of type"
       ];
@@ -453,8 +449,7 @@ in
     expr = rejections.flakeInvalidSegment;
     expectedError = {
       type = "ThrownError";
-      msg = "is not of type";
-      trace = [
+      msg = messagePattern [
         "crossConfig.optionPaths"
         "is not of type"
       ];
@@ -464,8 +459,7 @@ in
     expr = rejections.flakeMissingPaths;
     expectedError = {
       type = "ThrownError";
-      msg = "was accessed but has no value defined";
-      trace = [
+      msg = messagePattern [
         "crossConfig.optionPaths"
         "was accessed but has no value defined"
       ];
@@ -475,8 +469,7 @@ in
     expr = rejections.flakeReservedCrossConfig;
     expectedError = {
       type = "ThrownError";
-      msg = "reserved root";
-      trace = [
+      msg = messagePattern [
         "crossConfig.optionPaths"
         "reserved root"
         "crossConfig.nodes"
@@ -487,8 +480,7 @@ in
     expr = rejections.flakeReservedModule;
     expectedError = {
       type = "ThrownError";
-      msg = "reserved root";
-      trace = [
+      msg = messagePattern [
         "crossConfig.optionPaths"
         "reserved root"
         "_module.args"

@@ -1,4 +1,4 @@
-# Load the complete test collection, using root inputs unless supplied by the runner.
+# Load the nix-unit collection, using root inputs unless supplied explicitly.
 {
   nixpkgs ? (builtins.getFlake (toString ../.)).inputs.nixpkgs,
   flakeParts ?

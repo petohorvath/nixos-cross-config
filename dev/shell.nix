@@ -11,7 +11,6 @@
   prettier,
   shfmt,
   statix,
-  testRunner,
 }:
 mkShellNoCC {
   packages = [
@@ -26,6 +25,5 @@ mkShellNoCC {
     prettier
     actionlint
     formatter
-    testRunner
   ];
 }

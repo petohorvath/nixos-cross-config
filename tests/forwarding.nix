@@ -1,4 +1,8 @@
-{ checkAssertions, mkNodes }:
+{
+  checkAssertions,
+  messagePattern,
+  mkNodes,
+}:
 let
   rejections = import ./fixtures/contributions.nix { inherit mkNodes; };
   nodes = mkNodes {
@@ -41,8 +45,7 @@ in
     expr = rejections.incompatibleType;
     expectedError = {
       type = "ThrownError";
-      msg = "is not of type";
-      trace = [
+      msg = messagePattern [
         "is not of type"
         "networking.firewall.allowedTCPPorts"
         "not-a-port"
@@ -55,8 +58,7 @@ in
     expr = rejections.failedAssertion;
     expectedError = {
       type = "ThrownError";
-      msg = "The contributed receiver assertion failed.";
-      trace = [ "The contributed receiver assertion failed." ];
+      msg = messagePattern [ "The contributed receiver assertion failed." ];
     };
   };
 }
