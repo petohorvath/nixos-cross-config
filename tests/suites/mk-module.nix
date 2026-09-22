@@ -1,4 +1,9 @@
-{ crossConfig, nixpkgs, ... }:
+{
+  crossConfig,
+  nixpkgs,
+  sourcePaths,
+  ...
+}:
 let
   inherit (nixpkgs) lib;
   result = {
@@ -23,11 +28,11 @@ let
     {
       testConstructorLocation = {
         expr = map (definition: definition.file) node.options.crossConfig.name.definitionsWithLocations;
-        expected = [ (toString ../../lib/default.nix) ];
+        expected = [ sourcePaths.mkModule ];
       };
       testDeclarations = {
         expr = node.options.crossConfig.nodes.declarations;
-        expected = [ (toString ../../nixos/module.nix) ];
+        expected = [ sourcePaths.module ];
       };
       testReceiverLibrary = {
         expr = node.options.crossConfig.nodes.receiverLibrary;

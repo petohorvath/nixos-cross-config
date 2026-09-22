@@ -16,6 +16,7 @@ let
     inherit crossConfig nixpkgs system;
   };
   testContext = {
+    sourcePaths = import ../helpers/source-paths.nix;
     inherit
       checkAssertions
       crossConfig
