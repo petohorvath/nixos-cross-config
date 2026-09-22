@@ -4,7 +4,7 @@
   mkNodes,
 }:
 let
-  rejections = import ./fixtures/destinations.nix { inherit mkNodes; };
+  rejections = import ../fixtures/destinations.nix { inherit mkNodes; };
   contributionOrigin = [
     "sender `sender`"
     "receiver `receiver`"

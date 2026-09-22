@@ -6,8 +6,8 @@
   system,
 }:
 let
-  rejections = import ./fixtures/tagged-destinations.nix { mkNodes = mkNixosNodes; };
-  mkNixosNodes = import ./helpers/mk-nodes.nix { inherit crossConfig nixpkgs system; };
+  rejections = import ../fixtures/tagged-destinations.nix { mkNodes = mkNixosNodes; };
+  mkNixosNodes = import ../helpers/mk-nodes.nix { inherit crossConfig nixpkgs system; };
   contributionOrigin = [
     "sender `sender`"
     "receiver `receiver`"
@@ -18,7 +18,7 @@ let
   tests = {
     nixos =
       let
-        result = import ./fixtures/tagged-nixos.nix { inherit crossConfig nixpkgs system; };
+        result = import ../fixtures/tagged-nixos.nix { inherit crossConfig nixpkgs system; };
       in
       {
         testPublication = {
@@ -129,7 +129,7 @@ let
       ];
     };
     receiverLocalPermissions = checkValue "contributed" {
-      tagOption = import ./fixtures/tagged-permissions.nix { inherit lib; };
+      tagOption = import ../fixtures/tagged-permissions.nix { inherit lib; };
       receiverDefinitions = [ { payload.locked = false; } ];
     };
     freeform = checkValue "contributed" {
@@ -426,8 +426,8 @@ let
         unique = lib.types.uniq submoduleOption.type;
       };
 
-  mkNodes = import ./helpers/mk-module-nodes.nix { inherit crossConfig lib; };
-  mkTaggedNodes = import ./helpers/mk-tagged-nodes.nix { inherit lib mkNodes; };
+  mkNodes = import ../helpers/mk-module-nodes.nix { inherit crossConfig lib; };
+  mkTaggedNodes = import ../helpers/mk-tagged-nodes.nix { inherit lib mkNodes; };
   checkValue =
     expected: args:
     let
@@ -585,7 +585,7 @@ tests
     };
   };
   testRejectsValueCycle = {
-    expr = import ./fixtures/tagged-value-cycle.nix { mkNodes = mkNixosNodes; };
+    expr = import ../fixtures/tagged-value-cycle.nix { mkNodes = mkNixosNodes; };
     expectedError = {
       type = "EvalError";
       msg = "infinite recursion encountered";

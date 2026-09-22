@@ -4,7 +4,7 @@
   mkNodes,
 }:
 let
-  rejections = import ./fixtures/contributions.nix { inherit mkNodes; };
+  rejections = import ../fixtures/contributions.nix { inherit mkNodes; };
   nodes = mkNodes {
     optionPaths = [
       [

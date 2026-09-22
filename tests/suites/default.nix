@@ -4,15 +4,15 @@
   system,
 }:
 let
-  crossConfig = import ./helpers/flake-outputs.nix { inherit flakeParts nixpkgs; };
-  messagePattern = import ./helpers/message-pattern.nix { inherit (nixpkgs) lib; };
+  crossConfig = import ../helpers/flake-outputs.nix { inherit flakeParts nixpkgs; };
+  messagePattern = import ../helpers/message-pattern.nix { inherit (nixpkgs) lib; };
   checkAssertions =
     nodes:
     nixpkgs.lib.pipe nodes [
       builtins.attrValues
       (builtins.all (node: builtins.all (entry: entry.assertion) node.config.assertions))
     ];
-  mkNodes = import ./helpers/mk-nodes.nix {
+  mkNodes = import ../helpers/mk-nodes.nix {
     inherit crossConfig nixpkgs system;
   };
 in
@@ -44,8 +44,8 @@ in
   plainImports =
     let
       crossConfig = {
-        lib = import ../lib;
-        nixosModules.default = ../nixos/module.nix;
+        lib = import ../../lib;
+        nixosModules.default = ../../nixos/module.nix;
       };
     in
     {

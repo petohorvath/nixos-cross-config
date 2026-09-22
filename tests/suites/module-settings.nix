@@ -4,9 +4,9 @@
   nixpkgs,
 }:
 let
-  rejections = import ./fixtures/module-settings.nix { inherit crossConfig nixpkgs; };
+  rejections = import ../fixtures/module-settings.nix { inherit crossConfig nixpkgs; };
   inherit (nixpkgs) lib;
-  mkNodes = import ./helpers/mk-module-nodes.nix { inherit crossConfig lib; };
+  mkNodes = import ../helpers/mk-module-nodes.nix { inherit crossConfig lib; };
   valuePath = [
     "inventory"
     "values"

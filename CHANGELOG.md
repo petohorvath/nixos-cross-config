@@ -20,14 +20,14 @@
 - **Breaking:** select tools, fixtures, checks, and examples through one root `nixpkgs` input; remove stable/unstable labels from focused fixtures and root check names. Test runners still accept `nixpkgs` explicitly. Root `nix flake check` validates the selected revision. Native input overrides select another revision for the complete root check interface without changing the committed default.
 - Keep explicit `systems` bindings and public flake outputs, preserving the default nixpkgs revision in the root lock.
 - Run named value comparisons, expected errors, native recursion cases, and diagnostic message assertions through one native nix-unit collection.
-- **Breaking (development interface):** replace separate evaluation, diagnostic, and value-cycle check outputs with `checks.<system>.tests`. The development shell provides nix-unit for focused runs, including all assertions for each selected test. Rename the collection loader from `dev/fixtures.nix` to `dev/tests.nix` and remove its separate `tests` and `failures` trees. Rejection tests now require the intended error message as well as its type.
+- **Breaking (development interface):** replace separate evaluation, diagnostic, and value-cycle check outputs with `checks.<system>.tests`. The development shell provides nix-unit for focused runs, including all assertions for each selected test. Rename the collection loader from `dev/fixtures.nix` to `tests/entrypoint.nix` and remove its separate `tests` and `failures` trees. Rejection tests now require the intended error message as well as its type.
 - Select shared policy release `v0.3.0` and its `Policy` caller, deriving required merge checks from the release and central architecture and VM records. Preserve independent root defaults, verified stable and unstable compatibility runs, and separate compliance, formatting/lint, and committed-default jobs.
 
 ### Removed
 
 - **Breaking (development interface):** the redundant `packages.<system>.cross-config-fmt` output. The formatter remains available through `formatter.<system>`, `nix fmt`, and the default development shell.
 - **Breaking:** plain-export access through `(import ./flake.nix).outputs { }`. Use direct module paths and `(import ./lib).mkModule`; the small constructor moves from `nixos/mk-module.nix` into `lib/default.nix`.
-- **Breaking (development interface):** root `lib.tests`, `lib.failures`, and example `nixosConfigurations`. nix-unit loads suites from `dev/tests.nix`; raw scenarios become private fixtures and examples remain covered by the tests.
+- **Breaking (development interface):** root `lib.tests`, `lib.failures`, and example `nixosConfigurations`. nix-unit loads suites from `tests/entrypoint.nix`; raw scenarios become private fixtures and examples remain covered by the tests.
 - The separate `dev/flake.nix` and its lockfile, the benchmark suite, and Python, Ruff, and GNU time development tooling.
 - Completed implementation plans and separate review, research, and validation logs; retain current design explanations and architectural decisions.
 - **Breaking:** the root `nixpkgs-unstable` input. Compatibility revisions are supplied through native root input overrides.
@@ -38,7 +38,7 @@ Rename `crossConfig.nodeCollection` to `crossConfig.nodeConfigurations` in NixOS
 
 Replace references to `packages.<system>.cross-config-fmt` with `formatter.<system>`. For example, replace `nix build .#cross-config-fmt` with `nix build .#formatter.x86_64-linux` on x86_64 Linux. Use root `nix fmt --no-update-lock-file` to format the project; the `cross-config-fmt` command remains available inside `nix develop`.
 
-For focused tests, replace raw `failures.<fixture>` evaluations and old `dev/fixtures.nix` paths with `nix-unit dev/tests.nix --attr <suite-or-test>` inside the development shell. For example, use `nix-unit dev/tests.nix --attr merging.testHosts` or `nix-unit dev/tests.nix --attr merging.testRejectsLocalConflict`. Each selected case includes its expected value or error and required message fragments. `dev/tests.nix` is the collection loader; its definitions alone do not execute assertions. Root `nix flake check --no-update-lock-file --print-build-logs` remains the complete validation command. See [focused checks](docs/development.md#focused-checks) for exact-revision commands.
+For focused tests, replace raw `failures.<fixture>` evaluations and old `dev/fixtures.nix` or `dev/tests.nix` paths with `nix-unit tests/entrypoint.nix --attr <suite-or-test>` inside the development shell. For example, use `nix-unit tests/entrypoint.nix --attr merging.testHosts` or `nix-unit tests/entrypoint.nix --attr merging.testRejectsLocalConflict`. Each selected case includes its expected value or error and required message fragments. `tests/entrypoint.nix` is the collection loader; its definitions alone do not execute assertions. Root `nix flake check --no-update-lock-file --print-build-logs` remains the complete validation command. See [focused checks](docs/development.md#focused-checks) for exact-revision commands.
 
 Replace plain-export access through `(import ./flake.nix).outputs { }` with direct entry points relative to the library checkout:
 
@@ -48,7 +48,7 @@ Replace plain-export access through `(import ./flake.nix).outputs { }` with dire
 | `flakeModules.default` | `./flake-module.nix` in flake-parts `imports` |
 | `lib.mkModule`         | `(import ./lib).mkModule`                     |
 
-Flake consumers keep the same module and constructor exports. The library no longer exports example nodes; run `nix-unit dev/tests.nix --attr example` and `nix-unit dev/tests.nix --attr flakeModule.example` or construct nodes from the files in `examples/`.
+Flake consumers keep the same module and constructor exports. The library no longer exports example nodes; run `nix-unit tests/entrypoint.nix --attr example` and `nix-unit tests/entrypoint.nix --attr flakeModule.example` or construct nodes from the files in `examples/`.
 
 Flake-parts consumers can opt into `flakeModules.default`, move shared registrations to flake-level `crossConfig.optionPaths`, and import `config.flake.nixosModules.crossConfig` in each node. Keep node identities and outgoing contributions at NixOS scope. Set flake-level `crossConfig.nodeConfigurations` for subsets or guests outside `nixosConfigurations`. Extend shared lists at flake scope; ordinary node-level definitions replace the adapter's `mkDefault` settings. This adapter is additive and requires no migration for standalone or constructor consumers. See the [flake-parts guide](docs/flake-parts.md).
 

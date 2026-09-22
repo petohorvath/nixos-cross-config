@@ -8,10 +8,10 @@
 }:
 let
   sourceDir = lib.cleanSource ../.;
-  testFile = sourceDir + "/dev/tests.nix";
-  tests = import testFile { inherit flakeParts nixpkgs system; };
+  testEntrypoint = sourceDir + "/tests/entrypoint.nix";
+  tests = import testEntrypoint { inherit flakeParts nixpkgs system; };
   # Bound memory by starting a fresh evaluator for each suite entry.
-  groups = lib.concatLists (
+  testGroups = lib.concatLists (
     lib.mapAttrsToList (
       suite: entries:
       map (
@@ -23,23 +23,25 @@ let
       ) (builtins.attrNames entries)
     ) tests
   );
-  inputsPath = builtins.toFile "cross-config-test-inputs.nix" ''
+  # Reconstruct inputs from store paths so the sandbox needs no flake fetching.
+  evaluationInputsFile = builtins.toFile "cross-config-test-inputs.nix" ''
     import ${sourceDir}/tests/helpers/evaluation-inputs.nix {
       flakePartsDir = "${flakeParts}";
       nixpkgsDir = "${nixpkgs}";
     }
   '';
-  checkGroup = group: ''
+  # NixOS evaluation creates store paths, so each run needs a writable store.
+  runTestGroup = group: ''
     nix-unit --show-trace \
       --eval-store "$TMPDIR/eval-store" --gc-roots-dir "$TMPDIR/gc-roots" \
-      ${testFile} --attr ${lib.escapeShellArg group} \
-      --arg nixpkgs '(import ${inputsPath}).nixpkgs' \
-      --arg flakeParts '(import ${inputsPath}).flakeParts' \
+      ${testEntrypoint} --attr ${lib.escapeShellArg group} \
+      --arg nixpkgs '(import ${evaluationInputsFile}).nixpkgs' \
+      --arg flakeParts '(import ${evaluationInputsFile}).flakeParts' \
       --argstr system ${lib.escapeShellArg system}
   '';
 in
-assert groups != [ ];
+assert testGroups != [ ];
 runCommand "cross-config-tests" { nativeBuildInputs = [ nix-unit ]; } ''
-  ${lib.concatMapStringsSep "\n" checkGroup groups}
+  ${lib.concatMapStringsSep "\n" runTestGroup testGroups}
   touch "$out"
 ''
