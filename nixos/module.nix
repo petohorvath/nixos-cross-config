@@ -14,6 +14,7 @@ let
   inherit (config.crossConfig) name optionPaths;
   nodes = config.crossConfig.nodeCollection;
   inspectionPaths = specialArgs.__nixosCrossConfigInspectPaths or [ ];
+  isInspectingDestinations = inspectionPaths != [ ];
   settings = import ../lib/settings.nix {
     inherit lib;
     nodeName = if options.crossConfig.name.isDefined then name else null;
@@ -35,6 +36,7 @@ let
       optionPaths
       options
       ;
+    inherit (settings) reservedRoots;
   };
 
   # Required settings must also be checked on idle nodes with no paths.
@@ -64,8 +66,10 @@ in
   };
 
   config = lib.mkMerge [
-    # Declarations fix the outer names before any allowed paths are inspected.
-    (lib.mapAttrs receiving.mkReceivingNamespace (builtins.removeAttrs options settings.reservedRoots))
-    (lib.optionalAttrs (inspectionPaths == [ ]) { inherit assertions; })
+    receiving.definitions
+    {
+      # Inspection checks local declarations; validate contributions only in the main evaluation.
+      assertions = lib.optionals (!isInspectingDestinations) assertions;
+    }
   ];
 }

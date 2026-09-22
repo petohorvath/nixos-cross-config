@@ -6,8 +6,12 @@
   nodes,
   optionPaths,
   options,
+  reservedRoots,
 }:
 let
+  # Declarations fix the outer names before any allowed paths are inspected.
+  receivingOptions = builtins.removeAttrs options reservedRoots;
+
   mkReceivingNamespace =
     root: _:
     lib.pipe optionPaths [
@@ -104,6 +108,6 @@ let
   isWritable = option: option != null && !(option.readOnly or false);
 in
 {
-  inherit mkReceivingNamespace;
+  definitions = lib.mapAttrs mkReceivingNamespace receivingOptions;
   assertions = map mkDestinationAssertion optionPaths;
 }
