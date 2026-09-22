@@ -3,7 +3,7 @@
   inspectionPaths,
   lib,
   name,
-  nodes,
+  nodeCollection,
   optionPaths,
   options,
   reservedRoots,
@@ -90,7 +90,7 @@ let
           lib.attrByPath path [ ] (node.config.crossConfig.nodes.${name} or { })
         );
     in
-    lib.pipe nodes [
+    lib.pipe nodeCollection [
       (lib.mapAttrsToList fromSender)
       lib.concatLists
     ];

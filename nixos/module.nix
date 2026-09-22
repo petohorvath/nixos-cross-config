@@ -11,44 +11,44 @@
   ...
 }:
 let
-  inherit (config.crossConfig) name optionPaths;
-  nodes = config.crossConfig.nodeCollection;
-  inspectionPaths = specialArgs.__nixosCrossConfigInspectPaths or [ ];
-  isInspectingDestinations = inspectionPaths != [ ];
+  cfg = config.crossConfig;
+
+  # Path errors should remain useful even when the required node name is missing.
+  nodeNameForErrors = if options.crossConfig.name.isDefined then cfg.name else null;
   settings = import ../lib/settings.nix {
     inherit lib;
-    nodeName = if options.crossConfig.name.isDefined then name else null;
+    nodeName = nodeNameForErrors;
   };
 
-  outgoingDefinitions =
-    receiver: contribution:
-    builtins.addErrorContext "while evaluating contributions from sender `${name}` to receiver `${receiver}`:" contribution._definitions;
+  outgoingOption = import ../lib/outgoing-option.nix {
+    inherit lib;
+    inherit (cfg) name optionPaths;
+  };
 
-  contributionType = import ../lib/contribution-type.nix { inherit lib optionPaths; };
-
+  inspectionPaths = specialArgs.__nixosCrossConfigInspectPaths or [ ];
+  isInspectingDestinations = inspectionPaths != [ ];
   receiving = import ../lib/receiving.nix {
     inherit
       extendModules
       inspectionPaths
       lib
-      name
-      nodes
-      optionPaths
       options
       ;
+    inherit (cfg) name nodeCollection optionPaths;
     inherit (settings) reservedRoots;
   };
 
+  destinationAssertions = receiving.assertions;
+  receiverAssertions = lib.mapAttrsToList mkReceiverAssertion cfg.nodes;
+
   # Required settings must also be checked on idle nodes with no paths.
-  assertions = builtins.seq name (
-    builtins.seq nodes (
-      receiving.assertions ++ lib.mapAttrsToList mkReceiverAssertion config.crossConfig.nodes
-    )
+  assertions = builtins.seq cfg.name (
+    builtins.seq cfg.nodeCollection (destinationAssertions ++ receiverAssertions)
   );
 
   mkReceiverAssertion = receiver: contribution: {
-    assertion = builtins.seq contribution (builtins.hasAttr receiver nodes);
-    message = "nixos-cross-config: sender `${name}` targets unknown receiver `${receiver}`.";
+    assertion = builtins.seq contribution (builtins.hasAttr receiver cfg.nodeCollection);
+    message = "nixos-cross-config: sender `${cfg.name}` targets unknown receiver `${receiver}`.";
   };
 in
 {
@@ -57,12 +57,7 @@ in
       type = lib.types.str;
       description = "Required node identity within the caller-owned node collection, independent of the hostname.";
     };
-    nodes = lib.mkOption {
-      type = lib.types.attrsOf contributionType;
-      default = { };
-      description = "Configuration contributions indexed by receiver node identity.";
-      apply = lib.mapAttrs outgoingDefinitions;
-    };
+    nodes = outgoingOption;
   };
 
   config = lib.mkMerge [

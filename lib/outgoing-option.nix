@@ -1,5 +1,13 @@
-{ lib, optionPaths }:
+{
+  lib,
+  name,
+  optionPaths,
+}:
 let
+  getDefinitions =
+    receiver: contribution:
+    builtins.addErrorContext "while evaluating contributions from sender `${name}` to receiver `${receiver}`:" contribution._definitions;
+
   mkContributionModule =
     { options, ... }:
     {
@@ -33,4 +41,9 @@ let
 
   restoreDefinitionProperties = import ./restore-definition-properties.nix { inherit lib; };
 in
-lib.types.submodule mkContributionModule
+lib.mkOption {
+  type = lib.types.attrsOf (lib.types.submodule mkContributionModule);
+  default = { };
+  description = "Configuration contributions indexed by receiver node identity.";
+  apply = lib.mapAttrs getDefinitions;
+}
