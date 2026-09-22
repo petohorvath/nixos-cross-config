@@ -1,9 +1,4 @@
-{
-  crossConfig,
-  flakeParts,
-  mkNodes,
-  nixpkgs,
-}:
+{ mkNodes }:
 let
   localConflict = domainFailure {
     sender.crossConfig.nodes.receiver.networking.domain = "sender.example";
@@ -129,7 +124,3 @@ in
   incompatibleType = incompatibleType.receiver.config.networking.firewall.allowedTCPPorts;
   failedAssertion = failedAssertion.receiver.config.system.build.toplevel.drvPath;
 }
-// import ./destination-failures.nix { inherit mkNodes; }
-// import ./tagged-failures.nix { inherit mkNodes; }
-// import ./module-failures.nix { inherit crossConfig nixpkgs; }
-// import ./flake-module-failures.nix { inherit crossConfig flakeParts; }

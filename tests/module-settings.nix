@@ -1,5 +1,10 @@
-{ crossConfig, nixpkgs }:
+{
+  crossConfig,
+  messagePattern,
+  nixpkgs,
+}:
 let
+  rejections = import ./fixtures/module-settings.nix { inherit crossConfig nixpkgs; };
   inherit (nixpkgs) lib;
   mkNodes = import ./helpers/mk-module-nodes.nix { inherit crossConfig lib; };
   valuePath = [
@@ -210,4 +215,164 @@ in
     { crossConfig.nodeCollection = lib.mkDefault (throw "Discarded collection was forced."); }
     { crossConfig.nodeCollection.unused = throw "Selected node was forced."; }
   ];
+}
+// {
+  testRejectsMissingName = {
+    expr = rejections.missingName;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.name"
+        "was accessed but has no value defined"
+      ];
+    };
+  };
+  testRejectsMissingCollection = {
+    expr = rejections.missingCollection;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.nodeCollection"
+        "was accessed but has no value defined"
+      ];
+    };
+  };
+  testRejectsMissingPaths = {
+    expr = rejections.missingPaths;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.optionPaths"
+        "was accessed but has no value defined"
+      ];
+    };
+  };
+  testRejectsInvalidName = {
+    expr = rejections.invalidName;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.name"
+        "is not of type"
+      ];
+    };
+  };
+  testRejectsInvalidCollection = {
+    expr = rejections.invalidCollection;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.nodeCollection"
+        "is not of type"
+      ];
+    };
+  };
+  testRejectsInvalidPaths = {
+    expr = rejections.invalidPaths;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.optionPaths"
+        "is not of type"
+      ];
+    };
+  };
+  testRejectsInvalidPath = {
+    expr = rejections.invalidPath;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.optionPaths"
+        "is not of type"
+      ];
+    };
+  };
+  testRejectsInvalidSegment = {
+    expr = rejections.invalidSegment;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.optionPaths"
+        "is not of type"
+      ];
+    };
+  };
+  testRejectsEmptyRegistration = {
+    expr = rejections.emptyRegistration;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.optionPaths"
+        "is not of type"
+      ];
+    };
+  };
+  testRejectsReservedCrossConfig = {
+    expr = rejections.reservedCrossConfig;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.optionPaths"
+        "reserved root"
+        "crossConfig.nodes"
+        "receiver"
+      ];
+    };
+  };
+  testRejectsReservedModule = {
+    expr = rejections.reservedModule;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.optionPaths"
+        "reserved root"
+        "_module.args"
+        "receiver"
+      ];
+    };
+  };
+  testRejectsReservedWithoutName = {
+    expr = rejections.reservedWithoutName;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.optionPaths"
+        "reserved root"
+      ];
+    };
+  };
+  testRejectsLegacyReservedCrossConfig = {
+    expr = rejections.legacyReservedCrossConfig;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.optionPaths"
+        "reserved root"
+        "crossConfig.nodes"
+        "receiver"
+      ];
+    };
+  };
+  testRejectsLegacyReservedModule = {
+    expr = rejections.legacyReservedModule;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.optionPaths"
+        "reserved root"
+        "_module.args"
+        "receiver"
+      ];
+    };
+  };
+  testRejectsConflictingCollections = {
+    expr = rejections.conflictingCollections;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.nodeCollection"
+        "multiple times"
+      ];
+    };
+  };
 }

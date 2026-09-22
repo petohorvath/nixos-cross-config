@@ -1,5 +1,10 @@
-{ checkAssertions, mkNodes }:
+{
+  checkAssertions,
+  messagePattern,
+  mkNodes,
+}:
 let
+  rejections = import ./fixtures/contributions.nix { inherit mkNodes; };
   nodes = mkNodes {
     optionPaths = [
       [
@@ -124,5 +129,32 @@ in
   testAssertions = {
     expr = checkAssertions nodes;
     expected = true;
+  };
+}
+// {
+  testRejectsLocalConflict = {
+    expr = rejections.localConflict;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "conflicting definition"
+        "sender `sender`"
+        "receiver `receiver`"
+        "destination `networking.domain`"
+      ];
+    };
+  };
+  testRejectsSenderConflict = {
+    expr = rejections.senderConflict;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "conflicting definition"
+        "sender `alpha`"
+        "sender `beta`"
+        "receiver `receiver`"
+        "destination `networking.domain`"
+      ];
+    };
   };
 }

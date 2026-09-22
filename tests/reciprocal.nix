@@ -47,3 +47,12 @@ in
     expected = true;
   };
 }
+// {
+  testRejectsValueCycle = {
+    expr = import ./fixtures/value-cycle.nix { inherit mkNodes; };
+    expectedError = {
+      type = "EvalError";
+      msg = "infinite recursion encountered";
+    };
+  };
+}

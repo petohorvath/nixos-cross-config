@@ -1,10 +1,11 @@
 {
-  crossConfig,
   flakeParts,
   nixpkgs,
   system,
 }:
 let
+  crossConfig = import ./helpers/flake-outputs.nix { inherit flakeParts nixpkgs; };
+  messagePattern = import ./helpers/message-pattern.nix { inherit (nixpkgs) lib; };
   checkAssertions =
     nodes:
     nixpkgs.lib.pipe nodes [
@@ -14,36 +15,31 @@ let
   mkNodes = import ./helpers/mk-nodes.nix {
     inherit crossConfig nixpkgs system;
   };
-  failures = import ./failures.nix {
-    inherit
-      crossConfig
-      flakeParts
-      mkNodes
-      nixpkgs
-      ;
-  };
 in
 {
   conditional = import ./conditional.nix { inherit checkAssertions mkNodes; };
-  destinations = import ./destinations.nix { inherit checkAssertions mkNodes; };
+  destinations = import ./destinations.nix { inherit checkAssertions messagePattern mkNodes; };
   example = import ./example.nix { inherit crossConfig nixpkgs system; };
-  forwarding = import ./forwarding.nix { inherit checkAssertions mkNodes; };
+  forwarding = import ./forwarding.nix { inherit checkAssertions messagePattern mkNodes; };
   flakeModule = import ./flake-module.nix {
     inherit
       checkAssertions
       crossConfig
       flakeParts
+      messagePattern
       nixpkgs
       system
       ;
   };
   hostGuest = import ./host-guest.nix { inherit checkAssertions crossConfig mkNodes; };
   literalPath = import ./literal-path.nix { inherit checkAssertions mkNodes; };
-  merging = import ./merging.nix { inherit checkAssertions mkNodes; };
+  merging = import ./merging.nix { inherit checkAssertions messagePattern mkNodes; };
   mkModule = import ./mk-module.nix { inherit crossConfig nixpkgs; };
   module = import ./module.nix { inherit crossConfig nixpkgs; };
-  moduleSettings = import ./module-settings.nix { inherit crossConfig nixpkgs; };
-  nestedProperties = import ./nested-properties.nix { inherit checkAssertions mkNodes; };
+  moduleSettings = import ./module-settings.nix { inherit crossConfig messagePattern nixpkgs; };
+  nestedProperties = import ./nested-properties.nix {
+    inherit checkAssertions messagePattern mkNodes;
+  };
   ordering = import ./ordering.nix { inherit checkAssertions mkNodes; };
   plainImports =
     let
@@ -56,7 +52,7 @@ in
       mkModule = import ./mk-module.nix { inherit crossConfig nixpkgs; };
       module = import ./module.nix { inherit crossConfig nixpkgs; };
     };
-  priorities = import ./priorities.nix { inherit checkAssertions mkNodes; };
+  priorities = import ./priorities.nix { inherit checkAssertions messagePattern mkNodes; };
   reciprocal = import ./reciprocal.nix { inherit checkAssertions mkNodes; };
   selfTarget = import ./self-target.nix { inherit checkAssertions mkNodes; };
   senderContext = import ./sender-context.nix { inherit checkAssertions mkNodes; };
@@ -65,14 +61,9 @@ in
     inherit
       checkAssertions
       crossConfig
+      messagePattern
       nixpkgs
       system
       ;
   };
-  validation = builtins.mapAttrs (_: value: {
-    testRejected = {
-      expr = value;
-      expectedError.type = "ThrownError";
-    };
-  }) failures;
 }

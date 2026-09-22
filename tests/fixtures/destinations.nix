@@ -38,7 +38,7 @@ let
         ]
       ];
       modules = {
-        sender = ./fixtures/destination-sender.nix;
+        sender = ./destination-sender.nix;
         inherit receiver;
       };
     }).receiver;
@@ -174,12 +174,12 @@ let
         "value"
       ]
     ];
-    modules.sender = ./fixtures/destination-sender.nix;
+    modules.sender = ./destination-sender.nix;
   };
   unregisteredDestination = mkNodes {
     optionPaths = [ ];
     modules = {
-      sender = ./fixtures/destination-sender.nix;
+      sender = ./destination-sender.nix;
       receiver = { };
     };
   };

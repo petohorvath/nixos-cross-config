@@ -1,5 +1,10 @@
-{ checkAssertions, mkNodes }:
+{
+  checkAssertions,
+  messagePattern,
+  mkNodes,
+}:
 let
+  rejections = import ./fixtures/contributions.nix { inherit mkNodes; };
   scenarios = {
     contributedDefault = {
       modules = {
@@ -161,3 +166,42 @@ builtins.mapAttrs (
     };
   }
 ) scenarios
+// {
+  testRejectsForcedLocalConflict = {
+    expr = rejections.forcedLocalConflict;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "conflicting definition"
+        "sender `sender`"
+        "receiver `receiver`"
+        "destination `networking.domain`"
+      ];
+    };
+  };
+  testRejectsCustomSenderConflict = {
+    expr = rejections.customSenderConflict;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "conflicting definition"
+        "sender `alpha`"
+        "sender `beta`"
+        "receiver `receiver`"
+        "destination `networking.domain`"
+      ];
+    };
+  };
+  testRejectsSameSenderConflict = {
+    expr = rejections.sameSenderConflict;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "conflicting definition"
+        "sender `sender`"
+        "receiver `receiver`"
+        "destination `networking.domain`"
+      ];
+    };
+  };
+}

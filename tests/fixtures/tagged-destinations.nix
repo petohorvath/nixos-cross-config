@@ -25,7 +25,7 @@ let
       taggedDefaultSource =
         (mkReceiver {
           leafPath = [ ];
-          tagOption = lib: import ./fixtures/tagged-default.nix { inherit lib; };
+          tagOption = lib: import ./tagged-default.nix { inherit lib; };
           senderDefinitions = lib: [ (lib.mkIf false (throw "Disabled contribution was forced.")) ];
           receiverDefinitions = lib: [ { payload = lib.mkIf false "unused"; } ];
         }).config.inventory.payload;
@@ -73,12 +73,12 @@ let
         };
     };
     taggedReadOnlyLocal = mkReceiver {
-      tagOption = lib: import ./fixtures/tagged-permissions.nix { inherit lib; };
+      tagOption = lib: import ./tagged-permissions.nix { inherit lib; };
       receiverDefinitions = _: [ { payload.locked = true; } ];
     };
     taggedInspectionDefinitionSource = mkReceiver {
-      tagOption = lib: import ./fixtures/tagged-permissions.nix { inherit lib; };
-      receiverModules = [ ./fixtures/tagged-invalid-local.nix ];
+      tagOption = lib: import ./tagged-permissions.nix { inherit lib; };
+      receiverModules = [ ./tagged-invalid-local.nix ];
     };
   }
   //
@@ -125,7 +125,7 @@ let
       ];
       modules = {
         sender = { lib, ... }: {
-          _file = toString ./tagged-failures.nix;
+          _file = toString ./tagged-destinations.nix;
           crossConfig.nodes.receiver = lib.setAttrByPath (
             [
               "inventory"
@@ -135,7 +135,7 @@ let
           ) (lib.mkMerge (senderDefinitions lib));
         };
         receiver = { lib, ... }: {
-          _file = toString ./tagged-failures.nix;
+          _file = toString ./tagged-destinations.nix;
           imports = receiverModules;
           options.inventory = lib.mkOption {
             type = lib.types.attrTag { ${tagName} = tagOption lib; };
