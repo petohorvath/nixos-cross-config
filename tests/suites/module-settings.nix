@@ -2,6 +2,7 @@
   crossConfig,
   messagePattern,
   nixpkgs,
+  ...
 }:
 let
   rejections = import ../fixtures/module-settings.nix { inherit crossConfig nixpkgs; };

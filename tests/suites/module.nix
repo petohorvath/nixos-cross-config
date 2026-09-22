@@ -1,4 +1,4 @@
-{ crossConfig, nixpkgs }:
+{ crossConfig, nixpkgs, ... }:
 let
   inherit (nixpkgs) lib;
   nodes = {

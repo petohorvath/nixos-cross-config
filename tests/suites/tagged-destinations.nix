@@ -4,6 +4,7 @@
   messagePattern,
   nixpkgs,
   system,
+  ...
 }:
 let
   rejections = import ../fixtures/tagged-destinations.nix { mkNodes = mkNixosNodes; };

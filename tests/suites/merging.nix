@@ -2,6 +2,7 @@
   checkAssertions,
   messagePattern,
   mkNodes,
+  ...
 }:
 let
   rejections = import ../fixtures/contributions.nix { inherit mkNodes; };

@@ -5,6 +5,7 @@
   messagePattern,
   nixpkgs,
   system,
+  ...
 }:
 let
   rejections = import ../fixtures/flake-module-settings.nix { inherit crossConfig flakeParts; };

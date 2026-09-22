@@ -15,55 +15,43 @@ let
   mkNodes = import ../helpers/mk-nodes.nix {
     inherit crossConfig nixpkgs system;
   };
-in
-{
-  conditional = import ./conditional.nix { inherit checkAssertions mkNodes; };
-  destinations = import ./destinations.nix { inherit checkAssertions messagePattern mkNodes; };
-  example = import ./example.nix { inherit crossConfig nixpkgs system; };
-  forwarding = import ./forwarding.nix { inherit checkAssertions messagePattern mkNodes; };
-  flakeModule = import ./flake-module.nix {
+  testContext = {
     inherit
       checkAssertions
       crossConfig
       flakeParts
       messagePattern
+      mkNodes
       nixpkgs
       system
       ;
   };
-  hostGuest = import ./host-guest.nix { inherit checkAssertions crossConfig mkNodes; };
-  literalPath = import ./literal-path.nix { inherit checkAssertions mkNodes; };
-  merging = import ./merging.nix { inherit checkAssertions messagePattern mkNodes; };
-  mkModule = import ./mk-module.nix { inherit crossConfig nixpkgs; };
-  module = import ./module.nix { inherit crossConfig nixpkgs; };
-  moduleSettings = import ./module-settings.nix { inherit crossConfig messagePattern nixpkgs; };
-  nestedProperties = import ./nested-properties.nix {
-    inherit checkAssertions messagePattern mkNodes;
+  plainTestContext = testContext // {
+    crossConfig = import ../helpers/plain-exports.nix;
   };
-  ordering = import ./ordering.nix { inherit checkAssertions mkNodes; };
-  plainImports =
-    let
-      crossConfig = {
-        lib = import ../../lib;
-        nixosModules.default = ../../nixos/module.nix;
-      };
-    in
-    {
-      mkModule = import ./mk-module.nix { inherit crossConfig nixpkgs; };
-      module = import ./module.nix { inherit crossConfig nixpkgs; };
-    };
-  priorities = import ./priorities.nix { inherit checkAssertions messagePattern mkNodes; };
-  reciprocal = import ./reciprocal.nix { inherit checkAssertions mkNodes; };
-  selfTarget = import ./self-target.nix { inherit checkAssertions mkNodes; };
-  senderContext = import ./sender-context.nix { inherit checkAssertions mkNodes; };
-  transportProperties = import ./transport-properties.nix { inherit checkAssertions mkNodes; };
-  taggedDestinations = import ./tagged-destinations.nix {
-    inherit
-      checkAssertions
-      crossConfig
-      messagePattern
-      nixpkgs
-      system
-      ;
+in
+{
+  conditional = import ./conditional.nix testContext;
+  destinations = import ./destinations.nix testContext;
+  example = import ./example.nix testContext;
+  forwarding = import ./forwarding.nix testContext;
+  flakeModule = import ./flake-module.nix testContext;
+  hostGuest = import ./host-guest.nix testContext;
+  literalPath = import ./literal-path.nix testContext;
+  merging = import ./merging.nix testContext;
+  mkModule = import ./mk-module.nix testContext;
+  module = import ./module.nix testContext;
+  moduleSettings = import ./module-settings.nix testContext;
+  nestedProperties = import ./nested-properties.nix testContext;
+  ordering = import ./ordering.nix testContext;
+  plainImports = {
+    mkModule = import ./mk-module.nix plainTestContext;
+    module = import ./module.nix plainTestContext;
   };
+  priorities = import ./priorities.nix testContext;
+  reciprocal = import ./reciprocal.nix testContext;
+  selfTarget = import ./self-target.nix testContext;
+  senderContext = import ./sender-context.nix testContext;
+  transportProperties = import ./transport-properties.nix testContext;
+  taggedDestinations = import ./tagged-destinations.nix testContext;
 }

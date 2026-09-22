@@ -2,6 +2,7 @@
   checkAssertions,
   crossConfig,
   mkNodes,
+  ...
 }:
 let
   optionPaths = [

@@ -2,6 +2,7 @@
   crossConfig,
   nixpkgs,
   system,
+  ...
 }:
 let
   nodes = import ../../examples/minimal.nix {
