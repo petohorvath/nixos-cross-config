@@ -131,8 +131,6 @@ in
     expr = checkAssertions nodes;
     expected = true;
   };
-}
-// {
   testRejectsLocalConflict = {
     expr = rejections.localConflict;
     expectedError = {

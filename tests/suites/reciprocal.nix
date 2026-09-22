@@ -46,8 +46,6 @@ in
     expr = checkAssertions nodes;
     expected = true;
   };
-}
-// {
   testRejectsValueCycle = {
     expr = import ../fixtures/value-cycle.nix { inherit mkNodes; };
     expectedError = {

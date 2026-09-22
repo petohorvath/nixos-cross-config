@@ -166,8 +166,6 @@ in
     expr = checkAssertions nodes;
     expected = true;
   };
-}
-// {
   testRejectsNestedConflict = {
     expr = rejections.nestedConflict;
     expectedError = {

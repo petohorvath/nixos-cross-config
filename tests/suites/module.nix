@@ -23,7 +23,8 @@ let
             inventory.values = lib.mkOption {
               type = lib.types.listOf lib.types.str;
               default = [ ];
-              description = "Received and local inventory values.";
+              apply = map (value: "${name}:${value}");
+              description = "Values marked by the receiver after merging.";
             };
           };
           config = {
@@ -45,18 +46,18 @@ let
     };
 in
 {
-  testAlphaValues = {
+  testAlphaAppliedValues = {
     expr = nodes.alpha.config.inventory.values;
     expected = [
-      "from-beta"
-      "local-alpha"
+      "alpha:from-beta"
+      "alpha:local-alpha"
     ];
   };
-  testBetaValues = {
+  testBetaAppliedValues = {
     expr = nodes.beta.config.inventory.values;
     expected = [
-      "from-alpha"
-      "local-beta"
+      "beta:from-alpha"
+      "beta:local-beta"
     ];
   };
   testAlphaLibrary = {

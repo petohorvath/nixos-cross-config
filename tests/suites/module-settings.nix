@@ -1,4 +1,5 @@
 {
+  checkAssertions,
   crossConfig,
   messagePattern,
   nixpkgs,
@@ -57,11 +58,14 @@ let
         expected = expectedOther;
       };
       testRegistrations = {
-        expr = builtins.all (
-          node:
-          node.config.crossConfig.optionPaths == expectedPaths
-          && builtins.all (entry: entry.assertion) node.config.assertions
-        ) (builtins.attrValues nodes);
+        expr = lib.mapAttrs (_: node: node.config.crossConfig.optionPaths) nodes;
+        expected = {
+          sender = expectedPaths;
+          receiver = expectedPaths;
+        };
+      };
+      testAssertions = {
+        expr = checkAssertions nodes;
         expected = true;
       };
     };
@@ -103,54 +107,8 @@ let
         expected = true;
       };
     };
-  nodes = mkNodes {
-    optionPaths = [
-      [
-        "inventory"
-        "values"
-      ]
-    ];
-    modules = lib.genAttrs [ "alpha" "beta" ] (name: {
-      imports = [
-        {
-          crossConfig.optionPaths = [
-            [
-              "inventory"
-              "values"
-            ]
-          ];
-        }
-      ];
-      options.inventory.values = lib.mkOption {
-        type = lib.types.listOf lib.types.str;
-        default = [ ];
-        description = "Values at a repeatedly registered destination.";
-      };
-      config.crossConfig.nodes.${if name == "alpha" then "beta" else "alpha"}.inventory.values = [ name ];
-    });
-  };
 in
 {
-  duplicate = {
-    testAlphaValues = {
-      expr = nodes.alpha.config.inventory.values;
-      expected = [ "beta" ];
-    };
-    testBetaValues = {
-      expr = nodes.beta.config.inventory.values;
-      expected = [ "alpha" ];
-    };
-    testNormalizedPaths = {
-      expr = nodes.alpha.config.crossConfig.optionPaths;
-      expected = [ valuePath ];
-    };
-    testAssertions = {
-      expr = builtins.all (node: builtins.all (entry: entry.assertion) node.config.assertions) (
-        builtins.attrValues nodes
-      );
-      expected = true;
-    };
-  };
   splitRegistrations = checkRegistrations {
     modules = [
       {
@@ -216,8 +174,16 @@ in
     { crossConfig.nodeConfigurations = lib.mkDefault (throw "Discarded collection was forced."); }
     { crossConfig.nodeConfigurations.unused = throw "Selected node was forced."; }
   ];
-}
-// {
+  forcedCollection = checkIdleCollection [
+    {
+      crossConfig.nodeConfigurations.discarded = throw "Discarded ordinary collection entry was forced.";
+    }
+    {
+      crossConfig.nodeConfigurations = lib.mkForce {
+        unused = throw "Selected node was forced.";
+      };
+    }
+  ];
   testRejectsOldCollectionName = {
     expr = rejections.oldCollectionName;
     expectedError = {

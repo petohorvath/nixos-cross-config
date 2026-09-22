@@ -615,8 +615,6 @@ in
         expected = true;
       };
     };
-}
-// {
   testRejectsConflictingDestination = {
     expr = rejections.conflictingDestination;
     expectedError = {
@@ -724,6 +722,16 @@ in
   };
   testRejectsUnknownReceiver = {
     expr = rejections.unknownReceiver;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "sender `sender`"
+        "unknown receiver `receiver`"
+      ];
+    };
+  };
+  testRejectsUnknownReceiverWithDisabledContribution = {
+    expr = rejections.unknownReceiverWithDisabledContribution;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [

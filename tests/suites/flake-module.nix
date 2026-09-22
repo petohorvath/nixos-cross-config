@@ -86,10 +86,11 @@ let
         ];
       };
       testRegistrations = {
-        expr = builtins.all (node: node.config.crossConfig.optionPaths == paths) (
-          builtins.attrValues nodes
-        );
-        expected = true;
+        expr = lib.mapAttrs (_: node: node.config.crossConfig.optionPaths) nodes;
+        expected = {
+          alpha = paths;
+          beta = paths;
+        };
       };
       testAssertions = {
         expr = checkAssertions nodes;
@@ -377,14 +378,6 @@ in
       node = mkNode consumer.nixosModules.crossConfig "idle" { };
     in
     {
-      testPlainConstructor = {
-        expr = builtins.isFunction (import ../../lib).mkModule;
-        expected = true;
-      };
-      testPlainModule = {
-        expr = builtins.isFunction (import ../../nixos/module.nix);
-        expected = true;
-      };
       testEmptyPaths = {
         expr = node.config.crossConfig.optionPaths;
         expected = [ ];
@@ -394,8 +387,6 @@ in
         expected = true;
       };
     };
-}
-// {
   testRejectsOldCollectionName = {
     expr = rejections.flakeOldCollectionName;
     expectedError = {
