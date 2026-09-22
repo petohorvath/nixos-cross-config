@@ -12,6 +12,8 @@
 
 ### Changed
 
+- **Breaking:** rename `crossConfig.nodeCollection` to `crossConfig.nodeConfigurations` at NixOS and flake-parts scope.
+
 - **Breaking:** reject allowed paths rooted at `crossConfig` or `_module` through both interfaces; nested attributes and tags with these names remain supported. Validate required settings and nonempty string-segment paths, and normalize duplicate registrations so contributions arrive once.
 - Explain usage with a complete README example and API summary, and move detailed behavior to a separate API reference.
 - Return `mkFlake` directly from the root flake, with public module and library exports declared there. Keep shell, formatter, treefmt, and check assembly configuration in a `dev` partition, preserving root development commands and `.envrc`.
@@ -32,6 +34,8 @@
 
 ### Migration
 
+Rename `crossConfig.nodeCollection` to `crossConfig.nodeConfigurations` in NixOS modules and flake-parts settings. Update reads of that option as well as assignments. The old name is no longer declared. The `lib.mkModule` argument `nodes` and outgoing contribution option `crossConfig.nodes` are unchanged.
+
 Replace references to `packages.<system>.cross-config-fmt` with `formatter.<system>`. For example, replace `nix build .#cross-config-fmt` with `nix build .#formatter.x86_64-linux` on x86_64 Linux. Use root `nix fmt --no-update-lock-file` to format the project; the `cross-config-fmt` command remains available inside `nix develop`.
 
 For focused tests, replace raw `failures.<fixture>` evaluations and old `dev/fixtures.nix` paths with `nix-unit dev/tests.nix --attr <suite-or-test>` inside the development shell. For example, use `nix-unit dev/tests.nix --attr merging.testHosts` or `nix-unit dev/tests.nix --attr merging.testRejectsLocalConflict`. Each selected case includes its expected value or error and required message fragments. `dev/tests.nix` is the collection loader; its definitions alone do not execute assertions. Root `nix flake check --no-update-lock-file --print-build-logs` remains the complete validation command. See [focused checks](docs/development.md#focused-checks) for exact-revision commands.
@@ -46,9 +50,9 @@ Replace plain-export access through `(import ./flake.nix).outputs { }` with dire
 
 Flake consumers keep the same module and constructor exports. The library no longer exports example nodes; run `nix-unit dev/tests.nix --attr example` and `nix-unit dev/tests.nix --attr flakeModule.example` or construct nodes from the files in `examples/`.
 
-Flake-parts consumers can opt into `flakeModules.default`, move shared registrations to flake-level `crossConfig.optionPaths`, and import `config.flake.nixosModules.crossConfig` in each node. Keep node identities and outgoing contributions at NixOS scope. Set flake-level `crossConfig.nodeCollection` for subsets or guests outside `nixosConfigurations`. Extend shared lists at flake scope; ordinary node-level definitions replace the adapter's `mkDefault` settings. This adapter is additive and requires no migration for standalone or constructor consumers. See the [flake-parts guide](docs/flake-parts.md).
+Flake-parts consumers can opt into `flakeModules.default`, move shared registrations to flake-level `crossConfig.optionPaths`, and import `config.flake.nixosModules.crossConfig` in each node. Keep node identities and outgoing contributions at NixOS scope. Set flake-level `crossConfig.nodeConfigurations` for subsets or guests outside `nixosConfigurations`. Extend shared lists at flake scope; ordinary node-level definitions replace the adapter's `mkDefault` settings. This adapter is additive and requires no migration for standalone or constructor consumers. See the [flake-parts guide](docs/flake-parts.md).
 
-Replace `crossConfig.lib.mkModule { inherit name nodes optionPaths; }` in a node's imports with `crossConfig.nixosModules.default`. Set `crossConfig.name = name`, `crossConfig.nodeCollection = nodes`, and `crossConfig.optionPaths = optionPaths` through ordinary modules. The constructor remains available for incremental migration; outgoing `crossConfig.nodes` syntax is unchanged.
+Replace `crossConfig.lib.mkModule { inherit name nodes optionPaths; }` in a node's imports with `crossConfig.nixosModules.default`. Set `crossConfig.name = name`, `crossConfig.nodeConfigurations = nodes`, and `crossConfig.optionPaths = optionPaths` through ordinary modules. The constructor remains available for incremental migration; outgoing `crossConfig.nodes` syntax is unchanged.
 
 Share the collection and registrations through common imported settings modules. Path lists follow normal priorities and merge before deduplication. Supply `[ ]` explicitly when no contributions are allowed. Registrations must be independent of receiving configuration; register service destinations unconditionally and condition contributions instead. See the [API reference](docs/api.md#allowed-option-paths) for literal segments, normalization, and dependency limits.
 

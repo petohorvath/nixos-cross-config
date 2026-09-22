@@ -10,7 +10,7 @@
       imports = [ ../nixos/module.nix ];
       crossConfig = {
         inherit name optionPaths;
-        nodeCollection = nodes;
+        nodeConfigurations = nodes;
       };
     };
 }

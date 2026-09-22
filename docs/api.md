@@ -1,6 +1,6 @@
 # API reference
 
-The primary interface is `nixosModules.default`, which declares `crossConfig.name`, `crossConfig.nodeCollection`, `crossConfig.optionPaths`, and the outgoing contribution option `crossConfig.nodes`. `flakeModules.default` optionally shares settings through flake-parts, and `lib.mkModule` remains a compatibility adapter. The [README quickstart](../README.md#quickstart) shows a complete standalone example.
+The primary interface is `nixosModules.default`, which declares `crossConfig.name`, `crossConfig.nodeConfigurations`, `crossConfig.optionPaths`, and the outgoing contribution option `crossConfig.nodes`. `flakeModules.default` optionally shares settings through flake-parts, and `lib.mkModule` remains a compatibility adapter. The [README quickstart](../README.md#quickstart) shows a complete standalone example.
 
 - [Module creation](#module-creation)
 - [Flake-parts adapter](#flake-parts-adapter)
@@ -21,7 +21,7 @@ The primary interface is `nixosModules.default`, which declares `crossConfig.nam
   imports = [ crossConfig.nixosModules.default ];
   crossConfig = {
     name = "application";
-    nodeCollection = nodes;
+    nodeConfigurations = nodes;
     optionPaths = [ [ "services" "nginx" "virtualHosts" ] ];
   };
 }
@@ -31,11 +31,11 @@ Include `nixosModules.default` in `nixosSystem.modules` or a module's `imports` 
 
 All three settings are required:
 
-| Option                       | Value                                                                                                                      |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `crossConfig.name`           | A string identifying this node's key in the collection, independently of `networking.hostName`.                            |
-| `crossConfig.nodeCollection` | An opaque, lazy attribute set built by the caller. Each entry exposes its evaluated NixOS configuration through `.config`. |
-| `crossConfig.optionPaths`    | A shared list of nonempty lists of literal string segments. An explicit empty outer list permits no contributions.         |
+| Option                           | Value                                                                                                                      |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `crossConfig.name`               | A string identifying this node's key in the collection, independently of `networking.hostName`.                            |
+| `crossConfig.nodeConfigurations` | An opaque, lazy attribute set built by the caller. Each entry exposes its evaluated NixOS configuration through `.config`. |
+| `crossConfig.optionPaths`        | A shared list of nonempty lists of literal string segments. An explicit empty outer list permits no contributions.         |
 
 Every participating node must use the same node collection and normalized allowed-path set. Set each identity locally and import a common settings module for the collection and registrations:
 
@@ -43,7 +43,7 @@ Every participating node must use the same node collection and normalized allowe
 let
   sharedSettings = {
     imports = [ crossConfig.nixosModules.default ];
-    crossConfig.nodeCollection = nodes;
+    crossConfig.nodeConfigurations = nodes;
     crossConfig.optionPaths = [ [ "services" "nginx" "virtualHosts" ] ];
   };
 in
@@ -75,10 +75,10 @@ Use the same input name as the consuming flake; `crossConfig` matches the README
 
 Import `crossConfig.flakeModules.default` in a consumer's flake-parts module. It declares two system-independent options at flake scope, outside `perSystem`:
 
-| Option                       | Contract                                                                                                                                                                                                           |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `crossConfig.optionPaths`    | Required, with the same path shape, literal segments, list merging, priorities, first-occurrence deduplication, and reserved-root validation as the standalone option. An explicit `[ ]` permits no contributions. |
-| `crossConfig.nodeCollection` | The same opaque, lazy collection contract as the standalone option. Defaults to `config.flake.nixosConfigurations`; one explicit definition at the winning priority replaces the default.                          |
+| Option                           | Contract                                                                                                                                                                                                           |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `crossConfig.optionPaths`        | Required, with the same path shape, literal segments, list merging, priorities, first-occurrence deduplication, and reserved-root validation as the standalone option. An explicit `[ ]` permits no contributions. |
+| `crossConfig.nodeConfigurations` | The same opaque, lazy collection contract as the standalone option. Defaults to `config.flake.nixosConfigurations`; one explicit definition at the winning priority replaces the default.                          |
 
 The adapter provides `config.flake.nixosModules.crossConfig`, also exported as the consumer's `nixosModules.crossConfig`. Each participating node imports it explicitly and supplies its own `crossConfig.name`. Outgoing contributions stay at NixOS scope. The adapter does not construct or discover nodes, extend existing evaluated configurations, or create another collection. The [flake-parts guide](flake-parts.md) shows default and explicit collections.
 
@@ -104,7 +104,7 @@ Existing consumers can keep the required constructor signature:
 crossConfig.lib.mkModule { inherit name nodes optionPaths; }
 ```
 
-The adapter imports the same lower-level module and supplies ordinary definitions for `crossConfig.name`, `crossConfig.nodeCollection`, and `crossConfig.optionPaths`. It preserves the receiver's `lib`. Plain Nix consumers obtain it from `lib/`:
+The adapter imports the same lower-level module and supplies ordinary definitions for `crossConfig.name`, `crossConfig.nodeConfigurations`, and `crossConfig.optionPaths`. It preserves the receiver's `lib`. Plain Nix consumers obtain it from `lib/`:
 
 ```nix
 (import ./nixos-cross-config/lib).mkModule
@@ -112,7 +112,7 @@ The adapter imports the same lower-level module and supplies ordinary definition
 
 The root `flake.nix` now requires normal flake inputs; calling `(import ./flake.nix).outputs { }` is no longer supported. Use the direct entry points above for plain Nix imports.
 
-To migrate from the constructor to the primary interface, replace the constructor import with `nixosModules.default`, move `name` to `crossConfig.name`, `nodes` to `crossConfig.nodeCollection`, and `optionPaths` to `crossConfig.optionPaths`. Keep outgoing `crossConfig.nodes` assignments unchanged. The new path validation and reserved-root restriction apply to both interfaces; relocate destinations beneath an ordinary receiving namespace when migrating a root named `crossConfig` or `_module`.
+To migrate from the constructor to the primary interface, replace the constructor import with `nixosModules.default`, move `name` to `crossConfig.name`, `nodes` to `crossConfig.nodeConfigurations`, and `optionPaths` to `crossConfig.optionPaths`. Keep outgoing `crossConfig.nodes` assignments unchanged. The new path validation and reserved-root restriction apply to both interfaces; relocate destinations beneath an ordinary receiving namespace when migrating a root named `crossConfig` or `_module`.
 
 ## Allowed option paths
 

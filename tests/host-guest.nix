@@ -26,7 +26,7 @@ let
           crossConfig = {
             name = "guest";
             inherit optionPaths;
-            nodeCollection = nodes;
+            nodeConfigurations = nodes;
           };
           networking.hostName = "application-container";
           networking.hosts."192.0.2.10" = [ "guest-local.example" ];

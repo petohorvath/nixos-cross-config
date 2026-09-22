@@ -22,7 +22,7 @@ let
     ];
   settings = {
     name = "receiver";
-    nodeCollection = { };
+    nodeConfigurations = { };
     optionPaths = [ ];
   };
   paths = value: (evaluate (settings // { optionPaths = value; })).config.crossConfig.optionPaths;
@@ -30,10 +30,11 @@ in
 {
   missingName = (evaluate (builtins.removeAttrs settings [ "name" ])).config.assertions;
   missingCollection =
-    (evaluate (builtins.removeAttrs settings [ "nodeCollection" ])).config.assertions;
+    (evaluate (builtins.removeAttrs settings [ "nodeConfigurations" ])).config.assertions;
   missingPaths = (evaluate (builtins.removeAttrs settings [ "optionPaths" ])).config.assertions;
   invalidName = (evaluate (settings // { name = 42; })).config.assertions;
-  invalidCollection = (evaluate (settings // { nodeCollection = [ ]; })).config.assertions;
+  invalidCollection = (evaluate (settings // { nodeConfigurations = [ ]; })).config.assertions;
+  oldCollectionName = (evaluate (settings // { nodeCollection = { }; })).config.assertions;
   invalidPaths = paths "inventory.values";
   invalidPath = paths [ "inventory.values" ];
   invalidSegment = paths [
@@ -57,7 +58,7 @@ in
   ];
   reservedWithoutName =
     (evaluate {
-      inherit (settings) nodeCollection;
+      inherit (settings) nodeConfigurations;
       optionPaths = [ [ "crossConfig" ] ];
     }).config.crossConfig.optionPaths;
   legacyReservedCrossConfig =
@@ -91,7 +92,7 @@ in
       crossConfig.nixosModules.default
       { crossConfig = settings; }
       {
-        crossConfig.nodeCollection.unused =
+        crossConfig.nodeConfigurations.unused =
           let
             first = second;
             second = first;

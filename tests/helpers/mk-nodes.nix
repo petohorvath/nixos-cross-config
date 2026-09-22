@@ -19,7 +19,7 @@ let
           {
             crossConfig = {
               inherit name optionPaths;
-              nodeCollection = nodes;
+              nodeConfigurations = nodes;
             };
             networking.hostName = "${name}-hostname";
             system.stateVersion = "26.05";

@@ -1,9 +1,17 @@
 { lib }:
 option:
-# Module evaluation strips these wrappers before exposing definitions.
-map (definition: {
-  inherit (definition) file;
-  value = lib.mkOverride option.highestPrio (
-    if definition ? priority then lib.mkOrder definition.priority definition.value else definition.value
-  );
-}) option.definitionsWithLocations
+let
+  # Module evaluation strips override and ordering wrappers before exposing definitions.
+  restoreDefinition = definition: {
+    inherit (definition) file;
+    value = lib.mkOverride option.highestPrio (restoreOrder definition);
+  };
+
+  restoreOrder =
+    definition:
+    if definition ? priority then
+      lib.mkOrder definition.priority definition.value
+    else
+      definition.value;
+in
+map restoreDefinition option.definitionsWithLocations

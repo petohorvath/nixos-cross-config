@@ -86,7 +86,7 @@ let
     in
     {
       testCollectionNames = {
-        expr = builtins.attrNames node.config.crossConfig.nodeCollection;
+        expr = builtins.attrNames node.config.crossConfig.nodeConfigurations;
         expected = [ "unused" ];
       };
       testEmptyPaths = {
@@ -209,14 +209,25 @@ in
     expectedPaths = [ valuePath ];
   };
   opaqueCollection = checkIdleCollection [
-    { crossConfig.nodeCollection.unused = throw "Unused node was forced."; }
+    { crossConfig.nodeConfigurations.unused = throw "Unused node was forced."; }
   ];
   collectionPriorities = checkIdleCollection [
-    { crossConfig.nodeCollection = lib.mkDefault (throw "Discarded collection was forced."); }
-    { crossConfig.nodeCollection.unused = throw "Selected node was forced."; }
+    { crossConfig.nodeConfigurations = lib.mkDefault (throw "Discarded collection was forced."); }
+    { crossConfig.nodeConfigurations.unused = throw "Selected node was forced."; }
   ];
 }
 // {
+  testRejectsOldCollectionName = {
+    expr = rejections.oldCollectionName;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.nodeCollection"
+        "does not exist"
+      ];
+    };
+  };
+
   testRejectsMissingName = {
     expr = rejections.missingName;
     expectedError = {
@@ -232,7 +243,7 @@ in
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
-        "crossConfig.nodeCollection"
+        "crossConfig.nodeConfigurations"
         "was accessed but has no value defined"
       ];
     };
@@ -262,7 +273,7 @@ in
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
-        "crossConfig.nodeCollection"
+        "crossConfig.nodeConfigurations"
         "is not of type"
       ];
     };
@@ -370,7 +381,7 @@ in
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
-        "crossConfig.nodeCollection"
+        "crossConfig.nodeConfigurations"
         "multiple times"
       ];
     };

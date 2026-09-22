@@ -11,7 +11,7 @@ let
   sharedSettings = {
     imports = [ crossConfig.nixosModules.default ];
     crossConfig = {
-      nodeCollection = nodes;
+      nodeConfigurations = nodes;
       optionPaths = [
         [
           "services"
