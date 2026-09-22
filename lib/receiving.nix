@@ -108,6 +108,6 @@ let
   isWritable = option: option != null && !(option.readOnly or false);
 in
 {
-  definitions = lib.mapAttrs mkReceivingNamespace receivingOptions;
-  assertions = map mkDestinationAssertion optionPaths;
+  receivedConfig = lib.mapAttrs mkReceivingNamespace receivingOptions;
+  destinationAssertions = map mkDestinationAssertion optionPaths;
 }

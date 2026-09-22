@@ -27,6 +27,7 @@ let
 
   inspectionPaths = specialArgs.__nixosCrossConfigInspectPaths or [ ];
   isInspectingDestinations = inspectionPaths != [ ];
+  # Receiving assembles config contributed to this node and checks its destinations.
   receiving = import ../lib/receiving.nix {
     inherit
       extendModules
@@ -37,8 +38,8 @@ let
     inherit (cfg) name nodeConfigurations optionPaths;
     inherit (settings) reservedRoots;
   };
+  inherit (receiving) destinationAssertions receivedConfig;
 
-  destinationAssertions = receiving.assertions;
   receiverAssertions = lib.mapAttrsToList mkReceiverAssertion cfg.nodes;
 
   # Required settings must also be checked on idle nodes with no paths.
@@ -61,7 +62,7 @@ in
   };
 
   config = lib.mkMerge [
-    receiving.definitions
+    receivedConfig
     {
       # Inspection checks local declarations; validate contributions only in the main evaluation.
       assertions = lib.optionals (!isInspectingDestinations) assertions;

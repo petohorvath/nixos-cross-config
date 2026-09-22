@@ -11,25 +11,24 @@ let
   mkContributionModule =
     { options, ... }:
     {
-      options =
-        mkPathAttrs (
-          path:
-          lib.mkOption {
-            type = lib.types.raw;
-            description = "Definitions contributed to ${lib.showOption path}.";
-          }
-        )
-        // {
-          _definitions = lib.mkOption {
-            type = lib.types.raw;
-            internal = true;
-            visible = false;
-            readOnly = true;
-            description = "Outgoing definitions before the receiving type merges them.";
-            # Inspect definitions without forcing a merge in the sender.
-            default = mkPathAttrs (path: restoreDefinitionProperties (lib.getAttrFromPath path options));
-          };
+      options = mkPathAttrs mkContributionOption // {
+        _definitions = lib.mkOption {
+          type = lib.types.raw;
+          internal = true;
+          visible = false;
+          readOnly = true;
+          description = "Outgoing definitions before the receiving type merges them.";
+          # Inspect definitions without forcing a merge in the sender.
+          default = mkPathAttrs (path: restoreDefinitionProperties (lib.getAttrFromPath path options));
         };
+      };
+    };
+
+  mkContributionOption =
+    path:
+    lib.mkOption {
+      type = lib.types.raw;
+      description = "Definitions contributed to ${lib.showOption path}.";
     };
 
   mkPathAttrs =

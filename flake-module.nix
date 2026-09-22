@@ -1,7 +1,7 @@
 # Share collection settings through a NixOS module that callers import explicitly.
 { config, lib, ... }:
 let
-  flakeConfig = config;
+  cfg = config.crossConfig;
   settings = import ./lib/settings.nix { inherit lib; };
 in
 {
@@ -18,8 +18,8 @@ in
     {
       imports = [ ./nixos/module.nix ];
       crossConfig = {
-        nodeConfigurations = lib.mkDefault flakeConfig.crossConfig.nodeConfigurations;
-        optionPaths = lib.mkDefault flakeConfig.crossConfig.optionPaths;
+        nodeConfigurations = lib.mkDefault cfg.nodeConfigurations;
+        optionPaths = lib.mkDefault cfg.optionPaths;
       };
     };
 }
