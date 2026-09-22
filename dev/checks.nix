@@ -1,21 +1,11 @@
 {
   formatter,
-  flakeParts,
-  nixpkgs,
   pkgs,
-  system,
+  testRunner,
 }:
 let
   checks = {
-    evaluation = pkgs.callPackage ../tests/check-evaluation.nix {
-      inherit flakeParts nixpkgs system;
-    };
-    value-cycle = pkgs.callPackage ../tests/check-value-cycle.nix {
-      inherit flakeParts nixpkgs system;
-    };
-    diagnostics = pkgs.callPackage ../tests/check-diagnostics.nix {
-      inherit flakeParts nixpkgs system;
-    };
+    tests = pkgs.callPackage ../tests/check.nix { inherit testRunner; };
     formatting = mkCheck {
       name = "cross-config-formatting";
       packages = [ formatter ];

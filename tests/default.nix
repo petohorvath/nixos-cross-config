@@ -14,14 +14,6 @@ let
   mkNodes = import ./helpers/mk-nodes.nix {
     inherit crossConfig nixpkgs system;
   };
-  failures = import ./failures.nix {
-    inherit
-      crossConfig
-      flakeParts
-      mkNodes
-      nixpkgs
-      ;
-  };
 in
 {
   conditional = import ./conditional.nix { inherit checkAssertions mkNodes; };
@@ -69,10 +61,4 @@ in
       system
       ;
   };
-  validation = builtins.mapAttrs (_: value: {
-    testRejected = {
-      expr = value;
-      expectedError.type = "ThrownError";
-    };
-  }) failures;
 }

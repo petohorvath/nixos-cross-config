@@ -6,6 +6,7 @@
   system,
 }:
 let
+  rejections = import ./fixtures/flake-module-settings.nix { inherit crossConfig flakeParts; };
   inherit (nixpkgs) lib;
   valuePath = [
     "inventory"
@@ -391,4 +392,107 @@ in
         expected = true;
       };
     };
+}
+// {
+  testRejectsConflictingCollections = {
+    expr = rejections.flakeConflictingCollections;
+    expectedError = {
+      type = "ThrownError";
+      msg = "multiple times";
+      trace = [
+        "crossConfig.nodeCollection"
+        "multiple times"
+      ];
+    };
+  };
+  testRejectsEmptyRegistration = {
+    expr = rejections.flakeEmptyRegistration;
+    expectedError = {
+      type = "ThrownError";
+      msg = "is not of type";
+      trace = [
+        "crossConfig.optionPaths"
+        "is not of type"
+      ];
+    };
+  };
+  testRejectsInvalidCollection = {
+    expr = rejections.flakeInvalidCollection;
+    expectedError = {
+      type = "ThrownError";
+      msg = "is not of type";
+      trace = [
+        "crossConfig.nodeCollection"
+        "is not of type"
+      ];
+    };
+  };
+  testRejectsInvalidPath = {
+    expr = rejections.flakeInvalidPath;
+    expectedError = {
+      type = "ThrownError";
+      msg = "is not of type";
+      trace = [
+        "crossConfig.optionPaths"
+        "is not of type"
+      ];
+    };
+  };
+  testRejectsInvalidPaths = {
+    expr = rejections.flakeInvalidPaths;
+    expectedError = {
+      type = "ThrownError";
+      msg = "is not of type";
+      trace = [
+        "crossConfig.optionPaths"
+        "is not of type"
+      ];
+    };
+  };
+  testRejectsInvalidSegment = {
+    expr = rejections.flakeInvalidSegment;
+    expectedError = {
+      type = "ThrownError";
+      msg = "is not of type";
+      trace = [
+        "crossConfig.optionPaths"
+        "is not of type"
+      ];
+    };
+  };
+  testRejectsMissingPaths = {
+    expr = rejections.flakeMissingPaths;
+    expectedError = {
+      type = "ThrownError";
+      msg = "was accessed but has no value defined";
+      trace = [
+        "crossConfig.optionPaths"
+        "was accessed but has no value defined"
+      ];
+    };
+  };
+  testRejectsReservedCrossConfig = {
+    expr = rejections.flakeReservedCrossConfig;
+    expectedError = {
+      type = "ThrownError";
+      msg = "reserved root";
+      trace = [
+        "crossConfig.optionPaths"
+        "reserved root"
+        "crossConfig.nodes"
+      ];
+    };
+  };
+  testRejectsReservedModule = {
+    expr = rejections.flakeReservedModule;
+    expectedError = {
+      type = "ThrownError";
+      msg = "reserved root";
+      trace = [
+        "crossConfig.optionPaths"
+        "reserved root"
+        "_module.args"
+      ];
+    };
+  };
 }

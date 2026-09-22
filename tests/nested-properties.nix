@@ -1,5 +1,6 @@
 { checkAssertions, mkNodes }:
 let
+  rejections = import ./fixtures/contributions.nix { inherit mkNodes; };
   nodes = mkNodes {
     optionPaths = [
       [
@@ -159,5 +160,21 @@ in
   testAssertions = {
     expr = checkAssertions nodes;
     expected = true;
+  };
+}
+// {
+  testRejectsNestedConflict = {
+    expr = rejections.nestedConflict;
+    expectedError = {
+      type = "ThrownError";
+      msg = "conflicting definition";
+      trace = [
+        "conflicting definition"
+        "sender `sender`"
+        "receiver `receiver`"
+        "destination `services.nginx.virtualHosts`"
+        "proxyPass"
+      ];
+    };
   };
 }

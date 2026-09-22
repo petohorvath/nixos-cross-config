@@ -5,6 +5,14 @@
   system,
 }:
 let
+  rejections = import ./fixtures/tagged-destinations.nix { mkNodes = mkNixosNodes; };
+  mkNixosNodes = import ./helpers/mk-nodes.nix { inherit crossConfig nixpkgs system; };
+  contributionOrigin = [
+    "sender `sender`"
+    "receiver `receiver`"
+    "destination `inventory.payload.value`"
+    "fixtures/tagged-destinations.nix"
+  ];
   inherit (nixpkgs) lib;
   tests = {
     nixos =
@@ -468,3 +476,132 @@ let
   };
 in
 tests
+// {
+  testRejectsConflict = {
+    expr = rejections.taggedConflict;
+    expectedError = {
+      type = "ThrownError";
+      msg = "conflicting definition";
+      trace = [ "conflicting definition" ] ++ contributionOrigin;
+    };
+  };
+  testRejectsDefaultSource = {
+    expr = rejections.taggedDefaultSource;
+    expectedError = {
+      type = "ThrownError";
+      msg = "is not of type";
+      trace = [
+        "is not of type"
+        "inventory.payload"
+        "fixtures/tagged-default.nix"
+      ];
+    };
+  };
+  testRejectsIncompatible = {
+    expr = rejections.taggedIncompatible;
+    expectedError = {
+      type = "ThrownError";
+      msg = "is not of type";
+      trace = [ "is not of type" ] ++ contributionOrigin;
+    };
+  };
+  testRejectsInspectionDefinitionSource = {
+    expr = rejections.taggedInspectionDefinitionSource;
+    expectedError = {
+      type = "ThrownError";
+      msg = "is not of type";
+      trace = [
+        "is not of type"
+        "inventory.payload.locked"
+        "fixtures/tagged-invalid-local.nix"
+      ];
+    };
+  };
+  testRejectsMissingChild = {
+    expr = rejections.taggedMissingChild;
+    expectedError = {
+      type = "ThrownError";
+      msg = "missing destination";
+      trace = [ "missing destination" ] ++ contributionOrigin;
+    };
+  };
+  testRejectsMissingTag = {
+    expr = rejections.taggedMissingTag;
+    expectedError = {
+      type = "ThrownError";
+      msg = "missing destination";
+      trace = [ "missing destination" ] ++ contributionOrigin;
+    };
+  };
+  testRejectsReadOnlyChild = {
+    expr = rejections.taggedReadOnlyChild;
+    expectedError = {
+      type = "ThrownError";
+      msg = "read-only destination";
+      trace = [ "read-only destination" ] ++ contributionOrigin;
+    };
+  };
+  testRejectsReadOnlyCoerced = {
+    expr = rejections.taggedReadOnlyCoerced;
+    expectedError = {
+      type = "ThrownError";
+      msg = "read-only destination";
+      trace = [ "read-only destination" ] ++ contributionOrigin;
+    };
+  };
+  testRejectsReadOnlyEither = {
+    expr = rejections.taggedReadOnlyEither;
+    expectedError = {
+      type = "ThrownError";
+      msg = "read-only destination";
+      trace = [ "read-only destination" ] ++ contributionOrigin;
+    };
+  };
+  testRejectsReadOnlyLocal = {
+    expr = rejections.taggedReadOnlyLocal;
+    expectedError = {
+      type = "ThrownError";
+      msg = "read-only destination";
+      trace = [ "read-only destination" ] ++ contributionOrigin;
+    };
+  };
+  testRejectsReadOnlyName = {
+    expr = rejections.taggedReadOnlyName;
+    expectedError = {
+      type = "ThrownError";
+      msg = "read-only destination";
+      trace = [ "read-only destination" ] ++ contributionOrigin;
+    };
+  };
+  testRejectsReadOnlyNullable = {
+    expr = rejections.taggedReadOnlyNullable;
+    expectedError = {
+      type = "ThrownError";
+      msg = "read-only destination";
+      trace = [ "read-only destination" ] ++ contributionOrigin;
+    };
+  };
+  testRejectsReadOnlyTag = {
+    expr = rejections.taggedReadOnlyTag;
+    expectedError = {
+      type = "ThrownError";
+      msg = "read-only destination";
+      trace = [ "read-only destination" ] ++ contributionOrigin;
+    };
+  };
+  testRejectsReadOnlyUnique = {
+    expr = rejections.taggedReadOnlyUnique;
+    expectedError = {
+      type = "ThrownError";
+      msg = "read-only destination";
+      trace = [ "read-only destination" ] ++ contributionOrigin;
+    };
+  };
+  testRejectsValueCycle = {
+    expr = import ./fixtures/tagged-value-cycle.nix { mkNodes = mkNixosNodes; };
+    expectedError = {
+      type = "EvalError";
+      msg = "infinite recursion encountered";
+    };
+  };
+}

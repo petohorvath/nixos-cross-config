@@ -151,7 +151,7 @@ Development supports `x86_64-linux` and `aarch64-linux`. The root lock selects N
 
 ## Development
 
-The root flake supplies the development shell, formatter, and checks through a partition in `dev/`, using one selected `nixpkgs` input. The checks cover the examples. Run `nix fmt --no-update-lock-file` and `nix flake check --no-update-lock-file` from the repository root. Native input overrides select another exact revision for the whole evaluation without changing the committed lock. [Development instructions](docs/development.md) cover prerequisites, exact-revision compatibility checks, focused checks, and CI.
+The root flake supplies the development shell, formatter, and checks through a partition in `dev/`, using one selected `nixpkgs` input. The checks cover the examples. Run `nix fmt --no-update-lock-file` and `nix flake check --no-update-lock-file` from the repository root. Inside the development shell, `cross-config-test` runs the same tests and accepts a suite or test name for focused runs. Native input overrides select another exact revision for the whole evaluation without changing the committed lock. [Development instructions](docs/development.md) cover prerequisites, exact-revision compatibility checks, focused checks, and CI.
 
 ## Contributing
 

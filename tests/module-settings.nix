@@ -1,5 +1,6 @@
 { crossConfig, nixpkgs }:
 let
+  rejections = import ./fixtures/module-settings.nix { inherit crossConfig nixpkgs; };
   inherit (nixpkgs) lib;
   mkNodes = import ./helpers/mk-module-nodes.nix { inherit crossConfig lib; };
   valuePath = [
@@ -210,4 +211,179 @@ in
     { crossConfig.nodeCollection = lib.mkDefault (throw "Discarded collection was forced."); }
     { crossConfig.nodeCollection.unused = throw "Selected node was forced."; }
   ];
+}
+// {
+  testRejectsMissingName = {
+    expr = rejections.missingName;
+    expectedError = {
+      type = "ThrownError";
+      msg = "was accessed but has no value defined";
+      trace = [
+        "crossConfig.name"
+        "was accessed but has no value defined"
+      ];
+    };
+  };
+  testRejectsMissingCollection = {
+    expr = rejections.missingCollection;
+    expectedError = {
+      type = "ThrownError";
+      msg = "was accessed but has no value defined";
+      trace = [
+        "crossConfig.nodeCollection"
+        "was accessed but has no value defined"
+      ];
+    };
+  };
+  testRejectsMissingPaths = {
+    expr = rejections.missingPaths;
+    expectedError = {
+      type = "ThrownError";
+      msg = "was accessed but has no value defined";
+      trace = [
+        "crossConfig.optionPaths"
+        "was accessed but has no value defined"
+      ];
+    };
+  };
+  testRejectsInvalidName = {
+    expr = rejections.invalidName;
+    expectedError = {
+      type = "ThrownError";
+      msg = "is not of type";
+      trace = [
+        "crossConfig.name"
+        "is not of type"
+      ];
+    };
+  };
+  testRejectsInvalidCollection = {
+    expr = rejections.invalidCollection;
+    expectedError = {
+      type = "ThrownError";
+      msg = "is not of type";
+      trace = [
+        "crossConfig.nodeCollection"
+        "is not of type"
+      ];
+    };
+  };
+  testRejectsInvalidPaths = {
+    expr = rejections.invalidPaths;
+    expectedError = {
+      type = "ThrownError";
+      msg = "is not of type";
+      trace = [
+        "crossConfig.optionPaths"
+        "is not of type"
+      ];
+    };
+  };
+  testRejectsInvalidPath = {
+    expr = rejections.invalidPath;
+    expectedError = {
+      type = "ThrownError";
+      msg = "is not of type";
+      trace = [
+        "crossConfig.optionPaths"
+        "is not of type"
+      ];
+    };
+  };
+  testRejectsInvalidSegment = {
+    expr = rejections.invalidSegment;
+    expectedError = {
+      type = "ThrownError";
+      msg = "is not of type";
+      trace = [
+        "crossConfig.optionPaths"
+        "is not of type"
+      ];
+    };
+  };
+  testRejectsEmptyRegistration = {
+    expr = rejections.emptyRegistration;
+    expectedError = {
+      type = "ThrownError";
+      msg = "is not of type";
+      trace = [
+        "crossConfig.optionPaths"
+        "is not of type"
+      ];
+    };
+  };
+  testRejectsReservedCrossConfig = {
+    expr = rejections.reservedCrossConfig;
+    expectedError = {
+      type = "ThrownError";
+      msg = "reserved root";
+      trace = [
+        "crossConfig.optionPaths"
+        "reserved root"
+        "crossConfig.nodes"
+        "receiver"
+      ];
+    };
+  };
+  testRejectsReservedModule = {
+    expr = rejections.reservedModule;
+    expectedError = {
+      type = "ThrownError";
+      msg = "reserved root";
+      trace = [
+        "crossConfig.optionPaths"
+        "reserved root"
+        "_module.args"
+        "receiver"
+      ];
+    };
+  };
+  testRejectsReservedWithoutName = {
+    expr = rejections.reservedWithoutName;
+    expectedError = {
+      type = "ThrownError";
+      msg = "reserved root";
+      trace = [
+        "crossConfig.optionPaths"
+        "reserved root"
+      ];
+    };
+  };
+  testRejectsLegacyReservedCrossConfig = {
+    expr = rejections.legacyReservedCrossConfig;
+    expectedError = {
+      type = "ThrownError";
+      msg = "reserved root";
+      trace = [
+        "crossConfig.optionPaths"
+        "reserved root"
+        "crossConfig.nodes"
+        "receiver"
+      ];
+    };
+  };
+  testRejectsLegacyReservedModule = {
+    expr = rejections.legacyReservedModule;
+    expectedError = {
+      type = "ThrownError";
+      msg = "reserved root";
+      trace = [
+        "crossConfig.optionPaths"
+        "reserved root"
+        "_module.args"
+        "receiver"
+      ];
+    };
+  };
+  testRejectsConflictingCollections = {
+    expr = rejections.conflictingCollections;
+    expectedError = {
+      type = "ThrownError";
+      msg = "multiple times";
+      trace = [
+        "crossConfig.nodeCollection"
+        "multiple times"
+      ];
+    };
+  };
 }

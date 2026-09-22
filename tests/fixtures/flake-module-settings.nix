@@ -2,7 +2,7 @@
 let
   evaluate =
     modules:
-    (flakeParts.lib.evalFlakeModule { inputs.self.outPath = ../.; } {
+    (flakeParts.lib.evalFlakeModule { inputs.self.outPath = ../..; } {
       imports = [ crossConfig.flakeModules.default ] ++ modules;
       systems = [ ];
     }).config.crossConfig;
