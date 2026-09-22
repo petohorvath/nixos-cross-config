@@ -8,14 +8,6 @@
     }).flakeParts,
   system ? builtins.currentSystem,
 }:
-let
-  crossConfig = import ../tests/helpers/flake-outputs.nix { inherit flakeParts nixpkgs; };
-in
 import ../tests {
-  inherit
-    crossConfig
-    flakeParts
-    nixpkgs
-    system
-    ;
+  inherit flakeParts nixpkgs system;
 }

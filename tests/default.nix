@@ -1,10 +1,10 @@
 {
-  crossConfig,
   flakeParts,
   nixpkgs,
   system,
 }:
 let
+  crossConfig = import ./helpers/flake-outputs.nix { inherit flakeParts nixpkgs; };
   messagePattern = import ./helpers/message-pattern.nix { inherit (nixpkgs) lib; };
   checkAssertions =
     nodes:
