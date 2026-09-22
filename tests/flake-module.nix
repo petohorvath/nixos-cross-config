@@ -366,12 +366,8 @@ in
   };
   plainImport =
     let
-      exports = (import ../flake.nix).outputs {
-        nixpkgs = throw "Export access forced the development nixpkgs input.";
-        flake-parts = throw "Export access forced the development flake-parts input.";
-      };
       consumer = flakeParts.lib.mkFlake { inputs.self.outPath = ../.; } {
-        imports = [ exports.flakeModules.default ];
+        imports = [ ../flake-module.nix ];
         systems = [ ];
         crossConfig.optionPaths = [ ];
       };
@@ -379,11 +375,11 @@ in
     in
     {
       testPlainConstructor = {
-        expr = builtins.isFunction exports.lib.mkModule;
+        expr = builtins.isFunction (import ../lib).mkModule;
         expected = true;
       };
       testPlainModule = {
-        expr = builtins.isFunction (import exports.nixosModules.default);
+        expr = builtins.isFunction (import ../nixos/module.nix);
         expected = true;
       };
       testEmptyPaths = {

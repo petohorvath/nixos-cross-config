@@ -1,7 +1,6 @@
-{ nixpkgs }:
+{ crossConfig, nixpkgs }:
 let
   inherit (nixpkgs) lib;
-  crossConfig = (import ../flake.nix).outputs { };
   nodes = {
     alpha = mkNode "alpha" "beta";
     beta = mkNode "beta" "alpha";

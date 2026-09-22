@@ -1,12 +1,7 @@
-{ nixpkgs }:
+{ crossConfig, nixpkgs }:
 let
   inherit (nixpkgs) lib;
-  crossConfig = (import ../flake.nix).outputs { };
   result = {
-    testPlainImport = {
-      expr = builtins.isFunction ((import ../flake.nix).outputs { }).lib.mkModule;
-      expected = true;
-    };
     testConstructorArguments = {
       expr = builtins.functionArgs crossConfig.lib.mkModule;
       expected = {
@@ -26,6 +21,10 @@ let
       sourcePath = toString ./fixtures/factory-node.nix;
     in
     {
+      testConstructorLocation = {
+        expr = map (definition: definition.file) node.options.crossConfig.name.definitionsWithLocations;
+        expected = [ (toString ../lib/default.nix) ];
+      };
       testDeclarations = {
         expr = node.options.crossConfig.nodes.declarations;
         expected = [ (toString ../nixos/module.nix) ];

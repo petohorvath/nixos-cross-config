@@ -7,7 +7,7 @@
   system,
 }:
 let
-  crossConfig = (import ../flake.nix).outputs { };
+  crossConfig = import ./helpers/flake-outputs.nix { inherit flakeParts nixpkgs; };
   tests = import ./. {
     inherit
       crossConfig
@@ -28,11 +28,11 @@ let
     ]) (builtins.attrNames tests.validation);
   expressionPath = builtins.toFile "cross-config-evaluation" ''
     let
-      crossConfig = (import ${../.}/flake.nix).outputs { };
       inherit (import ${./helpers/evaluation-inputs.nix} {
         flakePartsDir = "${flakeParts}";
         nixpkgsDir = "${nixpkgs}";
       }) flakeParts nixpkgs;
+      crossConfig = import ${../.}/tests/helpers/flake-outputs.nix { inherit flakeParts nixpkgs; };
     in
     import ${../.}/tests {
       inherit crossConfig flakeParts nixpkgs;
