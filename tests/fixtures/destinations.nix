@@ -167,15 +167,25 @@ let
       config.inventory.value = "local";
     }
   );
-  unknownReceiver = mkNodes {
-    optionPaths = [
-      [
-        "inventory"
-        "value"
-      ]
-    ];
-    modules.sender = ./destination-sender.nix;
-  };
+  mkUnknownReceiver =
+    sender:
+    mkNodes {
+      optionPaths = [
+        [
+          "inventory"
+          "value"
+        ]
+      ];
+      modules = { inherit sender; };
+    };
+  unknownReceiver = mkUnknownReceiver ./destination-sender.nix;
+  unknownReceiverWithDisabledContribution = mkUnknownReceiver (
+    { lib, ... }: {
+      crossConfig.nodes.receiver.inventory.value = lib.mkIf false (
+        throw "Disabled contribution was evaluated."
+      );
+    }
+  );
   unregisteredDestination = mkNodes {
     optionPaths = [ ];
     modules = {
@@ -196,6 +206,8 @@ in
   incompatibleDestination = incompatibleDestination.config.inventory.value;
   conflictingDestination = conflictingDestination.config.inventory.value;
   unknownReceiver = unknownReceiver.sender.config.system.build.toplevel.drvPath;
+  unknownReceiverWithDisabledContribution =
+    unknownReceiverWithDisabledContribution.sender.config.system.build.toplevel.drvPath;
   unregisteredDestination = unregisteredDestination.sender.config.system.build.toplevel.drvPath;
 }
 // builtins.mapAttrs (_: receiver: receiver.config.system.build.toplevel.drvPath) {

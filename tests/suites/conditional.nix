@@ -1,4 +1,4 @@
-{ checkAssertions, mkNodes }:
+{ checkAssertions, mkNodes, ... }:
 let
   mkSender =
     { config, lib, ... }:

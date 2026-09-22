@@ -2,9 +2,10 @@
   checkAssertions,
   messagePattern,
   mkNodes,
+  ...
 }:
 let
-  rejections = import ./fixtures/contributions.nix { inherit mkNodes; };
+  rejections = import ../fixtures/contributions.nix { inherit mkNodes; };
   nodes = mkNodes {
     optionPaths = [
       [
@@ -13,9 +14,12 @@ let
       ]
     ];
     modules = {
-      sender.crossConfig.nodes.receiver.networking.hosts."192.0.2.10" = [
-        "application.example"
-      ];
+      sender = { lib, ... }: {
+        crossConfig.nodes.receiver.networking.hosts = lib.mkDefinition {
+          file = "generated-hosts.nix";
+          value."192.0.2.10" = [ "application.example" ];
+        };
+      };
       receiver.networking.hosts."192.0.2.20" = [ "local.example" ];
     };
   };
@@ -35,12 +39,20 @@ in
     expr = nodes.receiver.config.networking.hosts."192.0.2.20";
     expected = [ "local.example" ];
   };
+  testDefinitionSource = {
+    expr = map (definition: definition.file) (
+      builtins.filter (
+        definition: definition.value ? "192.0.2.10"
+      ) nodes.receiver.options.networking.hosts.definitionsWithLocations
+    );
+    expected = [
+      "generated-hosts.nix (sender `sender`, receiver `receiver`, destination `networking.hosts`)"
+    ];
+  };
   testAssertions = {
     expr = checkAssertions nodes;
     expected = true;
   };
-}
-// {
   testRejectsInvalidPort = {
     expr = rejections.incompatibleType;
     expectedError = {

@@ -5,9 +5,10 @@
   messagePattern,
   nixpkgs,
   system,
+  ...
 }:
 let
-  rejections = import ./fixtures/flake-module-settings.nix { inherit crossConfig flakeParts; };
+  rejections = import ../fixtures/flake-module-settings.nix { inherit crossConfig flakeParts; };
   inherit (nixpkgs) lib;
   valuePath = [
     "inventory"
@@ -19,7 +20,7 @@ let
   ];
   mkConsumer =
     sharedModules: nodeModule:
-    flakeParts.lib.mkFlake { inputs.self.outPath = ../.; } (
+    flakeParts.lib.mkFlake { inputs.self.outPath = ../../.; } (
       { config, ... }:
       {
         imports = [ crossConfig.flakeModules.default ] ++ sharedModules;
@@ -85,10 +86,11 @@ let
         ];
       };
       testRegistrations = {
-        expr = builtins.all (node: node.config.crossConfig.optionPaths == paths) (
-          builtins.attrValues nodes
-        );
-        expected = true;
+        expr = lib.mapAttrs (_: node: node.config.crossConfig.optionPaths) nodes;
+        expected = {
+          alpha = paths;
+          beta = paths;
+        };
       };
       testAssertions = {
         expr = checkAssertions nodes;
@@ -141,7 +143,7 @@ let
           nodeConfigurations = overriddenConsumer.nixosConfigurations;
         };
       };
-  explicitConsumer = flakeParts.lib.mkFlake { inputs.self.outPath = ../.; } (
+  explicitConsumer = flakeParts.lib.mkFlake { inputs.self.outPath = ../../.; } (
     { config, ... }:
     let
       nodes = {
@@ -173,7 +175,7 @@ in
 {
   example =
     let
-      consumer = import ../examples/flake-parts.nix {
+      consumer = import ../../examples/flake-parts.nix {
         inherit
           crossConfig
           flakeParts
@@ -223,7 +225,7 @@ in
     };
   sharedRegistrations =
     let
-      evaluation = flakeParts.lib.evalFlakeModule { inputs.self.outPath = ../.; } {
+      evaluation = flakeParts.lib.evalFlakeModule { inputs.self.outPath = ../../.; } {
         imports = [
           crossConfig.flakeModules.default
           {
@@ -269,7 +271,7 @@ in
     };
   explicitImports =
     let
-      consumer = flakeParts.lib.mkFlake { inputs.self.outPath = ../.; } {
+      consumer = flakeParts.lib.mkFlake { inputs.self.outPath = ../../.; } {
         imports = [ crossConfig.flakeModules.default ];
         systems = [ ];
         crossConfig.optionPaths = [ ];
@@ -368,22 +370,14 @@ in
   };
   plainImport =
     let
-      consumer = flakeParts.lib.mkFlake { inputs.self.outPath = ../.; } {
-        imports = [ ../flake-module.nix ];
+      consumer = flakeParts.lib.mkFlake { inputs.self.outPath = ../../.; } {
+        imports = [ ../../flake-module.nix ];
         systems = [ ];
         crossConfig.optionPaths = [ ];
       };
       node = mkNode consumer.nixosModules.crossConfig "idle" { };
     in
     {
-      testPlainConstructor = {
-        expr = builtins.isFunction (import ../lib).mkModule;
-        expected = true;
-      };
-      testPlainModule = {
-        expr = builtins.isFunction (import ../nixos/module.nix);
-        expected = true;
-      };
       testEmptyPaths = {
         expr = node.config.crossConfig.optionPaths;
         expected = [ ];
@@ -393,8 +387,6 @@ in
         expected = true;
       };
     };
-}
-// {
   testRejectsOldCollectionName = {
     expr = rejections.flakeOldCollectionName;
     expectedError = {

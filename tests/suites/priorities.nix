@@ -2,9 +2,10 @@
   checkAssertions,
   messagePattern,
   mkNodes,
+  ...
 }:
 let
-  rejections = import ./fixtures/contributions.nix { inherit mkNodes; };
+  rejections = import ../fixtures/contributions.nix { inherit mkNodes; };
   scenarios = {
     contributedDefault = {
       modules = {

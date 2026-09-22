@@ -2,9 +2,10 @@
   checkAssertions,
   messagePattern,
   mkNodes,
+  ...
 }:
 let
-  rejections = import ./fixtures/destinations.nix { inherit mkNodes; };
+  rejections = import ../fixtures/destinations.nix { inherit mkNodes; };
   contributionOrigin = [
     "sender `sender`"
     "receiver `receiver`"
@@ -614,8 +615,6 @@ in
         expected = true;
       };
     };
-}
-// {
   testRejectsConflictingDestination = {
     expr = rejections.conflictingDestination;
     expectedError = {
@@ -723,6 +722,16 @@ in
   };
   testRejectsUnknownReceiver = {
     expr = rejections.unknownReceiver;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "sender `sender`"
+        "unknown receiver `receiver`"
+      ];
+    };
+  };
+  testRejectsUnknownReceiverWithDisabledContribution = {
+    expr = rejections.unknownReceiverWithDisabledContribution;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [

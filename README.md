@@ -133,7 +133,7 @@ Contributions and local definitions use normal NixOS merging rules. A local defi
 
 Add the library input to the existing flake and import `nixosModules.default` on each participating node. Supply the existing collection through `crossConfig.nodeConfigurations`, compose `crossConfig.optionPaths` in shared settings modules, and set each node's `crossConfig.name` locally.
 
-Keep each host's hardware configuration and existing `system.stateVersion`. The library accepts nodes built by existing host and guest helpers as long as each entry exposes `.config`. The [host and guest example in the tests](tests/host-guest.nix) shows how to include a guest created through NixOS's `containers` option.
+Keep each host's hardware configuration and existing `system.stateVersion`. The library accepts nodes built by existing host and guest helpers as long as each entry exposes `.config`. The [host and guest example in the tests](tests/suites/host-guest.nix) shows how to include a guest created through NixOS's `containers` option.
 
 ## Support
 
@@ -151,7 +151,7 @@ Development supports `x86_64-linux` and `aarch64-linux`. The root lock selects N
 
 ## Development
 
-The root flake supplies the development shell, formatter, and checks through a partition in `dev/`, using one selected `nixpkgs` input. The checks cover the examples. Run `nix fmt --no-update-lock-file` and `nix flake check --no-update-lock-file` from the repository root. Inside the development shell, `nix-unit dev/tests.nix --attr merging` selects a suite from the same collection, including its error-message assertions. Native input overrides select another exact revision for the whole evaluation without changing the committed lock. [Development instructions](docs/development.md) cover prerequisites, exact-revision compatibility checks, focused checks, and CI.
+The root flake supplies the development shell, formatter, and checks through a partition in `dev/`, using one selected `nixpkgs` input. The checks cover the examples. Run `nix fmt --no-update-lock-file` and `nix flake check --no-update-lock-file` from the repository root. Inside the development shell, `nix-unit tests/entrypoint.nix --attr merging` selects a suite from the same collection, including its error-message assertions. Native input overrides select another exact revision for the whole evaluation without changing the committed lock. [Development instructions](docs/development.md) cover prerequisites, exact-revision compatibility checks, focused checks, and CI.
 
 ## Contributing
 

@@ -28,7 +28,7 @@ The ordinary flake checker evaluates applicable shell and formatter outputs and 
 
 [Root `flake.nix`](../flake.nix) returns `mkFlake` directly, declaring the supported systems, `nixosModules.default`, `flakeModules.default`, and `lib`. Its `dev` partition supplies `checks`, `devShells`, and `formatter` through [dev/default.nix](../dev/default.nix). [The shell](../dev/shell.nix) and [formatter](../dev/formatter.nix) declare their package dependencies through `pkgs.callPackage`; [development composition](../dev/default.nix) supplies the selected inputs explicitly through [check assembly](../dev/checks.nix) to the nix-unit check. [Treefmt configuration](../dev/treefmt.toml) lives beside the formatter. The root library exports contain no focused fixtures or example nodes. Plain Nix consumers use `nixos/module.nix`, `flake-module.nix`, or `(import ./lib).mkModule`. The policy remains outside the input and import graph.
 
-Behavior suites live directly under `tests/`, alongside their check builder. Shared node constructors and offline evaluation helpers live in [tests/helpers](../tests/helpers/). These helpers assemble the public flake exports with the supplied inputs, so the tests exercise the same exports consumers use. Concrete fixture modules and evaluated scenarios live in [tests/fixtures](../tests/fixtures/). Examples remain in `examples/` and run through the suites.
+Behavior suites and their registry live in [tests/suites](../tests/suites/). The collection loader and check builder remain at the top of `tests/`. Shared node constructors and offline evaluation helpers live in [tests/helpers](../tests/helpers/). These helpers assemble the public flake exports with the supplied inputs, so the tests exercise the same exports consumers use. Concrete fixture modules and evaluated scenarios live in [tests/fixtures](../tests/fixtures/). Examples remain in `examples/` and run through the suites.
 
 ## Compatibility checks
 
@@ -110,21 +110,21 @@ The separate final command validates the committed default. Repeat compatibility
 Root `nix flake check --no-update-lock-file --print-build-logs` runs the complete test collection through `checks.<system>.tests`, alongside formatting and lint. For a focused run, use nix-unit from the default development shell at the repository root:
 
 ```bash
-nix-unit dev/tests.nix --attr merging
-nix-unit dev/tests.nix --attr destinations.testRejectsMissingDestination
-nix-unit dev/tests.nix --attr destinations.testRejectsUnregisteredDestination
+nix-unit tests/entrypoint.nix --attr merging
+nix-unit tests/entrypoint.nix --attr destinations.testRejectsMissingDestination
+nix-unit tests/entrypoint.nix --attr destinations.testRejectsUnregisteredDestination
 ```
 
 A suite name selects its descendants; a full test name selects one case. Every selected case includes its value or error expectations, including required message fragments. nix-unit handles discovery, selection, comparisons, error matching, and reporting. It reads the current checkout, so edits to tests are available without re-entering the shell. Track new files with `git add` before Git-backed flake evaluation.
 
-[dev/tests.nix](../dev/tests.nix) loads the complete collection with the root locked inputs by default. The root [locked input](../flake.lock), `nixpkgs`, selects NixOS 26.05. The loader returns test definitions; evaluating it alone does not verify expectations. Raw configurations under [tests/fixtures](../tests/fixtures/) are private inputs to the suites.
+[tests/entrypoint.nix](../tests/entrypoint.nix) loads the complete collection with the root locked inputs by default. The root [locked input](../flake.lock), `nixpkgs`, selects NixOS 26.05. The loader returns test definitions from `tests/suites/default.nix`; evaluating it alone does not verify expectations. `tests/checks.nix` wraps nix-unit in a Nix build, and `dev/checks.nix` registers that build as the root test check. Raw configurations under [tests/fixtures](../tests/fixtures/) are private inputs to the suites.
 
 For a focused investigation at another exact revision, set `NIXPKGS_REV` to its full commit and select it for both the development tools and the test loader:
 
 ```bash
 nix develop --override-input nixpkgs "github:NixOS/nixpkgs/$NIXPKGS_REV" \
   --no-write-lock-file --command \
-  nix-unit dev/tests.nix --attr merging \
+  nix-unit tests/entrypoint.nix --attr merging \
   --arg nixpkgs "(builtins.getFlake \"github:NixOS/nixpkgs/$NIXPKGS_REV\")"
 ```
 
@@ -132,7 +132,7 @@ The shell override selects the tools; the explicit argument selects the tested c
 
 ### Test definitions
 
-[tests/default.nix](../tests/default.nix) registers suites by behavior. Each test name starts with `test` and pairs `expr` with `expected`, or with native nix-unit `expectedError` for a rejection case. Declare the expected error type and message pattern beside the expression. The private [message-pattern helper](../tests/helpers/message-pattern.nix) builds a regex requiring every supplied literal fragment, in any order and across line breaks:
+[tests/suites/default.nix](../tests/suites/default.nix) registers suites by behavior. Each test name starts with `test` and pairs `expr` with `expected`, or with native nix-unit `expectedError` for a rejection case. Declare the expected error type and message pattern beside the expression. The private [message-pattern helper](../tests/helpers/message-pattern.nix) builds a regex requiring every supplied literal fragment, in any order and across line breaks:
 
 ```nix
 testRejectsMissingDestination = {
@@ -151,11 +151,11 @@ testRejectsMissingDestination = {
 
 All expectations use nix-unit's standard definition shape. Error tests match the underlying error message. The unregistered-destination case checks its rejection reason, option path, and original source file; additional sender wording in the evaluator stack trace is outside that expectation. A mismatch prints the test name and the relevant value difference or error mismatch, and causes the command to fail. Use nix-unit's `--show-trace` option when investigating unexpected evaluation errors.
 
-The ordinary node helpers exercise `nixosModules.default` through the public flake export. [Module](../tests/module.nix) and [setting](../tests/module-settings.nix) suites cover receiver-supplied `lib`, reciprocal contributions, shared registrations, normalization, priorities, required settings, and lazy collections. [Constructor tests](../tests/mk-module.nix) cover `lib.mkModule`; `plainImports` repeats the module and constructor suites through direct imports without development inputs.
+The ordinary node helpers exercise `nixosModules.default` through the public flake export. [Module](../tests/suites/module.nix) and [setting](../tests/suites/module-settings.nix) suites cover receiver-supplied `lib`, reciprocal contributions, shared registrations, normalization, priorities, required settings, and lazy collections. [Constructor tests](../tests/suites/mk-module.nix) cover `lib.mkModule`; `plainImports` repeats the module and constructor suites through direct imports without development inputs.
 
-[Flake-module tests](../tests/flake-module.nix) assemble consumers with flake-parts through the public export and cover default and explicit collections, shared settings, node defaults, plain imports, and invalid settings. The selected flake-parts library follows the same nixpkgs revision as the evaluated nodes. The example suites evaluate system derivation paths without building example systems.
+[Flake-module tests](../tests/suites/flake-module.nix) assemble consumers with flake-parts through the public export and cover default and explicit collections, shared settings, node defaults, plain imports, and invalid settings. The selected flake-parts library follows the same nixpkgs revision as the evaluated nodes. The example suites evaluate system derivation paths without building example systems.
 
-[Destination](../tests/destinations.nix) and [tagged-destination](../tests/tagged-destinations.nix) suites pair accepted configurations with rejection cases for missing, read-only, incompatible, and conflicting destinations. Their error expectations verify contribution identities, destination paths, and source filenames. [Merging](../tests/merging.nix), [priorities](../tests/priorities.nix), [nested properties](../tests/nested-properties.nix), and [forwarding](../tests/forwarding.nix) include conflict, type, and contributed-assertion rejection cases beside successful behavior. [Reciprocal](../tests/reciprocal.nix) and tagged-destination tests require native recursion errors only for actual value-dependency cycles. The [destination inspection design](destination-inspection.md) explains the receiver-local metadata evaluation.
+[Destination](../tests/suites/destinations.nix) and [tagged-destination](../tests/suites/tagged-destinations.nix) suites pair accepted configurations with rejection cases for missing, read-only, incompatible, and conflicting destinations. Their error expectations verify contribution identities, destination paths, and source filenames. [Merging](../tests/suites/merging.nix), [priorities](../tests/suites/priorities.nix), [nested properties](../tests/suites/nested-properties.nix), and [forwarding](../tests/suites/forwarding.nix) include conflict, type, and contributed-assertion rejection cases beside successful behavior. [Reciprocal](../tests/suites/reciprocal.nix) and tagged-destination tests require native recursion errors only for actual value-dependency cycles. The [destination inspection design](destination-inspection.md) explains the receiver-local metadata evaluation.
 
 ## CI and policy
 
