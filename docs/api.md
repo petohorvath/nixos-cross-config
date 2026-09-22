@@ -90,7 +90,7 @@ The export is available without development inputs:
 ((import ./nixos-cross-config/flake.nix).outputs { }).flakeModules.default
 ```
 
-The root flake-parts input exists for assembled-consumer checks, with its `nixpkgs-lib` following the selected root `nixpkgs`. Accessing this export, `nixosModules.default`, or `lib.mkModule` through plain import does not evaluate either development input. Standalone consumers do not need to evaluate flake-parts.
+The root flake-parts input assembles development outputs and supports assembled-consumer checks, with its `nixpkgs-lib` following the selected root `nixpkgs`. Accessing this export, `nixosModules.default`, or `lib.mkModule` through plain import does not evaluate either development input. Standalone consumers do not need to evaluate flake-parts.
 
 ## Compatibility adapter
 

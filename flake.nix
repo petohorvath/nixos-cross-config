@@ -12,31 +12,27 @@
     let
       inherit (inputs) nixpkgs;
       flakeParts = inputs.flake-parts;
-      systems = [
-        "x86_64-linux"
-        "aarch64-linux"
-      ];
-      forSystems = nixpkgs.lib.genAttrs systems;
-      development = forSystems (
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-          formatter = pkgs.callPackage ./formatter.nix { };
-        in
-        {
-          inherit formatter;
-          shell = pkgs.callPackage ./shell.nix { inherit formatter; };
-          checks = import ./tests/checks.nix {
-            inherit
-              flakeParts
-              formatter
-              nixpkgs
-              pkgs
-              system
-              ;
+      development = flakeParts.lib.mkFlake { inherit inputs; } {
+        systems = [
+          "x86_64-linux"
+          "aarch64-linux"
+        ];
+        imports = [
+          (flakeParts.lib.importApply ./tests/flake-parts.nix { inherit crossConfig; })
+        ];
+
+        perSystem =
+          { config, pkgs, ... }:
+          {
+            formatter = pkgs.callPackage ./formatter.nix { };
+            packages.cross-config-fmt = config.formatter;
+            devShells.default = pkgs.callPackage ./shell.nix { inherit (config) formatter; };
           };
-        }
-      );
+
+        flake.nixosConfigurations = import ./examples/minimal.nix {
+          inherit crossConfig nixpkgs;
+        };
+      };
       crossConfig = {
         lib = { inherit mkModule; };
         nixosModules.default = ./nixos/module.nix;
@@ -56,51 +52,18 @@
         );
     in
     {
+      # Named exports keep plain imports independent of development inputs.
       inherit (crossConfig) flakeModules nixosModules;
       lib = {
         inherit mkModule;
-        tests = forSystems (
-          system:
-          import ./tests {
-            inherit
-              crossConfig
-              flakeParts
-              nixpkgs
-              system
-              ;
-          }
-        );
-        failures = forSystems (
-          system:
-          let
-            mkNodes = import ./tests/helpers/mk-nodes.nix {
-              inherit crossConfig nixpkgs system;
-            };
-          in
-          import ./tests/failures.nix {
-            inherit
-              crossConfig
-              flakeParts
-              mkNodes
-              nixpkgs
-              ;
-          }
-          // {
-            valueCycle = import ./tests/value-cycle.nix { inherit mkNodes; };
-            taggedValueCycle = import ./tests/tagged-value-cycle.nix { inherit mkNodes; };
-          }
-        );
+        inherit (development.lib) failures tests;
       };
-      devShells = forSystems (system: {
-        default = development.${system}.shell;
-      });
-      formatter = forSystems (system: development.${system}.formatter);
-      packages = forSystems (system: {
-        cross-config-fmt = development.${system}.formatter;
-      });
-      checks = forSystems (system: development.${system}.checks);
-      nixosConfigurations = import ./examples/minimal.nix {
-        inherit crossConfig nixpkgs;
-      };
+      inherit (development)
+        checks
+        devShells
+        formatter
+        nixosConfigurations
+        packages
+        ;
     };
 }
