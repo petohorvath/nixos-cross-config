@@ -1,13 +1,6 @@
-{
-  crossConfig,
-  nixpkgs,
-  system,
-  ...
-}:
+{ minimalExample, ... }:
 let
-  nodes = import ../../examples/minimal.nix {
-    inherit crossConfig nixpkgs system;
-  };
+  nodes = minimalExample;
   virtualHost = nodes.proxy.config.services.nginx.virtualHosts."app.example";
 in
 {

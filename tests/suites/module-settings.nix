@@ -1,14 +1,15 @@
 {
   checkAssertions,
-  crossConfig,
+  evaluateModule,
+  mkModuleNodes,
+  moduleRejections,
   messagePattern,
-  nixpkgs,
+  lib,
   ...
 }:
 let
-  rejections = import ../fixtures/module-settings.nix { inherit crossConfig nixpkgs; };
-  inherit (nixpkgs) lib;
-  mkNodes = import ../helpers/mk-module-nodes.nix { inherit crossConfig lib; };
+  rejections = moduleRejections;
+  mkNodes = mkModuleNodes;
   valuePath = [
     "inventory"
     "values"
@@ -72,15 +73,9 @@ let
   checkIdleCollection =
     modules:
     let
-      node = lib.evalModules {
+      node = evaluateModule {
         modules = modules ++ [
-          crossConfig.nixosModules.default
           {
-            options.assertions = lib.mkOption {
-              type = lib.types.listOf lib.types.raw;
-              default = [ ];
-              description = "Assertions emitted by participating modules.";
-            };
             config.crossConfig = {
               name = "idle";
               optionPaths = [ ];

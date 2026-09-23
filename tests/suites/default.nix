@@ -1,36 +1,4 @@
-{
-  flakeParts,
-  nixpkgs,
-  system,
-}:
-let
-  crossConfig = import ../helpers/flake-outputs.nix { inherit flakeParts nixpkgs; };
-  messagePattern = import ../helpers/message-pattern.nix { inherit (nixpkgs) lib; };
-  checkAssertions =
-    nodes:
-    nixpkgs.lib.pipe nodes [
-      builtins.attrValues
-      (builtins.all (node: builtins.all (entry: entry.assertion) node.config.assertions))
-    ];
-  mkNodes = import ../helpers/mk-nodes.nix {
-    inherit crossConfig nixpkgs system;
-  };
-  testContext = {
-    sourcePaths = import ../helpers/source-paths.nix;
-    inherit
-      checkAssertions
-      crossConfig
-      flakeParts
-      messagePattern
-      mkNodes
-      nixpkgs
-      system
-      ;
-  };
-  plainTestContext = testContext // {
-    crossConfig = import ../helpers/plain-exports.nix;
-  };
-in
+{ plainTestContext, testContext }:
 {
   conditional = import ./conditional.nix testContext;
   destinations = import ./destinations.nix testContext;
