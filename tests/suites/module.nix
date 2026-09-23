@@ -1,25 +1,18 @@
-{ crossConfig, nixpkgs, ... }:
+{ evaluateModule, lib, ... }:
 let
-  inherit (nixpkgs) lib;
   nodes = {
     alpha = mkNode "alpha" "beta";
     beta = mkNode "beta" "alpha";
   };
   mkNode =
     name: receiver:
-    lib.evalModules {
+    evaluateModule {
       specialArgs.lib = lib // {
         mkOption = arguments: lib.mkOption arguments // { receiverLibrary = name; };
       };
       modules = [
-        crossConfig.nixosModules.default
         {
           options = {
-            assertions = lib.mkOption {
-              type = lib.types.listOf lib.types.raw;
-              default = [ ];
-              description = "Assertions emitted by participating modules.";
-            };
             inventory.values = lib.mkOption {
               type = lib.types.listOf lib.types.str;
               default = [ ];

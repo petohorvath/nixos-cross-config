@@ -1,15 +1,22 @@
 {
   checkAssertions,
-  crossConfig,
-  flakeParts,
+  flakeConsumer,
+  flakeExample,
+  flakeRejections,
+  plainFlakeConsumer,
   messagePattern,
-  nixpkgs,
-  system,
+  lib,
   ...
 }:
 let
-  rejections = import ../fixtures/flake-module-settings.nix { inherit crossConfig flakeParts; };
-  inherit (nixpkgs) lib;
+  rejections = flakeRejections;
+  inherit (flakeConsumer)
+    evaluateConsumer
+    mkConsumer
+    mkNode
+    mkPair
+    mkUnconfiguredNode
+    ;
   valuePath = [
     "inventory"
     "values"
@@ -18,47 +25,6 @@ let
     "inventory"
     "literal.values"
   ];
-  mkConsumer =
-    sharedModules: nodeModule:
-    flakeParts.lib.mkFlake { inputs.self.outPath = ../../.; } (
-      { config, ... }:
-      {
-        imports = [ crossConfig.flakeModules.default ] ++ sharedModules;
-        systems = [ ];
-        flake.nixosConfigurations = lib.genAttrs [ "alpha" "beta" ] (
-          name: mkNode config.flake.nixosModules.crossConfig name nodeModule
-        );
-      }
-    );
-  mkNode =
-    configuredModule: name: nodeModule:
-    nixpkgs.lib.nixosSystem {
-      inherit system;
-      specialArgs.lib = lib // {
-        mkOption = arguments: lib.mkOption arguments // { receiverLibrary = name; };
-      };
-      modules = [
-        configuredModule
-        {
-          options.inventory = lib.genAttrs [ "values" "literal.values" ] (
-            _:
-            lib.mkOption {
-              type = lib.types.listOf lib.types.str;
-              default = [ ];
-              description = "Received and local inventory values.";
-            }
-          );
-          config = {
-            boot.isContainer = true;
-            system.stateVersion = "26.05";
-            networking.hostName = "${name}-container";
-            crossConfig.name = name;
-            inventory.values = [ "local-${name}" ];
-          };
-        }
-        nodeModule
-      ];
-    };
   reciprocal = { config, lib, ... }: {
     crossConfig.nodes.${
       if config.crossConfig.name == "alpha" then "beta" else "alpha"
@@ -97,9 +63,9 @@ let
         expected = true;
       };
     };
-  defaultConsumer = mkConsumer [ { crossConfig.optionPaths = [ valuePath ]; } ] reciprocal;
+  defaultConsumer = mkPair [ { crossConfig.optionPaths = [ valuePath ]; } ] reciprocal;
   mergedConsumer =
-    mkConsumer
+    mkPair
       [
         {
           crossConfig.optionPaths = lib.mkBefore [
@@ -118,7 +84,7 @@ let
         imports = [ reciprocal ];
         crossConfig.nodes.alpha.inventory."literal.values" = [ "literal" ];
       };
-  emptyConsumer = mkConsumer [
+  emptyConsumer = mkPair [
     {
       crossConfig = {
         optionPaths = [ ];
@@ -127,7 +93,7 @@ let
     }
   ] { };
   overriddenConsumer =
-    mkConsumer
+    mkPair
       [
         {
           crossConfig = {
@@ -143,7 +109,7 @@ let
           nodeConfigurations = overriddenConsumer.nixosConfigurations;
         };
       };
-  explicitConsumer = flakeParts.lib.mkFlake { inputs.self.outPath = ../../.; } (
+  explicitConsumer = mkConsumer (
     { config, ... }:
     let
       nodes = {
@@ -156,8 +122,6 @@ let
       };
     in
     {
-      imports = [ crossConfig.flakeModules.default ];
-      systems = [ ];
       crossConfig = {
         nodeConfigurations = nodes;
         optionPaths = [ valuePath ];
@@ -175,14 +139,7 @@ in
 {
   example =
     let
-      consumer = import ../../examples/flake-parts.nix {
-        inherit
-          crossConfig
-          flakeParts
-          nixpkgs
-          system
-          ;
-      };
+      consumer = flakeExample;
       nodes = consumer.nixosConfigurations;
       virtualHost = nodes.proxy.config.services.nginx.virtualHosts."app.example";
     in
@@ -225,9 +182,8 @@ in
     };
   sharedRegistrations =
     let
-      evaluation = flakeParts.lib.evalFlakeModule { inputs.self.outPath = ../../.; } {
+      evaluation = evaluateConsumer {
         imports = [
-          crossConfig.flakeModules.default
           {
             crossConfig.optionPaths = lib.mkBefore [
               valuePath
@@ -249,7 +205,6 @@ in
             ];
           }
         ];
-        systems = [ ];
       };
     in
     {
@@ -271,19 +226,14 @@ in
     };
   explicitImports =
     let
-      consumer = flakeParts.lib.mkFlake { inputs.self.outPath = ../../.; } {
-        imports = [ crossConfig.flakeModules.default ];
-        systems = [ ];
+      consumer = mkConsumer {
         crossConfig.optionPaths = [ ];
-        flake.nixosConfigurations.untouched = nixpkgs.lib.nixosSystem {
-          inherit system;
-          modules = [
-            {
-              boot.isContainer = true;
-              system.stateVersion = "26.05";
-            }
-          ];
-        };
+        flake.nixosConfigurations.untouched = mkUnconfiguredNode [
+          {
+            boot.isContainer = true;
+            system.stateVersion = "26.05";
+          }
+        ];
       };
     in
     {
@@ -342,11 +292,11 @@ in
       expected = true;
     };
   };
-  sharedDefaults = checkPair (mkConsumer [
+  sharedDefaults = checkPair (mkPair [
     { crossConfig.optionPaths = lib.mkDefault (throw "Overridden default registrations were forced."); }
     { crossConfig.optionPaths = [ valuePath ]; }
   ] reciprocal) [ valuePath ];
-  sharedForce = checkPair (mkConsumer [
+  sharedForce = checkPair (mkPair [
     { crossConfig.optionPaths = [ [ "crossConfig" ] ]; }
     { crossConfig.optionPaths = lib.mkForce [ valuePath ]; }
   ] reciprocal) [ valuePath ];
@@ -370,9 +320,7 @@ in
   };
   plainImport =
     let
-      consumer = flakeParts.lib.mkFlake { inputs.self.outPath = ../../.; } {
-        imports = [ ../../flake-module.nix ];
-        systems = [ ];
+      consumer = plainFlakeConsumer.mkConsumer {
         crossConfig.optionPaths = [ ];
       };
       node = mkNode consumer.nixosModules.crossConfig "idle" { };

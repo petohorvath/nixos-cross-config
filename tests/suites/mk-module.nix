@@ -1,14 +1,13 @@
 {
-  crossConfig,
-  nixpkgs,
-  sourcePaths,
+  constructorArguments,
+  evaluateConstructor,
+  lib,
   ...
 }:
 let
-  inherit (nixpkgs) lib;
   result = {
     testConstructorArguments = {
-      expr = builtins.functionArgs crossConfig.lib.mkModule;
+      expr = constructorArguments;
       expected = {
         name = false;
         nodes = false;
@@ -28,11 +27,11 @@ let
     {
       testConstructorLocation = {
         expr = map (definition: definition.file) node.options.crossConfig.name.definitionsWithLocations;
-        expected = [ sourcePaths.mkModule ];
+        expected = [ (toString ../../lib/default.nix) ];
       };
       testDeclarations = {
         expr = node.options.crossConfig.nodes.declarations;
-        expected = [ sourcePaths.module ];
+        expected = [ (toString ../../nixos/module.nix) ];
       };
       testReceiverLibrary = {
         expr = node.options.crossConfig.nodes.receiverLibrary;
@@ -82,7 +81,7 @@ let
 
   mkNode =
     name: receiver:
-    lib.evalModules {
+    evaluateConstructor { inherit name nodes optionPaths; } {
       specialArgs = {
         inherit receiver;
         lib = lib // {
@@ -93,14 +92,8 @@ let
         optionPaths = [ [ "ordinary-optionPaths-${name}" ] ];
       };
       modules = [
-        (crossConfig.lib.mkModule { inherit name nodes optionPaths; })
         ../fixtures/factory-node.nix
         {
-          options.assertions = lib.mkOption {
-            type = lib.types.listOf lib.types.raw;
-            default = [ ];
-            description = "Assertions emitted by the forwarding module.";
-          };
           config = {
             _module.args.ordinaryArgument = "argument-${name}";
             inventory.identity = name;

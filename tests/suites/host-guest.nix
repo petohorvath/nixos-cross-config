@@ -1,6 +1,6 @@
 {
   checkAssertions,
-  crossConfig,
+  withModule,
   mkNodes,
   ...
 }:
@@ -20,10 +20,7 @@ let
         crossConfig.nodes.guest.networking.hosts."192.0.2.10" = [
           "host-to-guest.example"
         ];
-        containers.application.config = {
-          imports = [
-            crossConfig.nixosModules.default
-          ];
+        containers.application.config = withModule {
           crossConfig = {
             name = "guest";
             inherit optionPaths;

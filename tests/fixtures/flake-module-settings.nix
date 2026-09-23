@@ -1,11 +1,6 @@
-{ crossConfig, flakeParts }:
+{ evaluateConsumer }:
 let
-  evaluate =
-    modules:
-    (flakeParts.lib.evalFlakeModule { inputs.self.outPath = ../..; } {
-      imports = [ crossConfig.flakeModules.default ] ++ modules;
-      systems = [ ];
-    }).config.crossConfig;
+  evaluate = modules: (evaluateConsumer { imports = modules; }).config.crossConfig;
   paths = value: (evaluate [ { crossConfig.optionPaths = value; } ]).optionPaths;
 in
 {

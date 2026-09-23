@@ -1,25 +1,24 @@
 {
   checkAssertions,
-  crossConfig,
+  mkModuleNodes,
+  mkNodes,
+  taggedNixos,
   messagePattern,
-  nixpkgs,
-  system,
+  lib,
   ...
 }:
 let
-  rejections = import ../fixtures/tagged-destinations.nix { mkNodes = mkNixosNodes; };
-  mkNixosNodes = import ../helpers/mk-nodes.nix { inherit crossConfig nixpkgs system; };
+  rejections = import ../fixtures/tagged-destinations.nix { inherit mkNodes; };
   contributionOrigin = [
     "sender `sender`"
     "receiver `receiver`"
     "destination `inventory.payload.value`"
     "fixtures/tagged-destinations.nix"
   ];
-  inherit (nixpkgs) lib;
   tests = {
     nixos =
       let
-        result = import ../fixtures/tagged-nixos.nix { inherit crossConfig nixpkgs system; };
+        result = taggedNixos;
       in
       {
         testPublication = {
@@ -203,7 +202,7 @@ let
     };
     transportSelection =
       let
-        nodes = mkNodes {
+        nodes = mkModuleNodes {
           optionPaths = [
             [
               "inventory"
@@ -265,7 +264,7 @@ let
             description = "Inventory retaining unused and disabled registrations.";
           };
         };
-        nodes = mkNodes {
+        nodes = mkModuleNodes {
           optionPaths = [
             [
               "inventory"
@@ -322,7 +321,7 @@ let
       };
     conditionalSelf =
       let
-        nodes = mkNodes {
+        nodes = mkModuleNodes {
           optionPaths = [
             [
               "inventory"
@@ -349,7 +348,7 @@ let
       };
     reciprocal =
       let
-        nodes = mkNodes {
+        nodes = mkModuleNodes {
           optionPaths = [
             [
               "inventory"
@@ -427,8 +426,10 @@ let
         unique = lib.types.uniq submoduleOption.type;
       };
 
-  mkNodes = import ../helpers/mk-module-nodes.nix { inherit crossConfig lib; };
-  mkTaggedNodes = import ../helpers/mk-tagged-nodes.nix { inherit lib mkNodes; };
+  mkTaggedNodes = import ../helpers/mk-tagged-nodes.nix {
+    inherit lib;
+    mkNodes = mkModuleNodes;
+  };
   checkValue =
     expected: args:
     let
@@ -586,7 +587,7 @@ tests
     };
   };
   testRejectsValueCycle = {
-    expr = import ../fixtures/tagged-value-cycle.nix { mkNodes = mkNixosNodes; };
+    expr = import ../fixtures/tagged-value-cycle.nix { inherit mkNodes; };
     expectedError = {
       type = "EvalError";
       msg = "infinite recursion encountered";

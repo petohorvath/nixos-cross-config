@@ -1,10 +1,5 @@
-{
-  crossConfig,
-  nixpkgs,
-  system,
-}:
+{ mkNodes }:
 let
-  mkNodes = import ../helpers/mk-nodes.nix { inherit crossConfig nixpkgs system; };
   nodes = mkNodes {
     optionPaths = [
       [

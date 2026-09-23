@@ -18,6 +18,26 @@ in
   flakeParts ? flakePartsFor nixpkgs,
   system ? builtins.currentSystem,
 }:
-import ./suites {
-  inherit flakeParts nixpkgs system;
-}
+let
+  mkTestContext =
+    crossConfig:
+    import ./helpers/test-context.nix {
+      inherit
+        crossConfig
+        flakeParts
+        nixpkgs
+        system
+        ;
+    };
+  plainTestContext = mkTestContext (import ./helpers/plain-exports.nix);
+  testContext =
+    mkTestContext (
+      import ./helpers/flake-outputs.nix {
+        inherit flakeParts nixpkgs;
+      }
+    )
+    // {
+      plainFlakeConsumer = plainTestContext.flakeConsumer;
+    };
+in
+import ./suites { inherit plainTestContext testContext; }

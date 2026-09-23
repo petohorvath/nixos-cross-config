@@ -1,25 +1,6 @@
-{ crossConfig, nixpkgs }:
+{ evaluateModule, evaluateConstructor }:
 let
-  inherit (nixpkgs) lib;
-  evaluateModules =
-    modules:
-    lib.evalModules {
-      modules = modules ++ [
-        {
-          options.assertions = lib.mkOption {
-            type = lib.types.listOf lib.types.raw;
-            default = [ ];
-            description = "Assertions emitted by participating modules.";
-          };
-        }
-      ];
-    };
-  evaluate =
-    settings:
-    evaluateModules [
-      crossConfig.nixosModules.default
-      { crossConfig = settings; }
-    ];
+  evaluate = settings: evaluateModule { modules = [ { crossConfig = settings; } ]; };
   settings = {
     name = "receiver";
     nodeConfigurations = { };
@@ -62,42 +43,39 @@ in
       optionPaths = [ [ "crossConfig" ] ];
     }).config.crossConfig.optionPaths;
   legacyReservedCrossConfig =
-    (evaluateModules [
-      (crossConfig.lib.mkModule {
-        inherit (settings) name;
-        nodes = { };
-        optionPaths = [
-          [
-            "crossConfig"
-            "nodes"
-          ]
-        ];
-      })
-    ]).config.assertions;
+    (evaluateConstructor {
+      inherit (settings) name;
+      nodes = { };
+      optionPaths = [
+        [
+          "crossConfig"
+          "nodes"
+        ]
+      ];
+    } { modules = [ ]; }).config.assertions;
   legacyReservedModule =
-    (evaluateModules [
-      (crossConfig.lib.mkModule {
-        inherit (settings) name;
-        nodes = { };
-        optionPaths = [
-          [
-            "_module"
-            "args"
-          ]
-        ];
-      })
-    ]).config.assertions;
+    (evaluateConstructor {
+      inherit (settings) name;
+      nodes = { };
+      optionPaths = [
+        [
+          "_module"
+          "args"
+        ]
+      ];
+    } { modules = [ ]; }).config.assertions;
   conflictingCollections =
-    (evaluateModules [
-      crossConfig.nixosModules.default
-      { crossConfig = settings; }
-      {
-        crossConfig.nodeConfigurations.unused =
-          let
-            first = second;
-            second = first;
-          in
-          first;
-      }
-    ]).config.assertions;
+    (evaluateModule {
+      modules = [
+        { crossConfig = settings; }
+        {
+          crossConfig.nodeConfigurations.unused =
+            let
+              first = second;
+              second = first;
+            in
+            first;
+        }
+      ];
+    }).config.assertions;
 }
