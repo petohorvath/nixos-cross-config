@@ -13,7 +13,8 @@ permissions:
 jobs:
   policy:
     name: Policy
-    uses: petohorvath/nixos-project-policy/.github/workflows/check.yml@v0.3.0
+    uses: petohorvath/nixos-project-policy/.github/workflows/check.yml@v0.4.0
     with:
       project: nixos-cross-config
-      policy_version: v0.3.0
+      policy_version: v0.4.0
+      required_architectures: '["x86_64-linux", "aarch64-linux"]'
