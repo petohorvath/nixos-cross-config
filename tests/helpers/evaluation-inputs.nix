@@ -1,4 +1,7 @@
-# Reconstruct development inputs from store paths for offline fixture evaluation.
+/*
+  Reconstruct development inputs from store paths for offline fixture
+  evaluation.
+*/
 { flakePartsDir, nixpkgsDir }:
 let
   inputs = {

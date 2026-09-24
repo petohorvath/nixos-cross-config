@@ -1,4 +1,7 @@
-# Assemble the public flake with the supplied inputs, including in offline runners.
+/*
+  Assemble the public flake with the supplied inputs, including in offline
+  runners.
+*/
 { flakeParts, nixpkgs }:
 let
   inputs = {

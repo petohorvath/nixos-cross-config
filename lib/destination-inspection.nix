@@ -6,23 +6,50 @@
 }:
 path:
 let
-  destination = findDeclaration [ ] path options;
-  requiresLocalInspection = destination.remaining != [ ] && !(destination.option.readOnly or false);
+  restoreDefinitionProperties = import ./restore-definition-properties.nix { inherit lib; };
 
-  inspectReceiverLocalOption =
-    { destination, path }:
+  findDeclaration =
+    prefix: remaining: declarations:
+    if lib.isOption declarations then
+      {
+        inherit prefix remaining;
+        option = declarations;
+      }
+    else if remaining == [ ] then
+      null
+    else
+      let
+        segment = builtins.head remaining;
+      in
+      findDeclaration (prefix ++ [ segment ]) (builtins.tail remaining) (declarations.${segment} or { });
+
+  evaluateTagOption =
+    {
+      optionPath,
+      tag,
+      definitions,
+    }:
     let
-      # Inspect local submodule definitions without receiving our own contribution.
-      localOptions =
-        (extendModules {
-          specialArgs.__nixosCrossConfigInspectPaths = inspectionPaths ++ [ path ];
-        }).options;
+      evaluation = lib.evalModules {
+        modules = [
+          (
+            lib.optionalAttrs (tag.declarations != [ ]) {
+              _file = builtins.head tag.declarations;
+            }
+            // {
+              /*
+                The full path preserves submodule names and nested `_module`
+                tags.
+              */
+              options = lib.setAttrByPath optionPath tag;
+              config = lib.setAttrByPath optionPath (lib.mkMerge (map lib.mkDefinition definitions));
+            }
+          )
+        ];
+      };
     in
-    findLocalOption {
-      inherit (destination) prefix;
-      path = destination.remaining;
-      option = lib.getAttrFromPath destination.prefix localOptions;
-    };
+    # Inspection consumes definitions, leaving the final value and apply lazy.
+    lib.getAttrFromPath optionPath evaluation.options;
 
   findLocalOption =
     {
@@ -112,31 +139,6 @@ let
         };
       };
 
-  evaluateTagOption =
-    {
-      optionPath,
-      tag,
-      definitions,
-    }:
-    let
-      evaluation = lib.evalModules {
-        modules = [
-          (
-            lib.optionalAttrs (tag.declarations != [ ]) {
-              _file = builtins.head tag.declarations;
-            }
-            // {
-              # The full path preserves submodule names and nested `_module` tags.
-              options = lib.setAttrByPath optionPath tag;
-              config = lib.setAttrByPath optionPath (lib.mkMerge (map lib.mkDefinition definitions));
-            }
-          )
-        ];
-      };
-    in
-    # Inspection consumes definitions, leaving the final value and apply lazy.
-    lib.getAttrFromPath optionPath evaluation.options;
-
   findMetadataOption =
     {
       prefix,
@@ -162,7 +164,10 @@ let
         inherit enclosingOption;
       }
     else
-      # Types without submodule metadata validate their attribute contents natively.
+      /*
+        Types without submodule metadata validate their attribute contents
+        natively.
+      */
       enclosingOption;
 
   findSubmoduleOption =
@@ -173,7 +178,10 @@ let
       enclosingOption,
     }:
     let
-      # The empty prefix stub may name an absent child; inspect declarations first.
+      /*
+        The empty prefix stub may name an absent child; inspect declarations
+        first.
+      */
       instance = configuration.extendModules {
         modules = [ { _module.check = false; } ];
       };
@@ -199,22 +207,27 @@ let
     else
       null;
 
-  findDeclaration =
-    prefix: remaining: declarations:
-    if lib.isOption declarations then
-      {
-        inherit prefix remaining;
-        option = declarations;
-      }
-    else if remaining == [ ] then
-      null
-    else
-      let
-        segment = builtins.head remaining;
-      in
-      findDeclaration (prefix ++ [ segment ]) (builtins.tail remaining) (declarations.${segment} or { });
+  inspectReceiverLocalOption =
+    { destination, path }:
+    let
+      /*
+        Inspect local submodule definitions without receiving our own
+        contribution.
+      */
+      localOptions =
+        (extendModules {
+          specialArgs.__nixosCrossConfigInspectPaths = inspectionPaths ++ [ path ];
+        }).options;
+    in
+    findLocalOption {
+      inherit (destination) prefix;
+      path = destination.remaining;
+      option = lib.getAttrFromPath destination.prefix localOptions;
+    };
 
-  restoreDefinitionProperties = import ./restore-definition-properties.nix { inherit lib; };
+  destination = findDeclaration [ ] path options;
+
+  requiresLocalInspection = destination.remaining != [ ] && !(destination.option.readOnly or false);
 in
 if destination == null then
   null

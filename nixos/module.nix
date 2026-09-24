@@ -1,6 +1,7 @@
 /*
   Contributes definitions between caller-owned NixOS nodes. Each participant
-  supplies crossConfig.name, crossConfig.nodeConfigurations, and crossConfig.optionPaths.
+  supplies crossConfig.name, crossConfig.nodeConfigurations, and
+  crossConfig.optionPaths.
 */
 {
   config,
@@ -13,7 +14,10 @@
 let
   cfg = config.crossConfig;
 
-  # Path errors should remain useful even when the required node name is missing.
+  /*
+    Path errors should remain useful even when the required node name is
+    missing.
+  */
   nodeNameForErrors = if options.crossConfig.name.isDefined then cfg.name else null;
   settings = import ../lib/settings.nix {
     inherit lib;
@@ -27,7 +31,6 @@ let
 
   inspectionPaths = specialArgs.__nixosCrossConfigInspectPaths or [ ];
   isInspectingDestinations = inspectionPaths != [ ];
-  # Receiving assembles config contributed to this node and checks its destinations.
   receiving = import ../lib/receiving.nix {
     inherit
       extendModules
@@ -40,23 +43,25 @@ let
   };
   inherit (receiving) destinationAssertions receivedConfig;
 
+  mkReceiverAssertion = receiver: contribution: {
+    assertion = builtins.seq contribution (builtins.hasAttr receiver cfg.nodeConfigurations);
+    message = "nixos-cross-config: sender `${cfg.name}` " + "targets unknown receiver `${receiver}`.";
+  };
   receiverAssertions = lib.mapAttrsToList mkReceiverAssertion cfg.nodes;
 
   # Required settings must also be checked on idle nodes with no paths.
   assertions = builtins.seq cfg.name (
     builtins.seq cfg.nodeConfigurations (destinationAssertions ++ receiverAssertions)
   );
-
-  mkReceiverAssertion = receiver: contribution: {
-    assertion = builtins.seq contribution (builtins.hasAttr receiver cfg.nodeConfigurations);
-    message = "nixos-cross-config: sender `${cfg.name}` targets unknown receiver `${receiver}`.";
-  };
 in
 {
   options.crossConfig = settings.options // {
     name = lib.mkOption {
       type = lib.types.str;
-      description = "Required node identity within the caller-owned node collection, independent of the hostname.";
+      description = ''
+        Required node identity within the caller-owned node collection,
+        independent of the hostname.
+      '';
     };
     nodes = outgoingOption;
   };
@@ -64,7 +69,10 @@ in
   config = lib.mkMerge [
     receivedConfig
     {
-      # Inspection checks local declarations; validate contributions only in the main evaluation.
+      /*
+        Inspection checks local declarations; validate contributions only in the
+        main evaluation.
+      */
       assertions = lib.optionals (!isInspectingDestinations) assertions;
     }
   ];
