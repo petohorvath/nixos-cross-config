@@ -45,7 +45,9 @@ let
       leafPath = [ ];
       tagOption = lib.mkOption {
         type = lib.types.str;
-        description = "A scalar tag.";
+        description = ''
+          A scalar tag.
+        '';
       };
     };
     nested = checkValue "contributed" { tagOption = submoduleOption; };
@@ -58,11 +60,15 @@ let
               type = lib.types.str;
               default = "local";
               readOnly = name != "payload";
-              description = "A field writable only under its original tag name.";
+              description = ''
+                A field writable only under its original tag name.
+              '';
             };
           }
         );
-        description = "A tag with name-dependent permissions.";
+        description = ''
+          A tag with name-dependent permissions.
+        '';
       };
     };
     namedEntry = checkValue "contributed" {
@@ -82,16 +88,22 @@ let
                     type = lib.types.str;
                     default = "local";
                     readOnly = name != "writable";
-                    description = "A field writable only in its named entry.";
+                    description = ''
+                      A field writable only in its named entry.
+                    '';
                   };
                 }
               )
             );
             default = { };
-            description = "Named entries inside a tag.";
+            description = ''
+              Named entries inside a tag.
+            '';
           };
         };
-        description = "A tag containing named entries.";
+        description = ''
+          A tag containing named entries.
+        '';
       };
     };
     dottedTag = checkValue "contributed" {
@@ -114,14 +126,18 @@ let
     receiverDeclared = checkValue "contributed" {
       tagOption = lib.mkOption {
         type = lib.types.submodule { };
-        description = "A tag whose receiver declares its fields.";
+        description = ''
+          A tag whose receiver declares its fields.
+        '';
       };
       receiverDefinitions = [
         {
           payload = { lib, ... }: {
             options.value = lib.mkOption {
               type = lib.types.str;
-              description = "A receiver-owned declaration.";
+              description = ''
+                A receiver-owned declaration.
+              '';
             };
             config.value = lib.mkDefault "local";
           };
@@ -136,7 +152,9 @@ let
       leafPath = [ "extra" ];
       tagOption = lib.mkOption {
         type = lib.types.submodule { };
-        description = "A tag with receiver-owned freeform fields.";
+        description = ''
+          A tag with receiver-owned freeform fields.
+        '';
       };
       receiverDefinitions = [
         {
@@ -152,7 +170,9 @@ let
       tagOption = lib.mkOption {
         type = lib.types.str;
         default = "tag-default";
-        description = "A tag-level default retained by disabled contributions.";
+        description = ''
+          A tag-level default retained by disabled contributions.
+        '';
       };
       senderDefinitions = [ (lib.mkIf false (throw "Disabled default override was forced.")) ];
       receiverDefinitions = [ { payload = lib.mkIf false "unused"; } ];
@@ -182,7 +202,9 @@ let
           options.value = lib.mkOption {
             type = lib.types.listOf lib.types.str;
             default = [ ];
-            description = "Ordered definitions below a writable tag.";
+            description = ''
+              Ordered definitions below a writable tag.
+            '';
           };
         };
       };
@@ -244,12 +266,16 @@ let
                     value = lib.mkOption {
                       type = lib.types.str;
                       default = "local";
-                      description = "The local value retained by inactive contributions.";
+                      description = ''
+                        The local value retained by inactive contributions.
+                      '';
                     };
                     locked = lib.mkOption {
                       type = lib.types.str;
                       readOnly = true;
-                      description = "An unused read-only child without a value.";
+                      description = ''
+                        An unused read-only child without a value.
+                      '';
                     };
                   };
                 };
@@ -257,11 +283,15 @@ let
               locked = lib.mkOption {
                 type = lib.types.str;
                 readOnly = true;
-                description = "An unused read-only tag without a value.";
+                description = ''
+                  An unused read-only tag without a value.
+                '';
               };
             };
             default.payload = { };
-            description = "Inventory retaining unused and disabled registrations.";
+            description = ''
+              Inventory retaining unused and disabled registrations.
+            '';
           };
         };
         nodes = mkModuleNodes {
@@ -393,7 +423,10 @@ let
           nodes
           ;
       in
-      # The assertions inspect the destination without asking for its final value.
+      /*
+        The assertions inspect the destination without asking for its final
+        value.
+      */
       {
         testAssertions = {
           expr = checkAssertions nodes;
@@ -415,7 +448,9 @@ let
         checkValue "contributed" {
           tagOption = lib.mkOption {
             inherit type;
-            description = "A tag containing a wrapped submodule.";
+            description = ''
+              A tag containing a wrapped submodule.
+            '';
           };
         }
       )
@@ -450,10 +485,14 @@ let
       options.value = lib.mkOption {
         type = lib.types.str;
         default = "local";
-        description = "A writable field inside the tag.";
+        description = ''
+          A writable field inside the tag.
+        '';
       };
     };
-    description = "A writable submodule tag.";
+    description = ''
+      A writable submodule tag.
+    '';
   };
   relationModule = {
     options.inventory = lib.mkOption {
@@ -467,14 +506,18 @@ let
               value = lib.mkOption {
                 type = lib.types.str;
                 default = "local";
-                description = "A value exchanged between nodes.";
+                description = ''
+                  A value exchanged between nodes.
+                '';
               };
             };
           };
         };
       };
       default.payload = { };
-      description = "A tagged inventory shared by participating nodes.";
+      description = ''
+        A tagged inventory shared by participating nodes.
+      '';
     };
   };
 in

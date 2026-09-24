@@ -26,7 +26,9 @@ in
         _file = toString ./mk-tagged-nodes.nix;
         options.inventory = lib.mkOption {
           type = lib.types.attrTag { ${tagName} = tagOption; };
-          description = "A tagged receiver destination.";
+          description = ''
+            A tagged receiver destination.
+          '';
         };
         config = lib.optionalAttrs (receiverDefinitions != [ ]) {
           inventory = lib.mkMerge receiverDefinitions;

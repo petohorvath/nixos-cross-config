@@ -10,7 +10,6 @@ let
   sourceDir = lib.cleanSource ../.;
   testEntrypoint = sourceDir + "/tests/entrypoint.nix";
   testSuites = import testEntrypoint { inherit flakeParts nixpkgs system; };
-  testGroups = lib.concatLists (lib.mapAttrsToList groupsForSuite testSuites);
 
   # Select immediate suite entries; nix-unit discovers any nested tests.
   groupsForSuite =
@@ -22,6 +21,8 @@ let
         entryName
       ]
     ) (builtins.attrNames suite);
+
+  testGroups = lib.concatLists (lib.mapAttrsToList groupsForSuite testSuites);
 
   # Reconstruct inputs from store paths so the sandbox needs no flake fetching.
   evaluationInputsFile = builtins.toFile "cross-config-test-inputs.nix" ''

@@ -20,17 +20,23 @@ let
           type = lib.types.str;
           readOnly = true;
           default = "default-serial";
-          description = "Serial supplied by the option declaration.";
+          description = ''
+            Serial supplied by the option declaration.
+          '';
         };
         model = lib.mkOption {
           type = lib.types.str;
           readOnly = true;
-          description = "Model supplied by the receiver.";
+          description = ''
+            Model supplied by the receiver.
+          '';
         };
         unassigned = lib.mkOption {
           type = lib.types.str;
           readOnly = true;
-          description = "Read-only option without a definition.";
+          description = ''
+            Read-only option without a definition.
+          '';
         };
       };
       config.inventory.model = "local-model";
@@ -84,12 +90,16 @@ in
                 value = lib.mkOption {
                   type = lib.types.str;
                   default = "local";
-                  description = "Value receiving a conditional self contribution.";
+                  description = ''
+                    Value receiving a conditional self contribution.
+                  '';
                 };
               };
             };
             default = { };
-            description = "Inventory with a conditional self contribution.";
+            description = ''
+              Inventory with a conditional self contribution.
+            '';
           };
           config.crossConfig.nodes.application.inventory.value =
             lib.mkIf config.inventory.enable "contributed";
@@ -127,7 +137,9 @@ in
               options = {
                 gate = lib.mkOption {
                   type = lib.types.bool;
-                  description = "A contributed condition for receiver-local values.";
+                  description = ''
+                    A contributed condition for receiver-local values.
+                  '';
                 };
                 inventory.entries = lib.mkOption {
                   type = lib.types.attrsOf (
@@ -135,12 +147,16 @@ in
                       options.value = lib.mkOption {
                         type = lib.types.str;
                         default = "default";
-                        description = "Value declared independently of the condition.";
+                        description = ''
+                          Value declared independently of the condition.
+                        '';
                       };
                     }
                   );
                   default = { };
-                  description = "Receiver-local entries controlled by a received value.";
+                  description = ''
+                    Receiver-local entries controlled by a received value.
+                  '';
                 };
               };
               config.inventory.entries = lib.mkIf config.gate {
@@ -194,13 +210,17 @@ in
                         type = lib.types.str;
                         readOnly = name != "writable";
                         default = "local";
-                        description = "Only the named writable entry accepts contributions.";
+                        description = ''
+                          Only the named writable entry accepts contributions.
+                        '';
                       };
                     }
                   )
                 );
                 default = { };
-                description = "Inventory entries with per-name write permissions.";
+                description = ''
+                  Inventory entries with per-name write permissions.
+                '';
               };
             };
         };
@@ -236,12 +256,16 @@ in
               options.inventory.entries = lib.mkOption {
                 type = lib.types.attrsOf (lib.types.submodule { });
                 default = { };
-                description = "Inventory entries with receiver-owned declarations.";
+                description = ''
+                  Inventory entries with receiver-owned declarations.
+                '';
               };
               config.inventory.entries.example = { lib, ... }: {
                 options.value = lib.mkOption {
                   type = lib.types.str;
-                  description = "Option declared in one receiver instance.";
+                  description = ''
+                    Option declared in one receiver instance.
+                  '';
                 };
                 config.value = lib.mkDefault "local";
               };
@@ -281,7 +305,9 @@ in
               options.inventory = lib.mkOption {
                 type = lib.types.submodule { };
                 default = { };
-                description = "Inventory with receiver-local freeform fields.";
+                description = ''
+                  Inventory with receiver-local freeform fields.
+                '';
               };
               config.inventory = { lib, ... }: {
                 _module.freeformType = lib.types.attrsOf lib.types.str;
@@ -324,7 +350,9 @@ in
                   options.value = lib.mkOption {
                     type = lib.types.str;
                     default = "local";
-                    description = "The wrapped submodule's local value.";
+                    description = ''
+                      The wrapped submodule's local value.
+                    '';
                   };
                 };
                 types = {
@@ -335,7 +363,9 @@ in
                   tagged = lib.types.attrTag {
                     value = lib.mkOption {
                       type = lib.types.str;
-                      description = "The only permitted tag.";
+                      description = ''
+                        The only permitted tag.
+                      '';
                     };
                   };
                 };
@@ -346,7 +376,9 @@ in
                   default = {
                     value = "local";
                   };
-                  description = "Inventory using a native option-type wrapper.";
+                  description = ''
+                    Inventory using a native option-type wrapper.
+                  '';
                 };
               };
           };
@@ -595,11 +627,15 @@ in
                     type = lib.types.str;
                     readOnly = true;
                     default = "local-serial";
-                    description = "Serial within a receiving submodule.";
+                    description = ''
+                      Serial within a receiving submodule.
+                    '';
                   };
                 };
                 default = { };
-                description = "Receiver-owned inventory entry.";
+                description = ''
+                  Receiver-owned inventory entry.
+                '';
               };
             };
         };

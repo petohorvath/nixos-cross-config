@@ -1,4 +1,7 @@
-# Share collection settings through a NixOS module that callers import explicitly.
+/*
+  Share collection settings through a NixOS module that callers import
+  explicitly.
+*/
 { config, lib, ... }:
 let
   cfg = config.crossConfig;
@@ -9,7 +12,10 @@ in
     nodeConfigurations = settings.options.nodeConfigurations // {
       default = config.flake.nixosConfigurations;
       defaultText = lib.literalExpression "config.flake.nixosConfigurations";
-      description = "Opaque collection of caller-owned nodes exposing .config, shared by all participants. Defaults lazily to the consumer's NixOS configurations.";
+      description = ''
+        Opaque collection of caller-owned nodes exposing .config, shared by all
+        participants. Defaults lazily to the consumer's NixOS configurations.
+      '';
     };
   };
 

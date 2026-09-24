@@ -42,7 +42,9 @@ let
               lib.mkOption {
                 type = lib.types.listOf lib.types.str;
                 default = [ ];
-                description = "Values delivered through composed registrations.";
+                description = ''
+                  Values delivered through composed registrations.
+                '';
               }
             );
           };

@@ -1,3 +1,4 @@
+# Adapt explicit collection arguments to the receiver-owned NixOS module.
 {
   mkModule =
     {

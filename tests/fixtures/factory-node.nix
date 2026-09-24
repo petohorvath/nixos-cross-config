@@ -12,7 +12,9 @@ let
   valuesOption = lib.mkOption {
     type = lib.types.listOf lib.types.str;
     default = [ ];
-    description = "Contributions to a nested attribute whose name is reserved at the root.";
+    description = ''
+      Contributions to a nested attribute whose name is reserved at the root.
+    '';
   };
 in
 {
@@ -22,16 +24,22 @@ in
       crossConfig = valuesOption;
       identity = lib.mkOption {
         type = lib.types.str;
-        description = "The collection identity supplied by the node constructor.";
+        description = ''
+          The collection identity supplied by the node constructor.
+        '';
       };
       observedArguments = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        description = "Ordinary receiver module arguments that also name factory arguments.";
+        description = ''
+          Ordinary receiver module arguments that also name factory arguments.
+        '';
       };
       values = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [ ];
-        description = "Contributed and receiver-local values.";
+        description = ''
+          Contributed and receiver-local values.
+        '';
       };
     };
   };
