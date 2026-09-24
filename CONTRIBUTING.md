@@ -1,6 +1,6 @@
 # Contributing
 
-Follow the [shared project policy](https://github.com/petohorvath/nixos-project-policy/blob/v0.3.0/POLICY.md) and the local [development instructions](docs/development.md).
+Follow the [shared project policy](https://github.com/petohorvath/nixos-project-policy/blob/v0.4.0/POLICY.md) and the local [development instructions](docs/development.md).
 
 ## Changes
 
@@ -18,7 +18,7 @@ The `dev` partition provides root `devShells`, `formatter`, and `checks` using t
 
 The optional `flakeModules.default` adapter declares shared path and collection settings at flake scope and provides the consumer's `nixosModules.crossConfig`. The configured module supplies `mkDefault` settings, uses the receiver's `lib`, and leaves identity and construction to each caller-owned node. Its collection defaults lazily to the consumer's `flake.nixosConfigurations`. Preserve direct access through `flake-module.nix` and keep standalone usage independent of flake-parts evaluation. Its development input follows the selected `nixpkgs` for `nixpkgs-lib`.
 
-The root lock records the development default independently of the policy compatibility pair. Policy release `v0.3.0` supplies verified compatibility runs and separate committed-default and development-tool checks. Keep member references, central records, and required GitHub statuses aligned through the [policy maintenance procedure](docs/development.md#ci-and-policy). Report executed checks, cached results, and unverified architectures or policy integration separately; local success does not record adoption or configure merge gates.
+The root lock records the development default independently of the policy compatibility pair. Policy release `v0.4.0` supplies verified compatibility runs and separate compliance and committed-default checks, with project-owned formatting and lint in root checks. Keep member references, caller settings, and required GitHub statuses aligned through the [policy maintenance procedure](docs/development.md#ci-and-policy). Report executed checks, cached results, and unverified architectures or policy integration separately; local success does not change enrollment or configure merge gates.
 
 ## Releases
 
