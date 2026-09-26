@@ -11,7 +11,7 @@ let
       { config, ... }:
       {
         networking.hosts."192.0.2.10" = [ "local.example" ];
-        crossConfig.nodes.application.networking.hosts."192.0.2.10" = [
+        crossConfig.contributions.application.networking.hosts."192.0.2.10" = [
           "${config.networking.hostName}.example"
         ];
       };

@@ -21,7 +21,7 @@ let
         {
           networking.domain = "sender.example";
           services.nginx.virtualHosts."shared.example".serverName = "sender-local.example";
-          crossConfig.nodes.receiver = {
+          crossConfig.contributions.receiver = {
             networking.search = [ config.networking.domain ];
             services.nginx.virtualHosts."shared.example" =
               { config, name, ... }:

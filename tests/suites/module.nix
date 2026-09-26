@@ -41,7 +41,7 @@ let
                   "values"
                 ]
               ];
-              nodes.${receiver}.inventory.values = lib.mkBefore [ "from-${name}" ];
+              contributions.${receiver}.inventory.values = lib.mkBefore [ "from-${name}" ];
             };
             inventory.values = [ "local-${name}" ];
           };
@@ -65,11 +65,11 @@ in
     ];
   };
   testAlphaReceiverLibrary = {
-    expr = nodes.alpha.options.crossConfig.nodes.receiverLibrary;
+    expr = nodes.alpha.options.crossConfig.contributions.receiverLibrary;
     expected = "alpha";
   };
   testBetaReceiverLibrary = {
-    expr = nodes.beta.options.crossConfig.nodes.receiverLibrary;
+    expr = nodes.beta.options.crossConfig.contributions.receiverLibrary;
     expected = "beta";
   };
   testAssertions = {

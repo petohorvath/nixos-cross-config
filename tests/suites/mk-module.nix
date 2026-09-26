@@ -67,11 +67,11 @@ let
         expected = [ (toString ../../lib/default.nix) ];
       };
       testDeclarations = {
-        expr = node.options.crossConfig.nodes.declarations;
+        expr = node.options.crossConfig.contributions.declarations;
         expected = [ (toString ../../nixos/module.nix) ];
       };
       testReceiverLibrary = {
-        expr = node.options.crossConfig.nodes.receiverLibrary;
+        expr = node.options.crossConfig.contributions.receiverLibrary;
         expected = name;
       };
       testModuleArguments = {

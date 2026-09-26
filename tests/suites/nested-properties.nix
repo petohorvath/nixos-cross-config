@@ -22,7 +22,7 @@ let
       alpha =
         { lib, ... }:
         {
-          crossConfig.nodes = {
+          crossConfig.contributions = {
             receiver = {
               networking.hosts = {
                 "192.0.2.10" = lib.mkDefault [ "default.example" ];
@@ -56,7 +56,7 @@ let
       beta =
         { lib, ... }:
         {
-          crossConfig.nodes.receiver = {
+          crossConfig.contributions.receiver = {
             networking.hosts = {
               "192.0.2.10" = lib.mkBefore [ "beta.example" ];
               "192.0.2.20" = lib.mkForce (lib.mkAfter [ "beta.example" ]);

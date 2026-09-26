@@ -17,7 +17,7 @@ let
         { config, ... }:
         {
           networking.hosts."192.0.2.20" = [ "alpha-local.example" ];
-          crossConfig.nodes.beta.networking.hosts."192.0.2.10" = [
+          crossConfig.contributions.beta.networking.hosts."192.0.2.10" = [
             "${config.networking.hostName}.example"
           ];
         };
@@ -25,7 +25,7 @@ let
         { config, ... }:
         {
           networking.hosts."192.0.2.10" = [ "beta-local.example" ];
-          crossConfig.nodes.alpha.networking.hosts."192.0.2.20" = [
+          crossConfig.contributions.alpha.networking.hosts."192.0.2.20" = [
             "${config.networking.hostName}.example"
           ];
         };

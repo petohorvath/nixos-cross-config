@@ -43,7 +43,7 @@ let
       modules = {
         sender = { lib, ... }: {
           _file = toString ./tagged-destinations.nix;
-          crossConfig.nodes.receiver = lib.setAttrByPath path (lib.mkMerge (senderDefinitions lib));
+          crossConfig.contributions.receiver = lib.setAttrByPath path (lib.mkMerge (senderDefinitions lib));
         };
         receiver = { lib, ... }: {
           _file = toString ./tagged-destinations.nix;

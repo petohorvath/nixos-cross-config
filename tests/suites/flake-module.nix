@@ -25,7 +25,7 @@ let
     "literal.values"
   ];
   reciprocalModule = { config, lib, ... }: {
-    crossConfig.nodes.${
+    crossConfig.contributions.${
       if config.crossConfig.name == "alpha" then "beta" else "alpha"
     }.inventory.values =
       lib.mkBefore [ "from-${config.crossConfig.name}" ];
@@ -81,7 +81,7 @@ let
       ]
       {
         imports = [ reciprocalModule ];
-        crossConfig.nodes.alpha.inventory."literal.values" = [ "literal" ];
+        crossConfig.contributions.alpha.inventory."literal.values" = [ "literal" ];
       };
   emptyConsumer = mkPairConsumer [
     {
@@ -116,14 +116,14 @@ let
           configuredModule = config.flake.nixosModules.crossConfig;
           name = "alpha";
           nodeModule = {
-            crossConfig.nodes.guest.inventory.values = lib.mkBefore [ "from-alpha" ];
+            crossConfig.contributions.guest.inventory.values = lib.mkBefore [ "from-alpha" ];
           };
         };
         guest = mkNode {
           configuredModule = config.flake.nixosModules.crossConfig;
           name = "guest";
           nodeModule = {
-            crossConfig.nodes.alpha.inventory.values = lib.mkBefore [ "from-guest" ];
+            crossConfig.contributions.alpha.inventory.values = lib.mkBefore [ "from-guest" ];
           };
         };
       };
@@ -288,7 +288,7 @@ in
       expr = builtins.all (
         node:
         node.config.crossConfig.optionPaths == [ ]
-        && node.config.crossConfig.nodes == { }
+        && node.config.crossConfig.contributions == { }
         && builtins.attrNames node.config.crossConfig.nodeConfigurations == [ "unused" ]
       ) (builtins.attrValues emptyConsumer.nixosConfigurations);
       expected = true;
@@ -313,7 +313,8 @@ in
         builtins.all
           (
             name:
-            defaultConsumer.nixosConfigurations.${name}.options.crossConfig.nodes.receiverLibrary == name
+            defaultConsumer.nixosConfigurations.${name}.options.crossConfig.contributions.receiverLibrary
+            == name
             &&
               defaultConsumer.nixosConfigurations.${name}.options.crossConfig.optionPaths.receiverLibrary == name
           )
@@ -432,7 +433,7 @@ in
       msg = messagePattern [
         "crossConfig.optionPaths"
         "reserved root"
-        "crossConfig.nodes"
+        "crossConfig.contributions"
       ];
     };
   };

@@ -49,7 +49,7 @@ let
           ];
         in
         {
-          crossConfig.nodes = lib.mkMerge (
+          crossConfig.contributions = lib.mkMerge (
             map (
               export:
               lib.mkIf export.enable {
@@ -64,7 +64,7 @@ let
             ) exports
           );
         };
-      beta.crossConfig.nodes.receiver = {
+      beta.crossConfig.contributions.receiver = {
         networking.hosts."192.0.2.10" = [ "beta.example" ];
         networking.firewall.allowedTCPPorts = [ 9090 ];
         services.nginx.virtualHosts."shared.example".locations."/beta" = {

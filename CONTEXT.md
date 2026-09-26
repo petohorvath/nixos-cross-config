@@ -25,3 +25,4 @@ The node whose configuration includes a contribution. A receiver can also be the
 
 **Configuration contribution**:
 Option definitions that a sender supplies for a receiver.
+_Avoid_: Nodes (for contributions)

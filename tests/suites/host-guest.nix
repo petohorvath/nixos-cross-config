@@ -17,7 +17,7 @@ let
     modules = {
       host = {
         networking.hosts."192.0.2.20" = [ "host-local.example" ];
-        crossConfig.nodes.guest.networking.hosts."192.0.2.10" = [
+        crossConfig.contributions.guest.networking.hosts."192.0.2.10" = [
           "host-to-guest.example"
         ];
         containers.application.config = withModule {
@@ -29,7 +29,7 @@ let
           networking.hostName = "application-container";
           networking.hosts."192.0.2.10" = [ "guest-local.example" ];
           system.stateVersion = "26.05";
-          crossConfig.nodes = {
+          crossConfig.contributions = {
             host.networking.hosts."192.0.2.20" = [
               "guest-to-parent.example"
             ];

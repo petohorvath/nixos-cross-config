@@ -201,7 +201,7 @@ in
   unknownReceiverWithDisabledContribution =
     (mkUnknownReceiver (
       { lib, ... }: {
-        crossConfig.nodes.receiver.inventory.value = lib.mkIf false (
+        crossConfig.contributions.receiver.inventory.value = lib.mkIf false (
           throw "Disabled contribution was evaluated."
         );
       }
