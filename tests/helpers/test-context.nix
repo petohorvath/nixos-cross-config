@@ -15,10 +15,12 @@ let
   mkTaggedNodes = import ./mk-tagged-nodes.nix {
     inherit lib mkModuleNodes;
   };
+  mkReceiverLib = import ./mk-receiver-lib.nix { inherit lib; };
   flakeConsumer = import ./flake-consumer.nix {
     inherit
       crossConfig
       flakeParts
+      mkReceiverLib
       nixpkgs
       system
       ;
@@ -31,6 +33,7 @@ evaluation
     lib
     mkModuleNodes
     mkNodes
+    mkReceiverLib
     mkTaggedNodes
     ;
   messagePattern = import ./message-pattern.nix { inherit lib; };

@@ -2,7 +2,7 @@
   allAssertionsPass,
   constructorArguments,
   evaluateConstructor,
-  lib,
+  mkReceiverLib,
   ...
 }:
 let
@@ -37,9 +37,7 @@ let
     evaluateConstructor { inherit name nodes optionPaths; } {
       specialArgs = {
         inherit receiver;
-        lib = lib // {
-          mkOption = arguments: lib.mkOption arguments // { receiverLibrary = name; };
-        };
+        lib = mkReceiverLib name;
         name = "ordinary-name-${name}";
         nodes.marker = "ordinary-nodes-${name}";
         optionPaths = [ [ "ordinary-optionPaths-${name}" ] ];
