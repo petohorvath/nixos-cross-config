@@ -23,29 +23,37 @@ let
       in
       findDeclaration (prefix ++ [ segment ]) (builtins.tail remaining) (declarations.${segment} or { });
 
-  evaluateTagOption =
+  /*
+    Evaluates a writable tag or a type probe at its full path in isolation.
+    The path preserves submodule names and nested `_module` options. Each
+    definition gets its own module: `lib.mkDefinition` directly on a
+    submodule-typed option leaves its marker on the record, which submodule
+    merging rejects.
+  */
+  evaluateOption =
     {
       optionPath,
-      tag,
+      option,
       definitions,
     }:
     let
+      declarations = option.declarations or [ ];
+
+      declarationModule =
+        lib.optionalAttrs (declarations != [ ]) {
+          _file = builtins.head declarations;
+        }
+        // {
+          options = lib.setAttrByPath optionPath option;
+        };
+
+      definitionModule = definition: {
+        _file = definition.file;
+        config = lib.setAttrByPath optionPath definition.value;
+      };
+
       evaluation = lib.evalModules {
-        modules = [
-          (
-            lib.optionalAttrs (tag.declarations != [ ]) {
-              _file = builtins.head tag.declarations;
-            }
-            // {
-              /*
-                The full path preserves submodule names and nested `_module`
-                tags.
-              */
-              options = lib.setAttrByPath optionPath tag;
-              config = lib.setAttrByPath optionPath (lib.mkMerge (map lib.mkDefinition definitions));
-            }
-          )
-        ];
+        modules = [ declarationModule ] ++ map definitionModule definitions;
       };
     in
     # Inspection consumes definitions, leaving the final value and apply lazy.
@@ -76,15 +84,16 @@ let
       enclosingOption,
     }:
     let
-      probe = lib.modules.mergeDefinitions prefix type (
-        definitions
-        ++ [
+      probe = evaluateOption {
+        optionPath = prefix;
+        option = lib.mkOption { inherit type; };
+        definitions = definitions ++ [
           {
             file = "nixos-cross-config destination inspection";
             value = lib.setAttrByPath (lib.init path) { };
           }
-        ]
-      );
+        ];
+      };
     in
     if path == [ ] then
       enclosingOption
@@ -92,17 +101,17 @@ let
       findTypeOption {
         inherit enclosingOption path prefix;
         type = type.nestedTypes.elemType;
-        definitions = builtins.filter (definition: definition.value != null) probe.defsFinal;
+        definitions = builtins.filter (definition: definition.value != null) probe.definitionsWithLocations;
       }
     else if type.name == "attrTag" then
       findTagOption {
         inherit path prefix type;
-        definitions = probe.defsFinal;
+        definitions = probe.definitionsWithLocations;
       }
     else
       findMetadataOption {
         inherit enclosingOption path prefix;
-        metadata = probe.checkedAndMerged.valueMeta;
+        metadata = probe.valueMeta;
       };
 
   findTagOption =
@@ -132,9 +141,9 @@ let
       findLocalOption {
         prefix = tagPath;
         path = builtins.tail path;
-        option = evaluateTagOption {
+        option = evaluateOption {
           optionPath = tagPath;
-          inherit tag;
+          option = tag;
           definitions = childDefinitions;
         };
       };
