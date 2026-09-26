@@ -115,12 +115,16 @@ let
         alpha = mkNode {
           configuredModule = config.flake.nixosModules.crossConfig;
           name = "alpha";
-          nodeModule.crossConfig.nodes.guest.inventory.values = lib.mkBefore [ "from-alpha" ];
+          nodeModule = {
+            crossConfig.nodes.guest.inventory.values = lib.mkBefore [ "from-alpha" ];
+          };
         };
         guest = mkNode {
           configuredModule = config.flake.nixosModules.crossConfig;
           name = "guest";
-          nodeModule.crossConfig.nodes.alpha.inventory.values = lib.mkBefore [ "from-guest" ];
+          nodeModule = {
+            crossConfig.nodes.alpha.inventory.values = lib.mkBefore [ "from-guest" ];
+          };
         };
       };
     in
