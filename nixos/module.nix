@@ -24,7 +24,8 @@ let
 
   outgoingOption = import ../lib/outgoing-option.nix {
     inherit lib;
-    inherit (cfg) name optionPaths;
+    inherit (cfg) optionPaths;
+    sender = cfg.name;
   };
 
   inspectionPaths = specialArgs.__nixosCrossConfigInspectionPaths or [ ];
@@ -36,7 +37,8 @@ let
       lib
       options
       ;
-    inherit (cfg) name nodeConfigurations optionPaths;
+    inherit (cfg) nodeConfigurations optionPaths;
+    receiver = cfg.name;
     inherit (settings) reservedRoots;
   };
   inherit (receiving) destinationAssertions receivedConfig;

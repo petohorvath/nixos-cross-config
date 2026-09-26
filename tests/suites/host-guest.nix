@@ -1,7 +1,7 @@
 {
-  checkAssertions,
-  withModule,
+  allAssertionsPass,
   mkNodes,
+  withModule,
   ...
 }:
 let
@@ -77,7 +77,7 @@ in
     ];
   };
   testAssertions = {
-    expr = checkAssertions nodes;
+    expr = allAssertionsPass nodes;
     expected = true;
   };
 }

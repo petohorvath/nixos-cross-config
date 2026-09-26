@@ -1,14 +1,14 @@
 {
   lib,
-  name,
   optionPaths,
+  sender,
 }:
 let
   restoreDefinitionProperties = import ./restore-definition-properties.nix { inherit lib; };
 
   getDefinitions =
     receiver: contribution:
-    builtins.addErrorContext "while evaluating contributions from sender `${name}` to receiver `${receiver}`:" contribution._definitions;
+    builtins.addErrorContext "while evaluating contributions from sender `${sender}` to receiver `${receiver}`:" contribution._definitions;
 
   mkPathAttrs =
     getValue:

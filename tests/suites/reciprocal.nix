@@ -1,5 +1,5 @@
 {
-  checkAssertions,
+  allAssertionsPass,
   mkNodes,
   valueCycle,
   ...
@@ -48,7 +48,7 @@ in
     ];
   };
   testAssertions = {
-    expr = checkAssertions nodes;
+    expr = allAssertionsPass nodes;
     expected = true;
   };
   testRejectsValueCycle = {

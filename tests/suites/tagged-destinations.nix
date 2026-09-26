@@ -1,5 +1,5 @@
 {
-  checkAssertions,
+  allAssertionsPass,
   lib,
   messagePattern,
   mkModuleNodes,
@@ -28,7 +28,7 @@ let
         inherit expected;
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -276,7 +276,7 @@ in
         expected = "selected";
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -366,7 +366,7 @@ in
         expected = false;
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -393,7 +393,7 @@ in
         expected = "from-self";
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -429,7 +429,7 @@ in
         expected = "from-alpha";
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -448,7 +448,7 @@ in
     # value.
     {
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
       testApplyFailure = {
@@ -479,14 +479,14 @@ in
     }
 // {
   testRejectsConflict = {
-    expr = taggedRejections.taggedConflict;
+    expr = taggedRejections.conflict;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "conflicting definition" ] ++ contributionOrigin);
     };
   };
   testRejectsDefaultSource = {
-    expr = taggedRejections.taggedDefaultSource;
+    expr = taggedRejections.defaultSource;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -497,14 +497,14 @@ in
     };
   };
   testRejectsIncompatible = {
-    expr = taggedRejections.taggedIncompatible;
+    expr = taggedRejections.incompatible;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "is not of type" ] ++ contributionOrigin);
     };
   };
   testRejectsInspectionDefinitionSource = {
-    expr = taggedRejections.taggedInspectionDefinitionSource;
+    expr = taggedRejections.inspectionDefinitionSource;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -515,70 +515,70 @@ in
     };
   };
   testRejectsMissingChild = {
-    expr = taggedRejections.taggedMissingChild;
+    expr = taggedRejections.missingChild;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "missing destination" ] ++ contributionOrigin);
     };
   };
   testRejectsMissingTag = {
-    expr = taggedRejections.taggedMissingTag;
+    expr = taggedRejections.missingTag;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "missing destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyChild = {
-    expr = taggedRejections.taggedReadOnlyChild;
+    expr = taggedRejections.readOnlyChild;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyCoerced = {
-    expr = taggedRejections.taggedReadOnlyCoerced;
+    expr = taggedRejections.readOnlyCoerced;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyEither = {
-    expr = taggedRejections.taggedReadOnlyEither;
+    expr = taggedRejections.readOnlyEither;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyLocal = {
-    expr = taggedRejections.taggedReadOnlyLocal;
+    expr = taggedRejections.readOnlyLocal;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyName = {
-    expr = taggedRejections.taggedReadOnlyName;
+    expr = taggedRejections.readOnlyName;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyNullable = {
-    expr = taggedRejections.taggedReadOnlyNullable;
+    expr = taggedRejections.readOnlyNullable;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyTag = {
-    expr = taggedRejections.taggedReadOnlyTag;
+    expr = taggedRejections.readOnlyTag;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyUnique = {
-    expr = taggedRejections.taggedReadOnlyUnique;
+    expr = taggedRejections.readOnlyUnique;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);

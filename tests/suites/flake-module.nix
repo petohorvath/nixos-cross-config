@@ -1,5 +1,5 @@
 {
-  checkAssertions,
+  allAssertionsPass,
   flakeConsumer,
   flakeExample,
   flakeRejections,
@@ -58,7 +58,7 @@ let
         };
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -151,7 +151,7 @@ in
         expected = [ "www.app.example" ];
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -235,12 +235,12 @@ in
       };
     in
     {
-      testExplicitImport = {
+      testNoImplicitImport = {
         expr = consumer.nixosConfigurations.untouched.options ? crossConfig;
         expected = false;
       };
       testAssertions = {
-        expr = checkAssertions consumer.nixosConfigurations;
+        expr = allAssertionsPass consumer.nixosConfigurations;
         expected = true;
       };
     };
@@ -271,7 +271,7 @@ in
         ];
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -286,7 +286,7 @@ in
       expected = true;
     };
     testAssertions = {
-      expr = checkAssertions emptyConsumer.nixosConfigurations;
+      expr = allAssertionsPass emptyConsumer.nixosConfigurations;
       expected = true;
     };
   };
@@ -329,12 +329,12 @@ in
         expected = [ ];
       };
       testAssertions = {
-        expr = builtins.all (entry: entry.assertion) node.config.assertions;
+        expr = allAssertionsPass { inherit node; };
         expected = true;
       };
     };
   testRejectsOldCollectionName = {
-    expr = flakeRejections.flakeOldCollectionName;
+    expr = flakeRejections.oldCollectionName;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -344,7 +344,7 @@ in
     };
   };
   testRejectsConflictingCollections = {
-    expr = flakeRejections.flakeConflictingCollections;
+    expr = flakeRejections.conflictingCollections;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -354,7 +354,7 @@ in
     };
   };
   testRejectsEmptyRegistration = {
-    expr = flakeRejections.flakeEmptyRegistration;
+    expr = flakeRejections.emptyRegistration;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -364,7 +364,7 @@ in
     };
   };
   testRejectsInvalidCollection = {
-    expr = flakeRejections.flakeInvalidCollection;
+    expr = flakeRejections.invalidCollection;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -374,7 +374,7 @@ in
     };
   };
   testRejectsInvalidPath = {
-    expr = flakeRejections.flakeInvalidPath;
+    expr = flakeRejections.invalidPath;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -384,7 +384,7 @@ in
     };
   };
   testRejectsInvalidPaths = {
-    expr = flakeRejections.flakeInvalidPaths;
+    expr = flakeRejections.invalidPaths;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -394,7 +394,7 @@ in
     };
   };
   testRejectsInvalidSegment = {
-    expr = flakeRejections.flakeInvalidSegment;
+    expr = flakeRejections.invalidSegment;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -404,7 +404,7 @@ in
     };
   };
   testRejectsMissingPaths = {
-    expr = flakeRejections.flakeMissingPaths;
+    expr = flakeRejections.missingPaths;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -414,7 +414,7 @@ in
     };
   };
   testRejectsReservedCrossConfig = {
-    expr = flakeRejections.flakeReservedCrossConfig;
+    expr = flakeRejections.reservedCrossConfig;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -425,7 +425,7 @@ in
     };
   };
   testRejectsReservedModule = {
-    expr = flakeRejections.flakeReservedModule;
+    expr = flakeRejections.reservedModule;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [

@@ -13,8 +13,7 @@ let
     inherit (evaluation) evaluateModule;
   };
   mkTaggedNodes = import ./mk-tagged-nodes.nix {
-    inherit lib;
-    mkNodes = mkModuleNodes;
+    inherit lib mkModuleNodes;
   };
   flakeConsumer = import ./flake-consumer.nix {
     inherit
@@ -35,7 +34,7 @@ evaluation
     mkTaggedNodes
     ;
   messagePattern = import ./message-pattern.nix { inherit lib; };
-  checkAssertions =
+  allAssertionsPass =
     nodes:
     lib.pipe nodes [
       builtins.attrValues

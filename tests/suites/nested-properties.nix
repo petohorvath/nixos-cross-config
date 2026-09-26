@@ -1,5 +1,5 @@
 {
-  checkAssertions,
+  allAssertionsPass,
   contributionRejections,
   messagePattern,
   mkNodes,
@@ -163,7 +163,7 @@ in
     expected = false;
   };
   testAssertions = {
-    expr = checkAssertions nodes;
+    expr = allAssertionsPass nodes;
     expected = true;
   };
   testRejectsNestedConflict = {

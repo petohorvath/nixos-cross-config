@@ -60,14 +60,14 @@ let
     }).receiver;
 
   assertionFailures = {
-    taggedMissingTag = mkReceiver {
+    missingTag = mkReceiver {
       tagOption = submoduleOption;
       tagName = "other";
     };
-    taggedReadOnlyTag = mkReceiver {
+    readOnlyTag = mkReceiver {
       tagOption = lib: submoduleOption lib // { readOnly = true; };
     };
-    taggedMissingChild = mkReceiver {
+    missingChild = mkReceiver {
       tagOption =
         lib:
         lib.mkOption {
@@ -75,7 +75,7 @@ let
           description = "A writable tag without the contributed child.";
         };
     };
-    taggedReadOnlyChild = mkReceiver {
+    readOnlyChild = mkReceiver {
       tagOption =
         lib:
         lib.mkOption {
@@ -83,7 +83,7 @@ let
           description = "A writable tag containing a read-only child.";
         };
     };
-    taggedReadOnlyName = mkReceiver {
+    readOnlyName = mkReceiver {
       tagOption =
         lib:
         lib.mkOption {
@@ -100,11 +100,11 @@ let
           description = "A tag with name-dependent child permissions.";
         };
     };
-    taggedReadOnlyLocal = mkReceiver {
+    readOnlyLocal = mkReceiver {
       tagOption = lib: import ./tagged-permissions.nix { inherit lib; };
       receiverDefinitions = _: [ { payload.locked = true; } ];
     };
-    taggedInspectionDefinitionSource = mkReceiver {
+    inspectionDefinitionSource = mkReceiver {
       tagOption = lib: import ./tagged-permissions.nix { inherit lib; };
       receiverModules = [ ./tagged-invalid-local.nix ];
     };
@@ -123,19 +123,19 @@ let
         }
       )
       {
-        taggedReadOnlyCoerced =
+        readOnlyCoerced =
           lib:
           lib.types.coercedTo lib.types.str (value: {
             inherit value;
           });
-        taggedReadOnlyEither = lib: lib.types.either lib.types.str;
-        taggedReadOnlyNullable = lib: lib.types.nullOr;
-        taggedReadOnlyUnique = lib: lib.types.uniq;
+        readOnlyEither = lib: lib.types.either lib.types.str;
+        readOnlyNullable = lib: lib.types.nullOr;
+        readOnlyUnique = lib: lib.types.uniq;
       };
 in
 builtins.mapAttrs (_: receiver: receiver.config.system.build.toplevel.drvPath) assertionFailures
 // {
-  taggedIncompatible =
+  incompatible =
     (mkReceiver {
       tagOption =
         lib:
@@ -149,12 +149,12 @@ builtins.mapAttrs (_: receiver: receiver.config.system.build.toplevel.drvPath) a
           description = "A tag receiving an invalid child value.";
         };
     }).config.inventory.payload.value;
-  taggedConflict =
+  conflict =
     (mkReceiver {
       tagOption = submoduleOption;
       receiverDefinitions = _: [ { payload.value = "receiver"; } ];
     }).config.inventory.payload.value;
-  taggedDefaultSource =
+  defaultSource =
     (mkReceiver {
       leafPath = [ ];
       tagOption = lib: import ./tagged-default.nix { inherit lib; };

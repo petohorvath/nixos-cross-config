@@ -1,4 +1,5 @@
 {
+  allAssertionsPass,
   constructorArguments,
   evaluateConstructor,
   lib,
@@ -105,7 +106,7 @@ let
         ];
       };
       testAssertions = {
-        expr = builtins.all (entry: entry.assertion) node.config.assertions;
+        expr = allAssertionsPass { inherit node; };
         expected = true;
       };
     };

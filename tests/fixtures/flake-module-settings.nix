@@ -4,31 +4,30 @@ let
   evaluatePaths = value: (evaluate [ { crossConfig.optionPaths = value; } ]).optionPaths;
 in
 {
-  flakeMissingPaths = (evaluate [ ]).optionPaths;
-  flakeInvalidCollection =
-    (evaluate [ { crossConfig.nodeConfigurations = [ ]; } ]).nodeConfigurations;
-  flakeOldCollectionName = (evaluate [ { crossConfig.nodeCollection = { }; } ]).nodeConfigurations;
-  flakeConflictingCollections =
+  missingPaths = (evaluate [ ]).optionPaths;
+  invalidCollection = (evaluate [ { crossConfig.nodeConfigurations = [ ]; } ]).nodeConfigurations;
+  oldCollectionName = (evaluate [ { crossConfig.nodeCollection = { }; } ]).nodeConfigurations;
+  conflictingCollections =
     (evaluate [
       { crossConfig.nodeConfigurations = { }; }
       { crossConfig.nodeConfigurations.unused = throw "Conflicting collection entries must stay lazy."; }
     ]).nodeConfigurations;
-  flakeInvalidPaths = evaluatePaths "inventory.values";
-  flakeInvalidPath = evaluatePaths [ "inventory.values" ];
-  flakeInvalidSegment = evaluatePaths [
+  invalidPaths = evaluatePaths "inventory.values";
+  invalidPath = evaluatePaths [ "inventory.values" ];
+  invalidSegment = evaluatePaths [
     [
       "inventory"
       42
     ]
   ];
-  flakeEmptyRegistration = evaluatePaths [ [ ] ];
-  flakeReservedCrossConfig = evaluatePaths [
+  emptyRegistration = evaluatePaths [ [ ] ];
+  reservedCrossConfig = evaluatePaths [
     [
       "crossConfig"
       "nodes"
     ]
   ];
-  flakeReservedModule = evaluatePaths [
+  reservedModule = evaluatePaths [
     [
       "_module"
       "args"

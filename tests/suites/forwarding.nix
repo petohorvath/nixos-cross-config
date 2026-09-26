@@ -1,6 +1,7 @@
 {
-  checkAssertions,
+  allAssertionsPass,
   contributionRejections,
+  lib,
   messagePattern,
   mkNodes,
   ...
@@ -40,17 +41,16 @@ in
     expected = [ "local.example" ];
   };
   testDefinitionSource = {
-    expr = map (definition: definition.file) (
-      builtins.filter (
-        definition: definition.value ? "192.0.2.10"
-      ) nodes.receiver.options.networking.hosts.definitionsWithLocations
-    );
+    expr = lib.pipe nodes.receiver.options.networking.hosts.definitionsWithLocations [
+      (builtins.filter (definition: definition.value ? "192.0.2.10"))
+      (map (definition: definition.file))
+    ];
     expected = [
       "generated-hosts.nix (sender `sender`, receiver `receiver`, destination `networking.hosts`)"
     ];
   };
   testAssertions = {
-    expr = checkAssertions nodes;
+    expr = allAssertionsPass nodes;
     expected = true;
   };
   testRejectsInvalidPort = {

@@ -2,10 +2,10 @@
   extendModules,
   inspectionPaths,
   lib,
-  name,
   nodeConfigurations,
   optionPaths,
   options,
+  receiver,
   reservedRoots,
 }:
 let
@@ -25,21 +25,22 @@ let
     sender: path: definition:
     lib.mkDefinition {
       file =
-        definition.file + " (sender `${sender}`, receiver `${name}`, destination `${lib.showOption path}`)";
+        definition.file
+        + " (sender `${sender}`, receiver `${receiver}`, destination `${lib.showOption path}`)";
       inherit (definition) value;
     };
 
   collectDefinitions =
     path:
     let
-      fromSender =
+      collectSenderDefinitions =
         sender: node:
         map (withContributionContext sender path) (
-          lib.attrByPath path [ ] (node.config.crossConfig.nodes.${name} or { })
+          lib.attrByPath path [ ] (node.config.crossConfig.nodes.${receiver} or { })
         );
     in
     lib.pipe nodeConfigurations [
-      (lib.mapAttrsToList fromSender)
+      (lib.mapAttrsToList collectSenderDefinitions)
       lib.concatLists
     ];
 
@@ -57,7 +58,8 @@ let
           definitions
         else
           # Inspect instances only inside their declared writable option.
-          # Unlike `lib.mkIf`, an empty merge defines no attributes below it.
+          # A false `lib.mkIf` would still push its attributes into the path;
+          # an empty merge defines none.
           lib.mkMerge (lib.optional (isWritable option) (lib.setAttrByPath remaining definitions));
 
       mkPathDefinitions =
@@ -103,7 +105,7 @@ let
     {
       assertion = definitions == [ ] || isWritable option;
       message =
-        "nixos-cross-config: receiver `${name}` has a ${reason} destination `${lib.showOption path}`.\nContributions: "
+        "nixos-cross-config: receiver `${receiver}` has a ${reason} destination `${lib.showOption path}`.\nContributions: "
         + lib.concatMapStringsSep ", " (definition: definition.file) definitions
         + "\n";
     };

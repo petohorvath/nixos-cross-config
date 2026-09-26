@@ -1,5 +1,5 @@
 {
-  checkAssertions,
+  allAssertionsPass,
   evaluateModule,
   lib,
   messagePattern,
@@ -66,7 +66,7 @@ let
         };
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -98,7 +98,7 @@ let
         expected = { };
       };
       testAssertions = {
-        expr = builtins.all (entry: entry.assertion) node.config.assertions;
+        expr = allAssertionsPass { inherit node; };
         expected = true;
       };
     };

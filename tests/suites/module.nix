@@ -1,5 +1,5 @@
 {
-  checkAssertions,
+  allAssertionsPass,
   evaluateModule,
   lib,
   ...
@@ -73,7 +73,7 @@ in
     expected = "beta";
   };
   testAssertions = {
-    expr = checkAssertions nodes;
+    expr = allAssertionsPass nodes;
     expected = true;
   };
 }

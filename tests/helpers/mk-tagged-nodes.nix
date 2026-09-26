@@ -1,4 +1,4 @@
-{ lib, mkNodes }:
+{ lib, mkModuleNodes }:
 {
   tagName ? "payload",
   leafPath ? [ "value" ],
@@ -15,7 +15,7 @@ let
 in
 {
   inherit path;
-  nodes = mkNodes {
+  nodes = mkModuleNodes {
     optionPaths = [ path ];
     modules = {
       sender = {

@@ -1,5 +1,5 @@
 {
-  checkAssertions,
+  allAssertionsPass,
   destinationRejections,
   lib,
   messagePattern,
@@ -56,12 +56,12 @@ in
         expr = nodes.idle.config.services.neo4j ? unavailable;
         expected = false;
       };
-      testReadOnly = {
+      testNeo4jReadOnly = {
         expr = nodes.idle.config.services.neo4j.readOnly;
         expected = false;
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -105,7 +105,7 @@ in
         expected = "contributed";
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -173,7 +173,7 @@ in
         expected = false;
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -225,7 +225,7 @@ in
         expected = "contributed";
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -274,7 +274,7 @@ in
         expected = [ "value" ];
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -315,7 +315,7 @@ in
         };
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -376,7 +376,7 @@ in
             expected = false;
           };
           testAssertions = {
-            expr = checkAssertions nodes;
+            expr = allAssertionsPass nodes;
             expected = true;
           };
         };
@@ -436,7 +436,7 @@ in
         expected = [ 8080 ];
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -491,7 +491,7 @@ in
         expected = [ 8080 ];
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -533,7 +533,7 @@ in
         expected = [ 8080 ];
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -577,7 +577,7 @@ in
         expected = "default-serial";
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -619,7 +619,7 @@ in
         expected = "local-serial";
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };

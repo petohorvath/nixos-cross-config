@@ -1,5 +1,5 @@
 {
-  checkAssertions,
+  allAssertionsPass,
   contributionRejections,
   messagePattern,
   mkNodes,
@@ -128,7 +128,7 @@ in
     expected = "/srv/local";
   };
   testAssertions = {
-    expr = checkAssertions nodes;
+    expr = allAssertionsPass nodes;
     expected = true;
   };
   testRejectsLocalConflict = {

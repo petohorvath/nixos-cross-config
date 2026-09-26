@@ -1,5 +1,5 @@
 {
-  checkAssertions,
+  allAssertionsPass,
   contributionRejections,
   messagePattern,
   mkNodes,
@@ -162,7 +162,7 @@ builtins.mapAttrs (
       inherit (scenario) expected;
     };
     testAssertions = {
-      expr = checkAssertions nodes;
+      expr = allAssertionsPass nodes;
       expected = true;
     };
   }

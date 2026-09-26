@@ -1,7 +1,6 @@
 { minimalExample, ... }:
 let
-  nodes = minimalExample;
-  virtualHost = nodes.proxy.config.services.nginx.virtualHosts."app.example";
+  virtualHost = minimalExample.proxy.config.services.nginx.virtualHosts."app.example";
 in
 {
   testProxyPass = {
@@ -13,12 +12,12 @@ in
     expected = [ "www.app.example" ];
   };
   testHostName = {
-    expr = nodes.proxy.config.networking.hostName;
+    expr = minimalExample.proxy.config.networking.hostName;
     expected = "proxy-container";
   };
   testSystemEvaluation = {
     expr = builtins.all (node: builtins.isString node.config.system.build.toplevel.drvPath) (
-      builtins.attrValues nodes
+      builtins.attrValues minimalExample
     );
     expected = true;
   };
