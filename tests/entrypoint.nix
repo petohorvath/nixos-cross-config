@@ -1,5 +1,7 @@
-# Load test definitions for nix-unit; nix-unit checks their expectations.
-# Example: nix-unit tests/entrypoint.nix --attr merging
+/*
+  Load test definitions for nix-unit; nix-unit checks their expectations.
+  Example: nix-unit tests/entrypoint.nix --attr merging
+*/
 let
   rootInputs = (builtins.getFlake (toString ../.)).inputs;
 

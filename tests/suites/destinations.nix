@@ -338,9 +338,7 @@ in
                   options.value = lib.mkOption {
                     type = lib.types.str;
                     default = "local";
-                    description = ''
-                      The wrapped submodule's local value.
-                    '';
+                    description = "The wrapped submodule's local value.";
                   };
                 };
                 types = {
