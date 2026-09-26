@@ -22,7 +22,10 @@ let
       ]
     ) (builtins.attrNames suite);
 
-  testGroups = lib.concatLists (lib.mapAttrsToList groupsForSuite testSuites);
+  testGroups = lib.pipe testSuites [
+    (lib.mapAttrsToList groupsForSuite)
+    lib.concatLists
+  ];
 
   # Reconstruct inputs from store paths so the sandbox needs no flake fetching.
   evaluationInputsPath = builtins.toFile "cross-config-test-inputs.nix" ''

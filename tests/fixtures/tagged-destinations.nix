@@ -31,26 +31,19 @@ let
       leafPath ? [ "value" ],
       receiverModules ? [ ],
     }:
+    let
+      path = [
+        "inventory"
+        "payload"
+      ]
+      ++ leafPath;
+    in
     (mkNodes {
-      optionPaths = [
-        (
-          [
-            "inventory"
-            "payload"
-          ]
-          ++ leafPath
-        )
-      ];
+      optionPaths = [ path ];
       modules = {
         sender = { lib, ... }: {
           _file = toString ./tagged-destinations.nix;
-          crossConfig.nodes.receiver = lib.setAttrByPath (
-            [
-              "inventory"
-              "payload"
-            ]
-            ++ leafPath
-          ) (lib.mkMerge (senderDefinitions lib));
+          crossConfig.nodes.receiver = lib.setAttrByPath path (lib.mkMerge (senderDefinitions lib));
         };
         receiver = { lib, ... }: {
           _file = toString ./tagged-destinations.nix;

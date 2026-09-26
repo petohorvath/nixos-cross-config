@@ -1,4 +1,9 @@
-{ checkAssertions, mkNodes, ... }:
+{
+  checkAssertions,
+  mkNodes,
+  valueCycle,
+  ...
+}:
 let
   nodes = mkNodes {
     optionPaths = [
@@ -47,7 +52,7 @@ in
     expected = true;
   };
   testRejectsValueCycle = {
-    expr = import ../fixtures/value-cycle.nix { inherit mkNodes; };
+    expr = valueCycle;
     expectedError = {
       type = "EvalError";
       msg = "infinite recursion encountered";

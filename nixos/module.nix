@@ -27,7 +27,7 @@ let
     inherit (cfg) name optionPaths;
   };
 
-  inspectionPaths = specialArgs.__nixosCrossConfigInspectPaths or [ ];
+  inspectionPaths = specialArgs.__nixosCrossConfigInspectionPaths or [ ];
   isInspectingDestinations = inspectionPaths != [ ];
   receiving = import ../lib/receiving.nix {
     inherit

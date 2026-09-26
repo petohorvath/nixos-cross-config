@@ -219,7 +219,7 @@ let
       # contribution.
       localOptions =
         (extendModules {
-          specialArgs.__nixosCrossConfigInspectPaths = inspectionPaths ++ [ path ];
+          specialArgs.__nixosCrossConfigInspectionPaths = inspectionPaths ++ [ path ];
         }).options;
     in
     findLocalOption {

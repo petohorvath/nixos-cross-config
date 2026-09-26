@@ -3,18 +3,17 @@
   flakeConsumer,
   flakeExample,
   flakeRejections,
-  plainFlakeConsumer,
-  messagePattern,
   lib,
+  messagePattern,
+  plainFlakeConsumer,
   ...
 }:
 let
-  rejections = flakeRejections;
   inherit (flakeConsumer)
     evaluateConsumer
     mkConsumer
     mkNode
-    mkPair
+    mkPairConsumer
     mkUnconfiguredNode
     ;
   valuePath = [
@@ -25,7 +24,7 @@ let
     "inventory"
     "literal.values"
   ];
-  reciprocal = { config, lib, ... }: {
+  reciprocalModule = { config, lib, ... }: {
     crossConfig.nodes.${
       if config.crossConfig.name == "alpha" then "beta" else "alpha"
     }.inventory.values =
@@ -63,9 +62,9 @@ let
         expected = true;
       };
     };
-  defaultConsumer = mkPair [ { crossConfig.optionPaths = [ valuePath ]; } ] reciprocal;
+  defaultConsumer = mkPairConsumer [ { crossConfig.optionPaths = [ valuePath ]; } ] reciprocalModule;
   mergedConsumer =
-    mkPair
+    mkPairConsumer
       [
         {
           crossConfig.optionPaths = lib.mkBefore [
@@ -81,10 +80,10 @@ let
         }
       ]
       {
-        imports = [ reciprocal ];
+        imports = [ reciprocalModule ];
         crossConfig.nodes.alpha.inventory."literal.values" = [ "literal" ];
       };
-  emptyConsumer = mkPair [
+  emptyConsumer = mkPairConsumer [
     {
       crossConfig = {
         optionPaths = [ ];
@@ -93,7 +92,7 @@ let
     }
   ] { };
   overriddenConsumer =
-    mkPair
+    mkPairConsumer
       [
         {
           crossConfig = {
@@ -103,7 +102,7 @@ let
         }
       ]
       {
-        imports = [ reciprocal ];
+        imports = [ reciprocalModule ];
         crossConfig = {
           optionPaths = [ valuePath ];
           nodeConfigurations = overriddenConsumer.nixosConfigurations;
@@ -139,8 +138,7 @@ in
 {
   example =
     let
-      consumer = flakeExample;
-      nodes = consumer.nixosConfigurations;
+      nodes = flakeExample.nixosConfigurations;
       virtualHost = nodes.proxy.config.services.nginx.virtualHosts."app.example";
     in
     {
@@ -292,14 +290,14 @@ in
       expected = true;
     };
   };
-  sharedDefaults = checkPair (mkPair [
+  sharedDefaults = checkPair (mkPairConsumer [
     { crossConfig.optionPaths = lib.mkDefault (throw "Overridden default registrations were forced."); }
     { crossConfig.optionPaths = [ valuePath ]; }
-  ] reciprocal) [ valuePath ];
-  sharedForce = checkPair (mkPair [
+  ] reciprocalModule) [ valuePath ];
+  sharedForce = checkPair (mkPairConsumer [
     { crossConfig.optionPaths = [ [ "crossConfig" ] ]; }
     { crossConfig.optionPaths = lib.mkForce [ valuePath ]; }
-  ] reciprocal) [ valuePath ];
+  ] reciprocalModule) [ valuePath ];
   nodeDefaults = checkPair overriddenConsumer [ valuePath ];
   receiverLibrary = {
     testReceiverLibrary = {
@@ -336,7 +334,7 @@ in
       };
     };
   testRejectsOldCollectionName = {
-    expr = rejections.flakeOldCollectionName;
+    expr = flakeRejections.flakeOldCollectionName;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -345,9 +343,8 @@ in
       ];
     };
   };
-
   testRejectsConflictingCollections = {
-    expr = rejections.flakeConflictingCollections;
+    expr = flakeRejections.flakeConflictingCollections;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -357,7 +354,7 @@ in
     };
   };
   testRejectsEmptyRegistration = {
-    expr = rejections.flakeEmptyRegistration;
+    expr = flakeRejections.flakeEmptyRegistration;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -367,7 +364,7 @@ in
     };
   };
   testRejectsInvalidCollection = {
-    expr = rejections.flakeInvalidCollection;
+    expr = flakeRejections.flakeInvalidCollection;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -377,7 +374,7 @@ in
     };
   };
   testRejectsInvalidPath = {
-    expr = rejections.flakeInvalidPath;
+    expr = flakeRejections.flakeInvalidPath;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -387,7 +384,7 @@ in
     };
   };
   testRejectsInvalidPaths = {
-    expr = rejections.flakeInvalidPaths;
+    expr = flakeRejections.flakeInvalidPaths;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -397,7 +394,7 @@ in
     };
   };
   testRejectsInvalidSegment = {
-    expr = rejections.flakeInvalidSegment;
+    expr = flakeRejections.flakeInvalidSegment;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -407,7 +404,7 @@ in
     };
   };
   testRejectsMissingPaths = {
-    expr = rejections.flakeMissingPaths;
+    expr = flakeRejections.flakeMissingPaths;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -417,7 +414,7 @@ in
     };
   };
   testRejectsReservedCrossConfig = {
-    expr = rejections.flakeReservedCrossConfig;
+    expr = flakeRejections.flakeReservedCrossConfig;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -428,7 +425,7 @@ in
     };
   };
   testRejectsReservedModule = {
-    expr = rejections.flakeReservedModule;
+    expr = flakeRejections.flakeReservedModule;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [

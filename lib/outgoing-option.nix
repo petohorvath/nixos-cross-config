@@ -19,6 +19,7 @@ let
 
   mkContributionOption =
     path:
+    # No default: module evaluation would forward it as a contribution.
     lib.mkOption {
       type = lib.types.raw;
       description = "Definitions contributed to ${lib.showOption path}.";

@@ -21,12 +21,18 @@ let
   ];
 
   nodes = {
-    alpha = mkNode "alpha" "beta";
-    beta = mkNode "beta" "alpha";
+    alpha = mkNode {
+      name = "alpha";
+      receiver = "beta";
+    };
+    beta = mkNode {
+      name = "beta";
+      receiver = "alpha";
+    };
   };
 
   mkNode =
-    name: receiver:
+    { name, receiver }:
     evaluateConstructor { inherit name nodes optionPaths; } {
       specialArgs = {
         inherit receiver;
@@ -48,8 +54,8 @@ let
       ];
     };
 
-  checkNode =
-    name: sender:
+  mkNodeTests =
+    { name, sender }:
     let
       node = nodes.${name};
       sourcePath = toString ../fixtures/factory-node.nix;
@@ -113,6 +119,12 @@ in
       optionPaths = false;
     };
   };
-  alpha = checkNode "alpha" "beta";
-  beta = checkNode "beta" "alpha";
+  alpha = mkNodeTests {
+    name = "alpha";
+    sender = "beta";
+  };
+  beta = mkNodeTests {
+    name = "beta";
+    sender = "alpha";
+  };
 }

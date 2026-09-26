@@ -1,10 +1,12 @@
 {
   description = "Configuration contributions between caller-owned NixOS nodes";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-  inputs.flake-parts = {
-    url = "github:hercules-ci/flake-parts";
-    inputs.nixpkgs-lib.follows = "nixpkgs";
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
+    };
   };
 
   outputs =

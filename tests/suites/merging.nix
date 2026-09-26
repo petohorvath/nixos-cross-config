@@ -1,11 +1,11 @@
 {
   checkAssertions,
+  contributionRejections,
   messagePattern,
   mkNodes,
   ...
 }:
 let
-  rejections = import ../fixtures/contributions.nix { inherit mkNodes; };
   nodes = mkNodes {
     optionPaths = [
       [
@@ -81,12 +81,12 @@ let
       };
     };
   };
-  config = nodes.receiver.config;
-  virtualHost = config.services.nginx.virtualHosts."shared.example";
+  receiverConfig = nodes.receiver.config;
+  virtualHost = receiverConfig.services.nginx.virtualHosts."shared.example";
 in
 {
   testHosts = {
-    expr = builtins.sort builtins.lessThan config.networking.hosts."192.0.2.10";
+    expr = builtins.sort builtins.lessThan receiverConfig.networking.hosts."192.0.2.10";
     expected = [
       "alpha.example"
       "beta.example"
@@ -95,7 +95,7 @@ in
     ];
   };
   testPorts = {
-    expr = builtins.sort builtins.lessThan config.networking.firewall.allowedTCPPorts;
+    expr = builtins.sort builtins.lessThan receiverConfig.networking.firewall.allowedTCPPorts;
     expected = [
       443
       8080
@@ -132,7 +132,7 @@ in
     expected = true;
   };
   testRejectsLocalConflict = {
-    expr = rejections.localConflict;
+    expr = contributionRejections.localConflict;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -144,7 +144,7 @@ in
     };
   };
   testRejectsSenderConflict = {
-    expr = rejections.senderConflict;
+    expr = contributionRejections.senderConflict;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [

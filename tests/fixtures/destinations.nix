@@ -28,7 +28,7 @@ let
           '';
         };
         submodule = lib.types.submodule { options = { inherit value; }; };
-        types = {
+        wrapperTypes = {
           coerced = lib.types.coercedTo lib.types.str (value: { inherit value; }) submodule;
           either = lib.types.either lib.types.str submodule;
           nullable = lib.types.nullOr submodule;
@@ -38,13 +38,49 @@ let
       in
       {
         options.inventory = lib.mkOption {
-          type = types.${wrapper};
+          type = wrapperTypes.${wrapper};
           default = if wrapper == "tagged" then { value = "local"; } else { };
           description = "Inventory using a native option-type wrapper.";
         };
       }
     );
 
+  mkUnknownReceiver =
+    sender:
+    mkNodes {
+      optionPaths = [
+        [
+          "inventory"
+          "value"
+        ]
+      ];
+      modules = { inherit sender; };
+    };
+in
+{
+  incompatibleDestination =
+    (mkReceiver (
+      { lib, ... }:
+      {
+        options.inventory.value = lib.mkOption {
+          type = lib.types.int;
+          description = "Destination requiring an integer.";
+        };
+      }
+    )).config.inventory.value;
+  conflictingDestination =
+    (mkReceiver (
+      { lib, ... }:
+      {
+        options.inventory.value = lib.mkOption {
+          type = lib.types.str;
+          description = "Destination with a conflicting local definition.";
+        };
+        config.inventory.value = "local";
+      }
+    )).config.inventory.value;
+}
+// builtins.mapAttrs (_: node: node.config.system.build.toplevel.drvPath) {
   missingDestination = mkReceiver { };
   readOnlyNamedDestination = mkReceiver (
     { lib, ... }:
@@ -156,72 +192,26 @@ let
       config.inventory.value = "local";
     }
   );
-  incompatibleDestination = mkReceiver (
-    { lib, ... }:
-    {
-      options.inventory.value = lib.mkOption {
-        type = lib.types.int;
-        description = "Destination requiring an integer.";
-      };
-    }
-  );
-  conflictingDestination = mkReceiver (
-    { lib, ... }:
-    {
-      options.inventory.value = lib.mkOption {
-        type = lib.types.str;
-        description = "Destination with a conflicting local definition.";
-      };
-      config.inventory.value = "local";
-    }
-  );
-  mkUnknownReceiver =
-    sender:
-    mkNodes {
-      optionPaths = [
-        [
-          "inventory"
-          "value"
-        ]
-      ];
-      modules = { inherit sender; };
-    };
-  unknownReceiver = mkUnknownReceiver ./destination-sender.nix;
-  unknownReceiverWithDisabledContribution = mkUnknownReceiver (
-    { lib, ... }: {
-      crossConfig.nodes.receiver.inventory.value = lib.mkIf false (
-        throw "Disabled contribution was evaluated."
-      );
-    }
-  );
-  unregisteredDestination = mkNodes {
-    optionPaths = [ ];
-    modules = {
-      sender = ./destination-sender.nix;
-      receiver = { };
-    };
-  };
-in
-{
-  missingDestination = missingDestination.config.system.build.toplevel.drvPath;
-  readOnlyNamedDestination = readOnlyNamedDestination.config.system.build.toplevel.drvPath;
-  readOnlyLocalSubmoduleConfig = readOnlyLocalSubmoduleConfig.config.system.build.toplevel.drvPath;
-  missingSubmoduleDestination = missingSubmoduleDestination.config.system.build.toplevel.drvPath;
-  readOnlySubmoduleDestination = readOnlySubmoduleDestination.config.system.build.toplevel.drvPath;
-  readOnlyDestination = readOnlyDestination.config.system.build.toplevel.drvPath;
-  readOnlyDefault = readOnlyDefault.config.system.build.toplevel.drvPath;
-  readOnlyLocal = readOnlyLocal.config.system.build.toplevel.drvPath;
-  incompatibleDestination = incompatibleDestination.config.inventory.value;
-  conflictingDestination = conflictingDestination.config.inventory.value;
-  unknownReceiver = unknownReceiver.sender.config.system.build.toplevel.drvPath;
-  unknownReceiverWithDisabledContribution =
-    unknownReceiverWithDisabledContribution.sender.config.system.build.toplevel.drvPath;
-  unregisteredDestination = unregisteredDestination.sender.config.system.build.toplevel.drvPath;
-}
-// builtins.mapAttrs (_: receiver: receiver.config.system.build.toplevel.drvPath) {
   readOnlyCoercedDestination = mkReadOnlyWrapper "coerced";
   readOnlyEitherDestination = mkReadOnlyWrapper "either";
   readOnlyNullableDestination = mkReadOnlyWrapper "nullable";
   readOnlyUniqueDestination = mkReadOnlyWrapper "unique";
   readOnlyTaggedDestination = mkReadOnlyWrapper "tagged";
+  unknownReceiver = (mkUnknownReceiver ./destination-sender.nix).sender;
+  unknownReceiverWithDisabledContribution =
+    (mkUnknownReceiver (
+      { lib, ... }: {
+        crossConfig.nodes.receiver.inventory.value = lib.mkIf false (
+          throw "Disabled contribution was evaluated."
+        );
+      }
+    )).sender;
+  unregisteredDestination =
+    (mkNodes {
+      optionPaths = [ ];
+      modules = {
+        sender = ./destination-sender.nix;
+        receiver = { };
+      };
+    }).sender;
 }

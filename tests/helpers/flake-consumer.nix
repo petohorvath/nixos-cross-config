@@ -19,12 +19,12 @@ let
     module: flakeParts.lib.mkFlake { inputs.self.outPath = ../..; } (consumerModule module);
   mkUnconfiguredNode =
     modules:
-    nixpkgs.lib.nixosSystem {
+    lib.nixosSystem {
       inherit modules system;
     };
   mkNode =
     configuredModule: name: nodeModule:
-    nixpkgs.lib.nixosSystem {
+    lib.nixosSystem {
       inherit system;
       specialArgs.lib = lib // {
         mkOption = arguments: lib.mkOption arguments // { receiverLibrary = name; };
@@ -51,7 +51,7 @@ let
         nodeModule
       ];
     };
-  mkPair =
+  mkPairConsumer =
     sharedModules: nodeModule:
     mkConsumer (
       { config, ... }:
@@ -68,7 +68,7 @@ in
     evaluateConsumer
     mkConsumer
     mkNode
-    mkPair
+    mkPairConsumer
     mkUnconfiguredNode
     ;
 }

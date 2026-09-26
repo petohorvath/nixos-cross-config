@@ -1,4 +1,4 @@
-{ mkNodes, ... }:
+{ mkNodes }:
 let
   inventoryModule = { lib, ... }: {
     options.inventory = lib.mkOption {

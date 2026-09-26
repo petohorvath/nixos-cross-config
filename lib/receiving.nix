@@ -57,6 +57,7 @@ let
           definitions
         else
           # Inspect instances only inside their declared writable option.
+          # Unlike `lib.mkIf`, an empty merge defines no attributes below it.
           lib.mkMerge (lib.optional (isWritable option) (lib.setAttrByPath remaining definitions));
 
       mkPathDefinitions =

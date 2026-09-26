@@ -62,16 +62,16 @@ let
       };
     };
   };
-  config = nodes.receiver.config;
-  virtualHost = config.services.nginx.virtualHosts."shared.example";
+  receiverConfig = nodes.receiver.config;
+  virtualHost = receiverConfig.services.nginx.virtualHosts."shared.example";
 in
 {
   testReceiverDomain = {
-    expr = config.networking.domain;
+    expr = receiverConfig.networking.domain;
     expected = "receiver.example";
   };
   testSenderDomain = {
-    expr = config.networking.search;
+    expr = receiverConfig.networking.search;
     expected = [ "sender.example" ];
   };
   testReceiverServerName = {

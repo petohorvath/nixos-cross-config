@@ -1,11 +1,11 @@
 {
   checkAssertions,
+  contributionRejections,
   messagePattern,
   mkNodes,
   ...
 }:
 let
-  rejections = import ../fixtures/contributions.nix { inherit mkNodes; };
   nodes = mkNodes {
     optionPaths = [
       [
@@ -97,20 +97,20 @@ let
       forced.networking.hosts."192.0.2.40" = [ "discarded.example" ];
     };
   };
-  config = nodes.receiver.config;
-  virtualHost = config.services.nginx.virtualHosts."shared.example";
-  forcedVirtualHost = config.services.nginx.virtualHosts."forced.example";
+  receiverConfig = nodes.receiver.config;
+  virtualHost = receiverConfig.services.nginx.virtualHosts."shared.example";
+  forcedVirtualHost = receiverConfig.services.nginx.virtualHosts."forced.example";
 in
 {
   testOrdinaryHosts = {
-    expr = config.networking.hosts."192.0.2.10";
+    expr = receiverConfig.networking.hosts."192.0.2.10";
     expected = [
       "beta.example"
       "local.example"
     ];
   };
   testForcedHosts = {
-    expr = config.networking.hosts."192.0.2.20";
+    expr = receiverConfig.networking.hosts."192.0.2.20";
     expected = [
       "alpha.example"
       "beta.example"
@@ -146,19 +146,19 @@ in
     expr = forcedVirtualHost.serverAliases;
     expected = [ ];
   };
-  testLocalHosts = {
+  testDefaultsKeepLocalHosts = {
     expr = nodes.defaults.config.networking.hosts."192.0.2.40";
     expected = [ "local.example" ];
   };
-  testDiscardedDefault = {
+  testDefaultsDiscardContribution = {
     expr = nodes.defaults.config.networking.hosts ? "192.0.2.30";
     expected = false;
   };
-  testForcedOption = {
+  testForcedContribution = {
     expr = nodes.forced.config.networking.hosts."192.0.2.30";
     expected = [ "forced.example" ];
   };
-  testDiscardedLocal = {
+  testForcedDiscardsLocal = {
     expr = nodes.forced.config.networking.hosts ? "192.0.2.40";
     expected = false;
   };
@@ -167,7 +167,7 @@ in
     expected = true;
   };
   testRejectsNestedConflict = {
-    expr = rejections.nestedConflict;
+    expr = contributionRejections.nestedConflict;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [

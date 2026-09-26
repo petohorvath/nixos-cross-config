@@ -12,6 +12,10 @@ let
     inherit lib;
     inherit (evaluation) evaluateModule;
   };
+  mkTaggedNodes = import ./mk-tagged-nodes.nix {
+    inherit lib;
+    mkNodes = mkModuleNodes;
+  };
   flakeConsumer = import ./flake-consumer.nix {
     inherit
       crossConfig
@@ -28,6 +32,7 @@ evaluation
     lib
     mkModuleNodes
     mkNodes
+    mkTaggedNodes
     ;
   messagePattern = import ./message-pattern.nix { inherit lib; };
   checkAssertions =
@@ -36,6 +41,8 @@ evaluation
       builtins.attrValues
       (builtins.all (node: builtins.all (entry: entry.assertion) node.config.assertions))
     ];
+  contributionRejections = import ../fixtures/contributions.nix { inherit mkNodes; };
+  destinationRejections = import ../fixtures/destinations.nix { inherit mkNodes; };
   moduleRejections = import ../fixtures/module-settings.nix {
     inherit (evaluation) evaluateConstructor evaluateModule;
   };
@@ -43,6 +50,10 @@ evaluation
     inherit (flakeConsumer) evaluateConsumer;
   };
   taggedNixos = import ../fixtures/tagged-nixos.nix { inherit mkNodes; };
+  taggedPermissionsOption = import ../fixtures/tagged-permissions.nix { inherit lib; };
+  taggedRejections = import ../fixtures/tagged-destinations.nix { inherit mkNodes; };
+  taggedValueCycle = import ../fixtures/tagged-value-cycle.nix { inherit mkNodes; };
+  valueCycle = import ../fixtures/value-cycle.nix { inherit mkNodes; };
   minimalExample = import ../../examples/minimal.nix { inherit crossConfig nixpkgs system; };
   flakeExample = import ../../examples/flake-parts.nix {
     inherit

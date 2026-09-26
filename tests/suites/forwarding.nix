@@ -1,11 +1,11 @@
 {
   checkAssertions,
+  contributionRejections,
   messagePattern,
   mkNodes,
   ...
 }:
 let
-  rejections = import ../fixtures/contributions.nix { inherit mkNodes; };
   nodes = mkNodes {
     optionPaths = [
       [
@@ -54,7 +54,7 @@ in
     expected = true;
   };
   testRejectsInvalidPort = {
-    expr = rejections.incompatibleType;
+    expr = contributionRejections.incompatibleType;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -67,7 +67,7 @@ in
     };
   };
   testRejectsContributedAssertion = {
-    expr = rejections.failedAssertion;
+    expr = contributionRejections.failedAssertion;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [ "The contributed receiver assertion failed." ];

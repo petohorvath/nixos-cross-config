@@ -136,7 +136,7 @@ The shell override selects the tools; the explicit argument selects the tested c
 
 ```nix
 testRejectsMissingDestination = {
-  expr = rejections.missingDestination;
+  expr = destinationRejections.missingDestination;
   expectedError = {
     type = "ThrownError";
     msg = messagePattern [

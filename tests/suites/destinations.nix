@@ -1,11 +1,12 @@
 {
   checkAssertions,
+  destinationRejections,
+  lib,
   messagePattern,
   mkNodes,
   ...
 }:
 let
-  rejections = import ../fixtures/destinations.nix { inherit mkNodes; };
   contributionOrigin = [
     "sender `sender`"
     "receiver `receiver`"
@@ -380,20 +381,13 @@ in
           };
         };
     in
-    builtins.listToAttrs (
-      map
-        (name: {
-          inherit name;
-          value = mkCase name;
-        })
-        [
-          "coerced"
-          "either"
-          "nullable"
-          "unique"
-          "tagged"
-        ]
-    );
+    lib.genAttrs [
+      "coerced"
+      "either"
+      "nullable"
+      "unique"
+      "tagged"
+    ] mkCase;
 
   unusedMissing =
     let
@@ -630,112 +624,112 @@ in
       };
     };
   testRejectsConflictingDestination = {
-    expr = rejections.conflictingDestination;
+    expr = destinationRejections.conflictingDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "conflicting definition" ] ++ contributionOrigin);
     };
   };
   testRejectsIncompatibleDestination = {
-    expr = rejections.incompatibleDestination;
+    expr = destinationRejections.incompatibleDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "is not of type" ] ++ contributionOrigin);
     };
   };
   testRejectsMissingDestination = {
-    expr = rejections.missingDestination;
+    expr = destinationRejections.missingDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "missing destination" ] ++ contributionOrigin);
     };
   };
   testRejectsMissingSubmoduleDestination = {
-    expr = rejections.missingSubmoduleDestination;
+    expr = destinationRejections.missingSubmoduleDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "missing destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyCoercedDestination = {
-    expr = rejections.readOnlyCoercedDestination;
+    expr = destinationRejections.readOnlyCoercedDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyDefault = {
-    expr = rejections.readOnlyDefault;
+    expr = destinationRejections.readOnlyDefault;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyDestination = {
-    expr = rejections.readOnlyDestination;
+    expr = destinationRejections.readOnlyDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyEitherDestination = {
-    expr = rejections.readOnlyEitherDestination;
+    expr = destinationRejections.readOnlyEitherDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyLocal = {
-    expr = rejections.readOnlyLocal;
+    expr = destinationRejections.readOnlyLocal;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyLocalSubmoduleConfig = {
-    expr = rejections.readOnlyLocalSubmoduleConfig;
+    expr = destinationRejections.readOnlyLocalSubmoduleConfig;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyNamedDestination = {
-    expr = rejections.readOnlyNamedDestination;
+    expr = destinationRejections.readOnlyNamedDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyNullableDestination = {
-    expr = rejections.readOnlyNullableDestination;
+    expr = destinationRejections.readOnlyNullableDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlySubmoduleDestination = {
-    expr = rejections.readOnlySubmoduleDestination;
+    expr = destinationRejections.readOnlySubmoduleDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyTaggedDestination = {
-    expr = rejections.readOnlyTaggedDestination;
+    expr = destinationRejections.readOnlyTaggedDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyUniqueDestination = {
-    expr = rejections.readOnlyUniqueDestination;
+    expr = destinationRejections.readOnlyUniqueDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsUnknownReceiver = {
-    expr = rejections.unknownReceiver;
+    expr = destinationRejections.unknownReceiver;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -745,7 +739,7 @@ in
     };
   };
   testRejectsUnknownReceiverWithDisabledContribution = {
-    expr = rejections.unknownReceiverWithDisabledContribution;
+    expr = destinationRejections.unknownReceiverWithDisabledContribution;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -755,7 +749,7 @@ in
     };
   };
   testRejectsUnregisteredDestination = {
-    expr = rejections.unregisteredDestination;
+    expr = destinationRejections.unregisteredDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [

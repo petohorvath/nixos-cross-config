@@ -1,14 +1,13 @@
 {
   checkAssertions,
   evaluateModule,
+  lib,
+  messagePattern,
   mkModuleNodes,
   moduleRejections,
-  messagePattern,
-  lib,
   ...
 }:
 let
-  rejections = moduleRejections;
   valuePath = [
     "inventory"
     "values"
@@ -181,7 +180,7 @@ in
     }
   ];
   testRejectsOldCollectionName = {
-    expr = rejections.oldCollectionName;
+    expr = moduleRejections.oldCollectionName;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -190,9 +189,8 @@ in
       ];
     };
   };
-
   testRejectsMissingName = {
-    expr = rejections.missingName;
+    expr = moduleRejections.missingName;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -202,7 +200,7 @@ in
     };
   };
   testRejectsMissingCollection = {
-    expr = rejections.missingCollection;
+    expr = moduleRejections.missingCollection;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -212,7 +210,7 @@ in
     };
   };
   testRejectsMissingPaths = {
-    expr = rejections.missingPaths;
+    expr = moduleRejections.missingPaths;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -222,7 +220,7 @@ in
     };
   };
   testRejectsInvalidName = {
-    expr = rejections.invalidName;
+    expr = moduleRejections.invalidName;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -232,7 +230,7 @@ in
     };
   };
   testRejectsInvalidCollection = {
-    expr = rejections.invalidCollection;
+    expr = moduleRejections.invalidCollection;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -242,7 +240,7 @@ in
     };
   };
   testRejectsInvalidPaths = {
-    expr = rejections.invalidPaths;
+    expr = moduleRejections.invalidPaths;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -252,7 +250,7 @@ in
     };
   };
   testRejectsInvalidPath = {
-    expr = rejections.invalidPath;
+    expr = moduleRejections.invalidPath;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -262,7 +260,7 @@ in
     };
   };
   testRejectsInvalidSegment = {
-    expr = rejections.invalidSegment;
+    expr = moduleRejections.invalidSegment;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -272,7 +270,7 @@ in
     };
   };
   testRejectsEmptyRegistration = {
-    expr = rejections.emptyRegistration;
+    expr = moduleRejections.emptyRegistration;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -282,7 +280,7 @@ in
     };
   };
   testRejectsReservedCrossConfig = {
-    expr = rejections.reservedCrossConfig;
+    expr = moduleRejections.reservedCrossConfig;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -294,7 +292,7 @@ in
     };
   };
   testRejectsReservedModule = {
-    expr = rejections.reservedModule;
+    expr = moduleRejections.reservedModule;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -306,7 +304,7 @@ in
     };
   };
   testRejectsReservedWithoutName = {
-    expr = rejections.reservedWithoutName;
+    expr = moduleRejections.reservedWithoutName;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -316,7 +314,7 @@ in
     };
   };
   testRejectsLegacyReservedCrossConfig = {
-    expr = rejections.legacyReservedCrossConfig;
+    expr = moduleRejections.legacyReservedCrossConfig;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -328,7 +326,7 @@ in
     };
   };
   testRejectsLegacyReservedModule = {
-    expr = rejections.legacyReservedModule;
+    expr = moduleRejections.legacyReservedModule;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -340,7 +338,7 @@ in
     };
   };
   testRejectsConflictingCollections = {
-    expr = rejections.conflictingCollections;
+    expr = moduleRejections.conflictingCollections;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [

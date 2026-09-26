@@ -1,6 +1,6 @@
 { mkNodes }:
 let
-  domainFailure =
+  evaluateReceiverDomain =
     modules:
     (mkNodes {
       optionPaths = [
@@ -11,16 +11,18 @@ let
       ];
       inherit modules;
     }).receiver.config.networking.domain;
-  localConflict = domainFailure {
+in
+{
+  localConflict = evaluateReceiverDomain {
     sender.crossConfig.nodes.receiver.networking.domain = "sender.example";
     receiver.networking.domain = "local.example";
   };
-  senderConflict = domainFailure {
+  senderConflict = evaluateReceiverDomain {
     alpha.crossConfig.nodes.receiver.networking.domain = "alpha.example";
     beta.crossConfig.nodes.receiver.networking.domain = "beta.example";
     receiver = { };
   };
-  forcedLocalConflict = domainFailure {
+  forcedLocalConflict = evaluateReceiverDomain {
     sender =
       { lib, ... }:
       {
@@ -32,7 +34,7 @@ let
         networking.domain = lib.mkForce "local.example";
       };
   };
-  customSenderConflict = domainFailure {
+  customSenderConflict = evaluateReceiverDomain {
     alpha =
       { lib, ... }:
       {
@@ -45,7 +47,7 @@ let
       };
     receiver.networking.domain = "discarded.example";
   };
-  sameSenderConflict = domainFailure {
+  sameSenderConflict = evaluateReceiverDomain {
     sender =
       { lib, ... }:
       {
@@ -56,71 +58,61 @@ let
       };
     receiver = { };
   };
-  nestedConflict = mkNodes {
-    optionPaths = [
-      [
-        "services"
-        "nginx"
-        "virtualHosts"
-      ]
-    ];
-    modules = {
-      sender =
-        { lib, ... }:
-        {
-          crossConfig.nodes.receiver.services.nginx.virtualHosts."shared.example" = {
-            locations."/".proxyPass = lib.mkForce "http://sender:8080";
-          };
-        };
-      receiver =
-        { lib, ... }:
-        {
-          services.nginx.virtualHosts."shared.example" = {
-            locations."/".proxyPass = lib.mkForce "http://receiver:8080";
-          };
-        };
-    };
-  };
-  incompatibleType = mkNodes {
-    optionPaths = [
-      [
-        "networking"
-        "firewall"
-        "allowedTCPPorts"
-      ]
-    ];
-    modules = {
-      sender.crossConfig.nodes.receiver.networking.firewall.allowedTCPPorts = [
-        "not-a-port"
-      ];
-      receiver = { };
-    };
-  };
-  failedAssertion = mkNodes {
-    optionPaths = [
-      [ "assertions" ]
-    ];
-    modules = {
-      sender.crossConfig.nodes.receiver.assertions = [
-        {
-          assertion = false;
-          message = "The contributed receiver assertion failed.";
-        }
-      ];
-      receiver = { };
-    };
-  };
-in
-{
-  inherit
-    customSenderConflict
-    forcedLocalConflict
-    localConflict
-    sameSenderConflict
-    senderConflict
-    ;
   nestedConflict =
-    nestedConflict.receiver.config.services.nginx.virtualHosts."shared.example".locations."/".proxyPass;
-  incompatibleType = incompatibleType.receiver.config.networking.firewall.allowedTCPPorts;
-  failedAssertion = failedAssertion.receiver.config.system.build.toplevel.drvPath;
+    (mkNodes {
+      optionPaths = [
+        [
+          "services"
+          "nginx"
+          "virtualHosts"
+        ]
+      ];
+      modules = {
+        sender =
+          { lib, ... }:
+          {
+            crossConfig.nodes.receiver.services.nginx.virtualHosts."shared.example" = {
+              locations."/".proxyPass = lib.mkForce "http://sender:8080";
+            };
+          };
+        receiver =
+          { lib, ... }:
+          {
+            services.nginx.virtualHosts."shared.example" = {
+              locations."/".proxyPass = lib.mkForce "http://receiver:8080";
+            };
+          };
+      };
+    }).receiver.config.services.nginx.virtualHosts."shared.example".locations."/".proxyPass;
+  incompatibleType =
+    (mkNodes {
+      optionPaths = [
+        [
+          "networking"
+          "firewall"
+          "allowedTCPPorts"
+        ]
+      ];
+      modules = {
+        sender.crossConfig.nodes.receiver.networking.firewall.allowedTCPPorts = [
+          "not-a-port"
+        ];
+        receiver = { };
+      };
+    }).receiver.config.networking.firewall.allowedTCPPorts;
+  failedAssertion =
+    (mkNodes {
+      optionPaths = [
+        [ "assertions" ]
+      ];
+      modules = {
+        sender.crossConfig.nodes.receiver.assertions = [
+          {
+            assertion = false;
+            message = "The contributed receiver assertion failed.";
+          }
+        ];
+        receiver = { };
+      };
+    }).receiver.config.system.build.toplevel.drvPath;
 }

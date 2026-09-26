@@ -1,9 +1,9 @@
 {
-  writeShellApplication,
-  treefmt,
   nixfmt,
-  shfmt,
   prettier,
+  shfmt,
+  treefmt,
+  writeShellApplication,
 }:
 writeShellApplication {
   name = "cross-config-fmt";
