@@ -1,11 +1,22 @@
-{ evaluateModule, lib, ... }:
+{
+  allAssertionsPass,
+  evaluateModule,
+  lib,
+  ...
+}:
 let
   nodes = {
-    alpha = mkNode "alpha" "beta";
-    beta = mkNode "beta" "alpha";
+    alpha = mkNode {
+      name = "alpha";
+      receiver = "beta";
+    };
+    beta = mkNode {
+      name = "beta";
+      receiver = "alpha";
+    };
   };
   mkNode =
-    name: receiver:
+    { name, receiver }:
     evaluateModule {
       specialArgs.lib = lib // {
         mkOption = arguments: lib.mkOption arguments // { receiverLibrary = name; };
@@ -17,9 +28,7 @@ let
               type = lib.types.listOf lib.types.str;
               default = [ ];
               apply = map (value: "${name}:${value}");
-              description = ''
-                Values marked by the receiver after merging.
-              '';
+              description = "Values marked by the receiver after merging.";
             };
           };
           config = {
@@ -55,18 +64,16 @@ in
       "beta:local-beta"
     ];
   };
-  testAlphaLibrary = {
+  testAlphaReceiverLibrary = {
     expr = nodes.alpha.options.crossConfig.nodes.receiverLibrary;
     expected = "alpha";
   };
-  testBetaLibrary = {
+  testBetaReceiverLibrary = {
     expr = nodes.beta.options.crossConfig.nodes.receiverLibrary;
     expected = "beta";
   };
   testAssertions = {
-    expr = builtins.all (node: builtins.all (entry: entry.assertion) node.config.assertions) (
-      builtins.attrValues nodes
-    );
+    expr = allAssertionsPass nodes;
     expected = true;
   };
 }

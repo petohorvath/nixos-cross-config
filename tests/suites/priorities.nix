@@ -1,11 +1,11 @@
 {
-  checkAssertions,
+  allAssertionsPass,
+  contributionRejections,
   messagePattern,
   mkNodes,
   ...
 }:
 let
-  rejections = import ../fixtures/contributions.nix { inherit mkNodes; };
   scenarios = {
     contributedDefault = {
       modules = {
@@ -162,14 +162,14 @@ builtins.mapAttrs (
       inherit (scenario) expected;
     };
     testAssertions = {
-      expr = checkAssertions nodes;
+      expr = allAssertionsPass nodes;
       expected = true;
     };
   }
 ) scenarios
 // {
   testRejectsForcedLocalConflict = {
-    expr = rejections.forcedLocalConflict;
+    expr = contributionRejections.forcedLocalConflict;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -181,7 +181,7 @@ builtins.mapAttrs (
     };
   };
   testRejectsCustomSenderConflict = {
-    expr = rejections.customSenderConflict;
+    expr = contributionRejections.customSenderConflict;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -194,7 +194,7 @@ builtins.mapAttrs (
     };
   };
   testRejectsSameSenderConflict = {
-    expr = rejections.sameSenderConflict;
+    expr = contributionRejections.sameSenderConflict;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [

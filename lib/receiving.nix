@@ -2,10 +2,10 @@
   extendModules,
   inspectionPaths,
   lib,
-  name,
   nodeConfigurations,
   optionPaths,
   options,
+  receiver,
   reservedRoots,
 }:
 let
@@ -26,22 +26,21 @@ let
     lib.mkDefinition {
       file =
         definition.file
-        + " (sender `${sender}`, receiver `${name}`,"
-        + " destination `${lib.showOption path}`)";
+        + " (sender `${sender}`, receiver `${receiver}`, destination `${lib.showOption path}`)";
       inherit (definition) value;
     };
 
   collectDefinitions =
     path:
     let
-      fromSender =
+      collectSenderDefinitions =
         sender: node:
         map (withContributionContext sender path) (
-          lib.attrByPath path [ ] (node.config.crossConfig.nodes.${name} or { })
+          lib.attrByPath path [ ] (node.config.crossConfig.nodes.${receiver} or { })
         );
     in
     lib.pipe nodeConfigurations [
-      (lib.mapAttrsToList fromSender)
+      (lib.mapAttrsToList collectSenderDefinitions)
       lib.concatLists
     ];
 
@@ -59,9 +58,11 @@ let
           definitions
         else
           # Inspect instances only inside their declared writable option.
+          # A false `lib.mkIf` would still push its attributes into the path;
+          # an empty merge defines none.
           lib.mkMerge (lib.optional (isWritable option) (lib.setAttrByPath remaining definitions));
 
-      buildPath =
+      mkPathDefinitions =
         remaining: declarations:
         if remaining == [ ] then
           { }
@@ -72,14 +73,13 @@ let
             destination = declarations.${segment} or null;
           in
           lib.optionalAttrs (destination != null && (!lib.isOption destination || isWritable destination)) {
-            ${segment} = if lib.isOption destination then mergeAtOption rest else buildPath rest destination;
+            ${segment} =
+              if lib.isOption destination then mergeAtOption rest else mkPathDefinitions rest destination;
           };
     in
-    /*
-      Keep declaration inspection below its namespace so module arguments
-      resolve.
-    */
-    buildPath path options;
+    # Keep declaration inspection below its namespace so module arguments
+    # resolve.
+    mkPathDefinitions path options;
 
   mkReceivingNamespace =
     root: _:
@@ -105,9 +105,7 @@ let
     {
       assertion = definitions == [ ] || isWritable option;
       message =
-        "nixos-cross-config: receiver `${name}` has a ${reason} "
-        + "destination `${lib.showOption path}`.\n"
-        + "Contributions: "
+        "nixos-cross-config: receiver `${receiver}` has a ${reason} destination `${lib.showOption path}`.\nContributions: "
         + lib.concatMapStringsSep ", " (definition: definition.file) definitions
         + "\n";
     };

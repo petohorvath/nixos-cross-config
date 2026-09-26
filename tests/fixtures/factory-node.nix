@@ -37,9 +37,7 @@ in
       values = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [ ];
-        description = ''
-          Contributed and receiver-local values.
-        '';
+        description = "Contributed and receiver-local values.";
       };
     };
   };

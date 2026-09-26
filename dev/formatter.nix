@@ -1,9 +1,9 @@
 {
-  writeShellApplication,
-  treefmt,
   nixfmt,
-  shfmt,
   prettier,
+  shfmt,
+  treefmt,
+  writeShellApplication,
 }:
 writeShellApplication {
   name = "cross-config-fmt";
@@ -14,6 +14,7 @@ writeShellApplication {
     prettier
   ];
   text = ''
-    exec treefmt --tree-root . --walk filesystem --config-file ${./treefmt.toml} "$@"
+    exec treefmt --tree-root . --walk filesystem \
+      --config-file ${./treefmt.toml} "$@"
   '';
 }

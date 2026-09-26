@@ -14,10 +14,8 @@
 let
   cfg = config.crossConfig;
 
-  /*
-    Path errors should remain useful even when the required node name is
-    missing.
-  */
+  # Path errors should remain useful even when the required node name is
+  # missing.
   nodeNameForErrors = if options.crossConfig.name.isDefined then cfg.name else null;
   settings = import ../lib/settings.nix {
     inherit lib;
@@ -26,10 +24,11 @@ let
 
   outgoingOption = import ../lib/outgoing-option.nix {
     inherit lib;
-    inherit (cfg) name optionPaths;
+    inherit (cfg) optionPaths;
+    sender = cfg.name;
   };
 
-  inspectionPaths = specialArgs.__nixosCrossConfigInspectPaths or [ ];
+  inspectionPaths = specialArgs.__nixosCrossConfigInspectionPaths or [ ];
   isInspectingDestinations = inspectionPaths != [ ];
   receiving = import ../lib/receiving.nix {
     inherit
@@ -38,14 +37,15 @@ let
       lib
       options
       ;
-    inherit (cfg) name nodeConfigurations optionPaths;
+    inherit (cfg) nodeConfigurations optionPaths;
+    receiver = cfg.name;
     inherit (settings) reservedRoots;
   };
   inherit (receiving) destinationAssertions receivedConfig;
 
   mkReceiverAssertion = receiver: contribution: {
     assertion = builtins.seq contribution (builtins.hasAttr receiver cfg.nodeConfigurations);
-    message = "nixos-cross-config: sender `${cfg.name}` " + "targets unknown receiver `${receiver}`.";
+    message = "nixos-cross-config: sender `${cfg.name}` targets unknown receiver `${receiver}`.";
   };
   receiverAssertions = lib.mapAttrsToList mkReceiverAssertion cfg.nodes;
 
@@ -69,10 +69,8 @@ in
   config = lib.mkMerge [
     receivedConfig
     {
-      /*
-        Inspection checks local declarations; validate contributions only in the
-        main evaluation.
-      */
+      # Inspection checks local declarations; validate contributions only in
+      # the main evaluation.
       assertions = lib.optionals (!isInspectingDestinations) assertions;
     }
   ];

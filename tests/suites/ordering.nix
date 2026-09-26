@@ -1,4 +1,4 @@
-{ checkAssertions, mkNodes, ... }:
+{ allAssertionsPass, mkNodes, ... }:
 let
   optionPaths = [
     [
@@ -85,11 +85,11 @@ in
     ];
   };
   testAssertions = {
-    expr = checkAssertions nodes;
+    expr = allAssertionsPass nodes;
     expected = true;
   };
   testForcedAssertions = {
-    expr = checkAssertions forcedNodes;
+    expr = allAssertionsPass forcedNodes;
     expected = true;
   };
 }

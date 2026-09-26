@@ -1,4 +1,4 @@
-{ mkNodes, ... }:
+{ mkNodes }:
 let
   inventoryModule = { lib, ... }: {
     options.inventory = lib.mkOption {
@@ -7,19 +7,13 @@ let
           type = lib.types.submodule {
             options.value = lib.mkOption {
               type = lib.types.str;
-              description = ''
-                A tagged value supplied only by the other node.
-              '';
+              description = "A tagged value supplied only by the other node.";
             };
           };
-          description = ''
-            A writable tag participating in a value cycle.
-          '';
+          description = "A writable tag participating in a value cycle.";
         };
       };
-      description = ''
-        Inventory containing the cyclic contribution.
-      '';
+      description = "Inventory containing the cyclic contribution.";
     };
   };
   nodes = mkNodes {

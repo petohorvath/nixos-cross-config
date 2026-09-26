@@ -18,15 +18,6 @@ With Nix and the `nix-command` and `flakes` features enabled, save the following
     let
       system = "x86_64-linux";
 
-      # Both nodes import the same collection settings.
-      sharedSettings = {
-        imports = [ crossConfig.nixosModules.default ];
-        crossConfig = {
-          nodeConfigurations = nodes;
-          optionPaths = [ [ "services" "nginx" "virtualHosts" ] ];
-        };
-      };
-
       modules = {
         application = {
           crossConfig.nodes.proxy.services.nginx.virtualHosts."app.example" = {
@@ -39,6 +30,15 @@ With Nix and the `nix-command` and `flakes` features enabled, save the following
             enable = true;
             virtualHosts."app.example".serverAliases = [ "www.app.example" ];
           };
+        };
+      };
+
+      # Both nodes import the same collection settings.
+      sharedSettings = {
+        imports = [ crossConfig.nixosModules.default ];
+        crossConfig = {
+          nodeConfigurations = nodes;
+          optionPaths = [ [ "services" "nginx" "virtualHosts" ] ];
         };
       };
 

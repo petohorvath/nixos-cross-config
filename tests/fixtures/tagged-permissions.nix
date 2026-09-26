@@ -6,9 +6,7 @@ lib.mkOption {
         locked = lib.mkOption {
           type = lib.types.bool;
           default = false;
-          description = ''
-            Receiver-local write restriction.
-          '';
+          description = "Receiver-local write restriction.";
         };
         value = lib.mkOption {
           type = lib.types.str;
@@ -21,7 +19,5 @@ lib.mkOption {
       };
     }
   );
-  description = ''
-    A tag with receiver-local child permissions.
-  '';
+  description = "A tag with receiver-local child permissions.";
 }

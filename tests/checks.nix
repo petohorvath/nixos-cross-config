@@ -8,8 +8,8 @@
 }:
 let
   sourceDir = lib.cleanSource ../.;
-  testEntrypoint = sourceDir + "/tests/entrypoint.nix";
-  testSuites = import testEntrypoint { inherit flakeParts nixpkgs system; };
+  testEntrypointPath = sourceDir + "/tests/entrypoint.nix";
+  testSuites = import testEntrypointPath { inherit flakeParts nixpkgs system; };
 
   # Select immediate suite entries; nix-unit discovers any nested tests.
   groupsForSuite =
@@ -22,10 +22,13 @@ let
       ]
     ) (builtins.attrNames suite);
 
-  testGroups = lib.concatLists (lib.mapAttrsToList groupsForSuite testSuites);
+  testGroups = lib.pipe testSuites [
+    (lib.mapAttrsToList groupsForSuite)
+    lib.concatLists
+  ];
 
   # Reconstruct inputs from store paths so the sandbox needs no flake fetching.
-  evaluationInputsFile = builtins.toFile "cross-config-test-inputs.nix" ''
+  evaluationInputsPath = builtins.toFile "cross-config-test-inputs.nix" ''
     import ${sourceDir}/tests/helpers/evaluation-inputs.nix {
       flakePartsDir = "${flakeParts}";
       nixpkgsDir = "${nixpkgs}";
@@ -39,9 +42,9 @@ runCommand "cross-config-tests" { nativeBuildInputs = [ nix-unit ]; } ''
   for group in ${lib.escapeShellArgs testGroups}; do
     nix-unit --show-trace \
       --eval-store "$TMPDIR/eval-store" --gc-roots-dir "$TMPDIR/gc-roots" \
-      ${testEntrypoint} --attr "$group" \
-      --arg nixpkgs '(import ${evaluationInputsFile}).nixpkgs' \
-      --arg flakeParts '(import ${evaluationInputsFile}).flakeParts' \
+      ${testEntrypointPath} --attr "$group" \
+      --arg nixpkgs '(import ${evaluationInputsPath}).nixpkgs' \
+      --arg flakeParts '(import ${evaluationInputsPath}).flakeParts' \
       --argstr system ${lib.escapeShellArg system}
   done
 

@@ -1,4 +1,4 @@
-{ mkNodes, ... }:
+{ mkNodes }:
 let
   nodes = mkNodes {
     optionPaths = [

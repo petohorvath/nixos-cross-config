@@ -1,11 +1,12 @@
 {
-  checkAssertions,
+  allAssertionsPass,
+  destinationRejections,
+  lib,
   messagePattern,
   mkNodes,
   ...
 }:
 let
-  rejections = import ../fixtures/destinations.nix { inherit mkNodes; };
   contributionOrigin = [
     "sender `sender`"
     "receiver `receiver`"
@@ -20,23 +21,17 @@ let
           type = lib.types.str;
           readOnly = true;
           default = "default-serial";
-          description = ''
-            Serial supplied by the option declaration.
-          '';
+          description = "Serial supplied by the option declaration.";
         };
         model = lib.mkOption {
           type = lib.types.str;
           readOnly = true;
-          description = ''
-            Model supplied by the receiver.
-          '';
+          description = "Model supplied by the receiver.";
         };
         unassigned = lib.mkOption {
           type = lib.types.str;
           readOnly = true;
-          description = ''
-            Read-only option without a definition.
-          '';
+          description = "Read-only option without a definition.";
         };
       };
       config.inventory.model = "local-model";
@@ -61,12 +56,12 @@ in
         expr = nodes.idle.config.services.neo4j ? unavailable;
         expected = false;
       };
-      testReadOnly = {
+      testNeo4jReadOnly = {
         expr = nodes.idle.config.services.neo4j.readOnly;
         expected = false;
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -97,9 +92,7 @@ in
               };
             };
             default = { };
-            description = ''
-              Inventory with a conditional self contribution.
-            '';
+            description = "Inventory with a conditional self contribution.";
           };
           config.crossConfig.nodes.application.inventory.value =
             lib.mkIf config.inventory.enable "contributed";
@@ -112,7 +105,7 @@ in
         expected = "contributed";
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -180,7 +173,7 @@ in
         expected = false;
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -232,7 +225,7 @@ in
         expected = "contributed";
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -263,9 +256,7 @@ in
               config.inventory.entries.example = { lib, ... }: {
                 options.value = lib.mkOption {
                   type = lib.types.str;
-                  description = ''
-                    Option declared in one receiver instance.
-                  '';
+                  description = "Option declared in one receiver instance.";
                 };
                 config.value = lib.mkDefault "local";
               };
@@ -283,7 +274,7 @@ in
         expected = [ "value" ];
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -305,9 +296,7 @@ in
               options.inventory = lib.mkOption {
                 type = lib.types.submodule { };
                 default = { };
-                description = ''
-                  Inventory with receiver-local freeform fields.
-                '';
+                description = "Inventory with receiver-local freeform fields.";
               };
               config.inventory = { lib, ... }: {
                 _module.freeformType = lib.types.attrsOf lib.types.str;
@@ -326,7 +315,7 @@ in
         };
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -350,9 +339,7 @@ in
                   options.value = lib.mkOption {
                     type = lib.types.str;
                     default = "local";
-                    description = ''
-                      The wrapped submodule's local value.
-                    '';
+                    description = "The wrapped submodule's local value.";
                   };
                 };
                 types = {
@@ -363,9 +350,7 @@ in
                   tagged = lib.types.attrTag {
                     value = lib.mkOption {
                       type = lib.types.str;
-                      description = ''
-                        The only permitted tag.
-                      '';
+                      description = "The only permitted tag.";
                     };
                   };
                 };
@@ -376,9 +361,7 @@ in
                   default = {
                     value = "local";
                   };
-                  description = ''
-                    Inventory using a native option-type wrapper.
-                  '';
+                  description = "Inventory using a native option-type wrapper.";
                 };
               };
           };
@@ -393,25 +376,18 @@ in
             expected = false;
           };
           testAssertions = {
-            expr = checkAssertions nodes;
+            expr = allAssertionsPass nodes;
             expected = true;
           };
         };
     in
-    builtins.listToAttrs (
-      map
-        (name: {
-          inherit name;
-          value = mkCase name;
-        })
-        [
-          "coerced"
-          "either"
-          "nullable"
-          "unique"
-          "tagged"
-        ]
-    );
+    lib.genAttrs [
+      "coerced"
+      "either"
+      "nullable"
+      "unique"
+      "tagged"
+    ] mkCase;
 
   unusedMissing =
     let
@@ -460,7 +436,7 @@ in
         expected = [ 8080 ];
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -515,7 +491,7 @@ in
         expected = [ 8080 ];
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -557,7 +533,7 @@ in
         expected = [ 8080 ];
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -601,7 +577,7 @@ in
         expected = "default-serial";
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
@@ -627,15 +603,11 @@ in
                     type = lib.types.str;
                     readOnly = true;
                     default = "local-serial";
-                    description = ''
-                      Serial within a receiving submodule.
-                    '';
+                    description = "Serial within a receiving submodule.";
                   };
                 };
                 default = { };
-                description = ''
-                  Receiver-owned inventory entry.
-                '';
+                description = "Receiver-owned inventory entry.";
               };
             };
         };
@@ -647,117 +619,117 @@ in
         expected = "local-serial";
       };
       testAssertions = {
-        expr = checkAssertions nodes;
+        expr = allAssertionsPass nodes;
         expected = true;
       };
     };
   testRejectsConflictingDestination = {
-    expr = rejections.conflictingDestination;
+    expr = destinationRejections.conflictingDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "conflicting definition" ] ++ contributionOrigin);
     };
   };
   testRejectsIncompatibleDestination = {
-    expr = rejections.incompatibleDestination;
+    expr = destinationRejections.incompatibleDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "is not of type" ] ++ contributionOrigin);
     };
   };
   testRejectsMissingDestination = {
-    expr = rejections.missingDestination;
+    expr = destinationRejections.missingDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "missing destination" ] ++ contributionOrigin);
     };
   };
   testRejectsMissingSubmoduleDestination = {
-    expr = rejections.missingSubmoduleDestination;
+    expr = destinationRejections.missingSubmoduleDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "missing destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyCoercedDestination = {
-    expr = rejections.readOnlyCoercedDestination;
+    expr = destinationRejections.readOnlyCoercedDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyDefault = {
-    expr = rejections.readOnlyDefault;
+    expr = destinationRejections.readOnlyDefault;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyDestination = {
-    expr = rejections.readOnlyDestination;
+    expr = destinationRejections.readOnlyDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyEitherDestination = {
-    expr = rejections.readOnlyEitherDestination;
+    expr = destinationRejections.readOnlyEitherDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyLocal = {
-    expr = rejections.readOnlyLocal;
+    expr = destinationRejections.readOnlyLocal;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyLocalSubmoduleConfig = {
-    expr = rejections.readOnlyLocalSubmoduleConfig;
+    expr = destinationRejections.readOnlyLocalSubmoduleConfig;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyNamedDestination = {
-    expr = rejections.readOnlyNamedDestination;
+    expr = destinationRejections.readOnlyNamedDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyNullableDestination = {
-    expr = rejections.readOnlyNullableDestination;
+    expr = destinationRejections.readOnlyNullableDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlySubmoduleDestination = {
-    expr = rejections.readOnlySubmoduleDestination;
+    expr = destinationRejections.readOnlySubmoduleDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyTaggedDestination = {
-    expr = rejections.readOnlyTaggedDestination;
+    expr = destinationRejections.readOnlyTaggedDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsReadOnlyUniqueDestination = {
-    expr = rejections.readOnlyUniqueDestination;
+    expr = destinationRejections.readOnlyUniqueDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
     };
   };
   testRejectsUnknownReceiver = {
-    expr = rejections.unknownReceiver;
+    expr = destinationRejections.unknownReceiver;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -767,7 +739,7 @@ in
     };
   };
   testRejectsUnknownReceiverWithDisabledContribution = {
-    expr = rejections.unknownReceiverWithDisabledContribution;
+    expr = destinationRejections.unknownReceiverWithDisabledContribution;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -777,7 +749,7 @@ in
     };
   };
   testRejectsUnregisteredDestination = {
-    expr = rejections.unregisteredDestination;
+    expr = destinationRejections.unregisteredDestination;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [

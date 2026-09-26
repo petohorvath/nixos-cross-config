@@ -1,6 +1,6 @@
-{ checkAssertions, mkNodes, ... }:
+{ allAssertionsPass, mkNodes, ... }:
 let
-  mkSender =
+  senderModule =
     { config, lib, ... }:
     let
       enable = config.services.openssh.enable;
@@ -65,11 +65,11 @@ let
     ];
     modules = {
       enabled = {
-        imports = [ mkSender ];
+        imports = [ senderModule ];
         services.openssh.enable = true;
       };
       disabled = {
-        imports = [ mkSender ];
+        imports = [ senderModule ];
         services.openssh.enable = false;
       };
       receiver = {
@@ -78,33 +78,35 @@ let
       };
     };
   };
-  config = nodes.receiver.config;
+  receiverConfig = nodes.receiver.config;
 in
 {
   testEnabledBranches = {
-    expr = builtins.all (address: config.networking.hosts.${address} == [ "enabled-hostname" ]) [
-      "192.0.2.10"
-      "192.0.2.11"
-      "192.0.2.20"
-      "192.0.2.21"
-      "192.0.2.30"
-      "192.0.2.31"
-      "192.0.2.35"
-      "192.0.2.36"
-      "192.0.2.40"
-    ];
+    expr =
+      builtins.all (address: receiverConfig.networking.hosts.${address} == [ "enabled-hostname" ])
+        [
+          "192.0.2.10"
+          "192.0.2.11"
+          "192.0.2.20"
+          "192.0.2.21"
+          "192.0.2.30"
+          "192.0.2.31"
+          "192.0.2.35"
+          "192.0.2.36"
+          "192.0.2.40"
+        ];
     expected = true;
   };
   testLocalHosts = {
-    expr = config.networking.hosts."192.0.2.50";
+    expr = receiverConfig.networking.hosts."192.0.2.50";
     expected = [ "local.example" ];
   };
-  testDisabledSearch = {
-    expr = config.networking.search;
+  testSkipsDisabledSearch = {
+    expr = receiverConfig.networking.search;
     expected = [ "local.example" ];
   };
   testAssertions = {
-    expr = checkAssertions nodes;
+    expr = allAssertionsPass nodes;
     expected = true;
   };
 }

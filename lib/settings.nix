@@ -13,13 +13,10 @@ let
     if builtins.length definitions == 1 then
       (builtins.head definitions).value
     else
-      /*
-        Report only source locations: rendering conflicting values can force
-        nodes.
-      */
+      # Report only source locations: rendering conflicting values can force
+      # nodes.
       throw (
-        "The option `${lib.showOption location}' is defined multiple times. "
-        + "Supply one node collection using option priorities. Definitions: "
+        "The option `${lib.showOption location}' is defined multiple times. Supply one node collection using option priorities. Definitions: "
         + lib.concatMapStringsSep ", " (definition: definition.file) definitions
       );
 
@@ -39,8 +36,7 @@ let
     path:
     if builtins.elem (builtins.head path) reservedRoots then
       throw (
-        "nixos-cross-config: crossConfig.optionPaths "
-        + "registration `${lib.showOption path}`"
+        "nixos-cross-config: crossConfig.optionPaths registration `${lib.showOption path}`"
         + lib.optionalString (nodeName != null) " on node `${nodeName}`"
         + " uses a reserved root."
       )

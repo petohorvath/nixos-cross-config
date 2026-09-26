@@ -1,16 +1,14 @@
 {
   lib,
-  name,
   optionPaths,
+  sender,
 }:
 let
   restoreDefinitionProperties = import ./restore-definition-properties.nix { inherit lib; };
 
   getDefinitions =
     receiver: contribution:
-    builtins.addErrorContext (
-      "while evaluating contributions from sender `${name}` " + "to receiver `${receiver}`:"
-    ) contribution._definitions;
+    builtins.addErrorContext "while evaluating contributions from sender `${sender}` to receiver `${receiver}`:" contribution._definitions;
 
   mkPathAttrs =
     getValue:
@@ -21,11 +19,10 @@ let
 
   mkContributionOption =
     path:
+    # No default: module evaluation would forward it as a contribution.
     lib.mkOption {
       type = lib.types.raw;
-      description = ''
-        Definitions contributed to ${lib.showOption path}.
-      '';
+      description = "Definitions contributed to ${lib.showOption path}.";
     };
 
   mkContributionModule =
