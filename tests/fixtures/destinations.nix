@@ -1,5 +1,20 @@
 { mkNodes }:
 let
+  mkReceiver =
+    receiver:
+    (mkNodes {
+      optionPaths = [
+        [
+          "inventory"
+          "value"
+        ]
+      ];
+      modules = {
+        sender = ./destination-sender.nix;
+        inherit receiver;
+      };
+    }).receiver;
+
   mkReadOnlyWrapper =
     wrapper:
     mkReceiver (
@@ -29,21 +44,6 @@ let
         };
       }
     );
-
-  mkReceiver =
-    receiver:
-    (mkNodes {
-      optionPaths = [
-        [
-          "inventory"
-          "value"
-        ]
-      ];
-      modules = {
-        sender = ./destination-sender.nix;
-        inherit receiver;
-      };
-    }).receiver;
 
   missingDestination = mkReceiver { };
   readOnlyNamedDestination = mkReceiver (

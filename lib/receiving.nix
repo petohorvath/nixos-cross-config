@@ -61,7 +61,7 @@ let
           # Inspect instances only inside their declared writable option.
           lib.mkMerge (lib.optional (isWritable option) (lib.setAttrByPath remaining definitions));
 
-      buildPath =
+      mkPathDefinitions =
         remaining: declarations:
         if remaining == [ ] then
           { }
@@ -72,12 +72,13 @@ let
             destination = declarations.${segment} or null;
           in
           lib.optionalAttrs (destination != null && (!lib.isOption destination || isWritable destination)) {
-            ${segment} = if lib.isOption destination then mergeAtOption rest else buildPath rest destination;
+            ${segment} =
+              if lib.isOption destination then mergeAtOption rest else mkPathDefinitions rest destination;
           };
     in
     # Keep declaration inspection below its namespace so module arguments
     # resolve.
-    buildPath path options;
+    mkPathDefinitions path options;
 
   mkReceivingNamespace =
     root: _:

@@ -15,6 +15,58 @@ let
     "destination `inventory.payload.value`"
     "fixtures/tagged-destinations.nix"
   ];
+  mkTaggedNodes = import ../helpers/mk-tagged-nodes.nix {
+    inherit lib;
+    mkNodes = mkModuleNodes;
+  };
+  checkValue =
+    expected: args:
+    let
+      inherit (mkTaggedNodes args) nodes path;
+    in
+    {
+      testValue = {
+        expr = lib.getAttrFromPath path nodes.receiver.config;
+        inherit expected;
+      };
+      testAssertions = {
+        expr = checkAssertions nodes;
+        expected = true;
+      };
+    };
+  submoduleOption = lib.mkOption {
+    type = lib.types.submodule {
+      options.value = lib.mkOption {
+        type = lib.types.str;
+        default = "local";
+        description = "A writable field inside the tag.";
+      };
+    };
+    description = "A writable submodule tag.";
+  };
+  relationModule = {
+    options.inventory = lib.mkOption {
+      type = lib.types.attrTag {
+        payload = submoduleOption // {
+          type = lib.types.submodule {
+            options = {
+              enable = lib.mkEnableOption "the self contribution" // {
+                default = true;
+              };
+              value = lib.mkOption {
+                type = lib.types.str;
+                default = "local";
+                description = "A value exchanged between nodes.";
+              };
+            };
+          };
+        };
+      };
+      default.payload = { };
+      description = "A tagged inventory shared by participating nodes.";
+    };
+  };
+
   tests = {
     nixos =
       let
@@ -435,57 +487,6 @@ let
         unique = lib.types.uniq submoduleOption.type;
       };
 
-  mkTaggedNodes = import ../helpers/mk-tagged-nodes.nix {
-    inherit lib;
-    mkNodes = mkModuleNodes;
-  };
-  checkValue =
-    expected: args:
-    let
-      inherit (mkTaggedNodes args) nodes path;
-    in
-    {
-      testValue = {
-        expr = lib.getAttrFromPath path nodes.receiver.config;
-        inherit expected;
-      };
-      testAssertions = {
-        expr = checkAssertions nodes;
-        expected = true;
-      };
-    };
-  submoduleOption = lib.mkOption {
-    type = lib.types.submodule {
-      options.value = lib.mkOption {
-        type = lib.types.str;
-        default = "local";
-        description = "A writable field inside the tag.";
-      };
-    };
-    description = "A writable submodule tag.";
-  };
-  relationModule = {
-    options.inventory = lib.mkOption {
-      type = lib.types.attrTag {
-        payload = submoduleOption // {
-          type = lib.types.submodule {
-            options = {
-              enable = lib.mkEnableOption "the self contribution" // {
-                default = true;
-              };
-              value = lib.mkOption {
-                type = lib.types.str;
-                default = "local";
-                description = "A value exchanged between nodes.";
-              };
-            };
-          };
-        };
-      };
-      default.payload = { };
-      description = "A tagged inventory shared by participating nodes.";
-    };
-  };
 in
 tests
 // {

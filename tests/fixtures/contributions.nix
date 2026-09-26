@@ -1,5 +1,16 @@
 { mkNodes }:
 let
+  domainFailure =
+    modules:
+    (mkNodes {
+      optionPaths = [
+        [
+          "networking"
+          "domain"
+        ]
+      ];
+      inherit modules;
+    }).receiver.config.networking.domain;
   localConflict = domainFailure {
     sender.crossConfig.nodes.receiver.networking.domain = "sender.example";
     receiver.networking.domain = "local.example";
@@ -45,17 +56,6 @@ let
       };
     receiver = { };
   };
-  domainFailure =
-    modules:
-    (mkNodes {
-      optionPaths = [
-        [
-          "networking"
-          "domain"
-        ]
-      ];
-      inherit modules;
-    }).receiver.config.networking.domain;
   nestedConflict = mkNodes {
     optionPaths = [
       [

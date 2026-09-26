@@ -9,7 +9,6 @@
 }:
 let
   rejections = moduleRejections;
-  mkNodes = mkModuleNodes;
   valuePath = [
     "inventory"
     "values"
@@ -28,7 +27,7 @@ let
       expectedOther ? [ ],
     }:
     let
-      nodes = mkNodes {
+      nodes = mkModuleNodes {
         optionPaths = lib.mkDefault [ ];
         modules = {
           sender = {

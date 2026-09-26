@@ -5,18 +5,48 @@
   ...
 }:
 let
-  result = {
-    testConstructorArguments = {
-      expr = constructorArguments;
-      expected = {
-        name = false;
-        nodes = false;
-        optionPaths = false;
-      };
-    };
-    alpha = checkNode "alpha" "beta";
-    beta = checkNode "beta" "alpha";
+  optionPaths = [
+    [
+      "inventory"
+      "values"
+    ]
+    [
+      "inventory"
+      "crossConfig"
+    ]
+    [
+      "inventory"
+      "_module"
+    ]
+  ];
+
+  nodes = {
+    alpha = mkNode "alpha" "beta";
+    beta = mkNode "beta" "alpha";
   };
+
+  mkNode =
+    name: receiver:
+    evaluateConstructor { inherit name nodes optionPaths; } {
+      specialArgs = {
+        inherit receiver;
+        lib = lib // {
+          mkOption = arguments: lib.mkOption arguments // { receiverLibrary = name; };
+        };
+        name = "ordinary-name-${name}";
+        nodes.marker = "ordinary-nodes-${name}";
+        optionPaths = [ [ "ordinary-optionPaths-${name}" ] ];
+      };
+      modules = [
+        ../fixtures/factory-node.nix
+        {
+          config = {
+            _module.args.ordinaryArgument = "argument-${name}";
+            inventory.identity = name;
+          };
+        }
+      ];
+    };
 
   checkNode =
     name: sender:
@@ -73,48 +103,16 @@ let
         expected = true;
       };
     };
-
-  nodes = {
-    alpha = mkNode "alpha" "beta";
-    beta = mkNode "beta" "alpha";
-  };
-
-  mkNode =
-    name: receiver:
-    evaluateConstructor { inherit name nodes optionPaths; } {
-      specialArgs = {
-        inherit receiver;
-        lib = lib // {
-          mkOption = arguments: lib.mkOption arguments // { receiverLibrary = name; };
-        };
-        name = "ordinary-name-${name}";
-        nodes.marker = "ordinary-nodes-${name}";
-        optionPaths = [ [ "ordinary-optionPaths-${name}" ] ];
-      };
-      modules = [
-        ../fixtures/factory-node.nix
-        {
-          config = {
-            _module.args.ordinaryArgument = "argument-${name}";
-            inventory.identity = name;
-          };
-        }
-      ];
-    };
-
-  optionPaths = [
-    [
-      "inventory"
-      "values"
-    ]
-    [
-      "inventory"
-      "crossConfig"
-    ]
-    [
-      "inventory"
-      "_module"
-    ]
-  ];
 in
-result
+{
+  testConstructorArguments = {
+    expr = constructorArguments;
+    expected = {
+      name = false;
+      nodes = false;
+      optionPaths = false;
+    };
+  };
+  alpha = checkNode "alpha" "beta";
+  beta = checkNode "beta" "alpha";
+}

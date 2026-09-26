@@ -9,10 +9,9 @@ let
   paths = value: (evaluate (settings // { optionPaths = value; })).config.crossConfig.optionPaths;
 in
 {
-  missingName = (evaluate (builtins.removeAttrs settings [ "name" ])).config.assertions;
-  missingCollection =
-    (evaluate (builtins.removeAttrs settings [ "nodeConfigurations" ])).config.assertions;
-  missingPaths = (evaluate (builtins.removeAttrs settings [ "optionPaths" ])).config.assertions;
+  missingName = (evaluate (removeAttrs settings [ "name" ])).config.assertions;
+  missingCollection = (evaluate (removeAttrs settings [ "nodeConfigurations" ])).config.assertions;
+  missingPaths = (evaluate (removeAttrs settings [ "optionPaths" ])).config.assertions;
   invalidName = (evaluate (settings // { name = 42; })).config.assertions;
   invalidCollection = (evaluate (settings // { nodeConfigurations = [ ]; })).config.assertions;
   oldCollectionName = (evaluate (settings // { nodeCollection = { }; })).config.assertions;

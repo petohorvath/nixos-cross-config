@@ -1,6 +1,6 @@
 { checkAssertions, mkNodes, ... }:
 let
-  mkSender =
+  senderModule =
     { config, lib, ... }:
     let
       enable = config.services.openssh.enable;
@@ -65,11 +65,11 @@ let
     ];
     modules = {
       enabled = {
-        imports = [ mkSender ];
+        imports = [ senderModule ];
         services.openssh.enable = true;
       };
       disabled = {
-        imports = [ mkSender ];
+        imports = [ senderModule ];
         services.openssh.enable = false;
       };
       receiver = {
