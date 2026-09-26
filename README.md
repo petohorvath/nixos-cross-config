@@ -125,7 +125,7 @@ crossConfig.contributions.proxy.services.nginx.virtualHosts."app.example" = {
 };
 ```
 
-Read the merged result from `nodes.<receiver>.config`, as the quickstart command does. `crossConfig.contributions` declares outgoing contributions; its evaluated representation is internal.
+Read the merged result from `nodes.<receiver>.config`, as the quickstart command does. The evaluated representation of `crossConfig.contributions` is internal.
 
 Contributions and local definitions use normal NixOS merging rules. A local definition has no extra priority. Use `lib.mkDefault`, `lib.mkForce`, and list ordering helpers where needed. The [API reference](docs/api.md) explains merging, conditions, validation, and evaluation limits.
 

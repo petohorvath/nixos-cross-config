@@ -161,7 +161,7 @@ services.nginx.virtualHosts."app.example".serverAliases = [
 
 The receiver's option type validates and merges contributions from all senders with local definitions. A local definition has no extra priority. Incompatible scalar definitions at equal priority fail under the normal [NixOS option merging rules](https://nixos.org/manual/nixos/stable/#sec-option-definitions).
 
-Read the result from `nodes.<receiver>.config`. In this example, `nodes.proxy.config.services.nginx.virtualHosts."app.example"` contains both settings. `crossConfig.contributions` declares outgoing contributions; its evaluated representation is internal.
+Read the result from `nodes.<receiver>.config`. In this example, `nodes.proxy.config.services.nginx.virtualHosts."app.example"` contains both settings. The evaluated representation of `crossConfig.contributions` is internal.
 
 ## Override priorities and list ordering
 
