@@ -25,9 +25,7 @@ let
     sender: path: definition:
     lib.mkDefinition {
       file =
-        definition.file
-        + " (sender `${sender}`, receiver `${name}`,"
-        + " destination `${lib.showOption path}`)";
+        definition.file + " (sender `${sender}`, receiver `${name}`, destination `${lib.showOption path}`)";
       inherit (definition) value;
     };
 
@@ -104,9 +102,7 @@ let
     {
       assertion = definitions == [ ] || isWritable option;
       message =
-        "nixos-cross-config: receiver `${name}` has a ${reason} "
-        + "destination `${lib.showOption path}`.\n"
-        + "Contributions: "
+        "nixos-cross-config: receiver `${name}` has a ${reason} destination `${lib.showOption path}`.\nContributions: "
         + lib.concatMapStringsSep ", " (definition: definition.file) definitions
         + "\n";
     };
