@@ -63,9 +63,10 @@ let
 
   /*
     The `find*` helpers resolve `remaining` below the option at `prefix`.
-    They return the destination option, the nearest enclosing option when
-    its type validates the rest natively, or null when no declaration or
-    tag matches.
+    They return the destination option, a read-only option on the way, or
+    the nearest enclosing option when its type validates `remaining`
+    natively. They return null when a tag is missing or a submodule has
+    neither a matching declaration nor a freeform type.
   */
   findLocalOption =
     {
