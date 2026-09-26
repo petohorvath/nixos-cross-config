@@ -12,7 +12,7 @@ let
     modules = {
       application = { config, lib, ... }: {
         services.openssh.enable = true;
-        crossConfig.nodes.proxy.services.publishedEndpoint.http.upstream =
+        crossConfig.contributions.proxy.services.publishedEndpoint.http.upstream =
           lib.mkIf config.services.openssh.enable "http://192.0.2.10:8080";
       };
       proxy = { config, lib, ... }: {

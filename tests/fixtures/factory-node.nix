@@ -51,7 +51,7 @@ in
       ];
       values = [ "local-${config.inventory.identity}-${ordinaryArgument}" ];
     };
-    crossConfig.nodes.${receiver}.inventory = {
+    crossConfig.contributions.${receiver}.inventory = {
       values = lib.mkBefore [ "from-${config.inventory.identity}-${ordinaryArgument}" ];
       crossConfig = [ "from-${config.inventory.identity}" ];
       _module = [ "from-${config.inventory.identity}" ];

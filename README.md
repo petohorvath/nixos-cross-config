@@ -20,7 +20,7 @@ With Nix and the `nix-command` and `flakes` features enabled, save the following
 
       modules = {
         application = {
-          crossConfig.nodes.proxy.services.nginx.virtualHosts."app.example" = {
+          crossConfig.contributions.proxy.services.nginx.virtualHosts."app.example" = {
             locations."/".proxyPass = "http://192.0.2.10:8080";
           };
         };
@@ -115,17 +115,17 @@ Flake-parts consumers can import `crossConfig.flakeModules.default` and set `cro
 
 The caller still constructs every node and imports the configured module explicitly. Shared settings enter NixOS as `mkDefault` definitions, so extend path lists at flake scope: an ordinary node-level list replaces the supplied default. See the [flake-parts guide](docs/flake-parts.md) and [evaluated example](examples/flake-parts.nix). Flake-parts remains optional for standalone consumers.
 
-### `crossConfig.nodes`
+### `crossConfig.contributions`
 
-In the sender's module, set `crossConfig.nodes.<receiver>.<option-path>`:
+In the sender's module, set `crossConfig.contributions.<receiver>.<option-path>`:
 
 ```nix
-crossConfig.nodes.proxy.services.nginx.virtualHosts."app.example" = {
+crossConfig.contributions.proxy.services.nginx.virtualHosts."app.example" = {
   locations."/".proxyPass = "http://192.0.2.10:8080";
 };
 ```
 
-Read the merged result from `nodes.<receiver>.config`, as the quickstart command does. `crossConfig.nodes` declares outgoing contributions; its evaluated representation is internal.
+Read the merged result from `nodes.<receiver>.config`, as the quickstart command does. `crossConfig.contributions` declares outgoing contributions; its evaluated representation is internal.
 
 Contributions and local definitions use normal NixOS merging rules. A local definition has no extra priority. Use `lib.mkDefault`, `lib.mkForce`, and list ordering helpers where needed. The [API reference](docs/api.md) explains merging, conditions, validation, and evaluation limits.
 

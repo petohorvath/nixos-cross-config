@@ -37,7 +37,7 @@ The following flake constructs two NixOS containers. The application contributes
             ];
           }
         ) {
-          application.crossConfig.nodes.proxy.services.nginx.virtualHosts."app.example" = {
+          application.crossConfig.contributions.proxy.services.nginx.virtualHosts."app.example" = {
             locations."/".proxyPass = "http://192.0.2.10:8080";
           };
           proxy.services.nginx = {
@@ -60,7 +60,7 @@ nix eval --json .#nixosConfigurations.proxy.config.services.nginx.virtualHosts \
 
 The command creates a lockfile for the consumer's inputs. The backend address is illustrative; evaluation does not start an application or deploy either node. The [repository example](../examples/flake-parts.nix) uses this setup and runs in the existing evaluation harness.
 
-Both settings and the configured module are system-independent, so they belong outside `perSystem`. `systems = [ ];` leaves per-system outputs unused in this example; each node's builder selects its platform. Outgoing `crossConfig.nodes` contributions and the required node identity remain in NixOS modules. Identities can differ from hostnames.
+Both settings and the configured module are system-independent, so they belong outside `perSystem`. `systems = [ ];` leaves per-system outputs unused in this example; each node's builder selects its platform. Outgoing `crossConfig.contributions` definitions and the required node identity remain in NixOS modules. Identities can differ from hostnames.
 
 ## Explicit collection
 
@@ -85,7 +85,7 @@ let
   nodes = {
     host = mkNode "host" { };
     guest = mkNode "guest" {
-      crossConfig.nodes.host.networking.hosts."192.0.2.30" = [ "guest.example" ];
+      crossConfig.contributions.host.networking.hosts."192.0.2.30" = [ "guest.example" ];
     };
   };
 in

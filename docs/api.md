@@ -1,6 +1,6 @@
 # API reference
 
-The primary interface is `nixosModules.default`, which declares `crossConfig.name`, `crossConfig.nodeConfigurations`, `crossConfig.optionPaths`, and the outgoing contribution option `crossConfig.nodes`. `flakeModules.default` optionally shares settings through flake-parts, and `lib.mkModule` remains a compatibility adapter. The [README quickstart](../README.md#quickstart) shows a complete standalone example.
+The primary interface is `nixosModules.default`, which declares `crossConfig.name`, `crossConfig.nodeConfigurations`, `crossConfig.optionPaths`, and the outgoing contribution option `crossConfig.contributions`. `flakeModules.default` optionally shares settings through flake-parts, and `lib.mkModule` remains a compatibility adapter. The [README quickstart](../README.md#quickstart) shows a complete standalone example.
 
 - [Module creation](#module-creation)
 - [Flake-parts adapter](#flake-parts-adapter)
@@ -112,7 +112,7 @@ The adapter imports the same lower-level module and supplies ordinary definition
 
 The root `flake.nix` now requires normal flake inputs; calling `(import ./flake.nix).outputs { }` is no longer supported. Use the direct entry points above for plain Nix imports.
 
-To migrate from the constructor to the primary interface, replace the constructor import with `nixosModules.default`, move `name` to `crossConfig.name`, `nodes` to `crossConfig.nodeConfigurations`, and `optionPaths` to `crossConfig.optionPaths`. Keep outgoing `crossConfig.nodes` assignments unchanged. The new path validation and reserved-root restriction apply to both interfaces; relocate destinations beneath an ordinary receiving namespace when migrating a root named `crossConfig` or `_module`.
+To migrate from the constructor to the primary interface, replace the constructor import with `nixosModules.default`, move `name` to `crossConfig.name`, `nodes` to `crossConfig.nodeConfigurations`, and `optionPaths` to `crossConfig.optionPaths`. Outgoing contributions use `crossConfig.contributions` with either interface. The new path validation and reserved-root restriction apply to both interfaces; relocate destinations beneath an ordinary receiving namespace when migrating a root named `crossConfig` or `_module`.
 
 ## Allowed option paths
 
@@ -141,11 +141,11 @@ Unused missing or read-only paths add no receiving definitions. This also applie
 
 ## Contributions and results
 
-`crossConfig.nodes` defaults to `{ }`. Define contributions with ordinary nested assignments in a sender's module:
+`crossConfig.contributions` defaults to `{ }`. Define contributions with ordinary nested assignments in a sender's module:
 
 ```nix
 # Sender, with services.nginx.virtualHosts in optionPaths.
-crossConfig.nodes.proxy.services.nginx.virtualHosts."app.example" = {
+crossConfig.contributions.proxy.services.nginx.virtualHosts."app.example" = {
   locations."/".proxyPass = "http://192.0.2.10:8080";
 };
 ```
@@ -161,7 +161,7 @@ services.nginx.virtualHosts."app.example".serverAliases = [
 
 The receiver's option type validates and merges contributions from all senders with local definitions. A local definition has no extra priority. Incompatible scalar definitions at equal priority fail under the normal [NixOS option merging rules](https://nixos.org/manual/nixos/stable/#sec-option-definitions).
 
-Read the result from `nodes.<receiver>.config`. In this example, `nodes.proxy.config.services.nginx.virtualHosts."app.example"` contains both settings. `crossConfig.nodes` declares outgoing contributions; its evaluated representation is internal.
+Read the result from `nodes.<receiver>.config`. In this example, `nodes.proxy.config.services.nginx.virtualHosts."app.example"` contains both settings. `crossConfig.contributions` declares outgoing contributions; its evaluated representation is internal.
 
 ## Override priorities and list ordering
 
@@ -181,7 +181,7 @@ A sender can supply a default that the receiver overrides:
 
 ```nix
 # Sender, with networking.domain in optionPaths.
-crossConfig.nodes.receiver.networking.domain =
+crossConfig.contributions.receiver.networking.domain =
   lib.mkDefault "service.example";
 
 # Receiver: the resulting domain is "site.example".
@@ -191,7 +191,7 @@ networking.domain = "site.example";
 Nested definitions follow the same rules. With `services.nginx.virtualHosts` in `optionPaths`, a sender can supply a default for one location:
 
 ```nix
-crossConfig.nodes.proxy.services.nginx.virtualHosts."app.example" = {
+crossConfig.contributions.proxy.services.nginx.virtualHosts."app.example" = {
   locations."/".proxyPass = lib.mkDefault "http://192.0.2.10:8080";
 };
 ```
@@ -200,7 +200,7 @@ List ordering is independent of override priority. `lib.mkBefore` uses order 500
 
 ```nix
 # Sender, with networking.search in optionPaths.
-crossConfig.nodes.receiver.networking.search =
+crossConfig.contributions.receiver.networking.search =
   lib.mkBefore [ "service.example" ];
 
 # Receiver: the result is [ "service.example" "site.example" ].
@@ -211,11 +211,11 @@ Overrides can contain ordering properties, such as `lib.mkForce (lib.mkAfter [ "
 
 ### Priorities on receiver entries
 
-Properties on `crossConfig.nodes` or `crossConfig.nodes.<receiver>` select outgoing contributions during sender evaluation. Those priorities do not become priorities on the receiving option:
+Properties on `crossConfig.contributions` or `crossConfig.contributions.<receiver>` select outgoing contributions during sender evaluation. Those priorities do not become priorities on the receiving option:
 
 ```nix
 # Select this receiver map over weaker maps in the sender.
-crossConfig.nodes = lib.mkForce {
+crossConfig.contributions = lib.mkForce {
   # Local settings on the receiver can still override this default.
   receiver.networking.domain = lib.mkDefault "service.example";
 };
@@ -229,18 +229,18 @@ Use `lib.mkIf` at an allowed option path to make a contribution conditional:
 
 ```nix
 # Sender, with networking.firewall.allowedTCPPorts in optionPaths.
-crossConfig.nodes.receiver.networking.firewall.allowedTCPPorts =
+crossConfig.contributions.receiver.networking.firewall.allowedTCPPorts =
   lib.mkIf config.services.openssh.enable [ 22 ];
 ```
 
 A false condition contributes no definitions and leaves its payload unevaluated. The receiver's local settings and option defaults still apply.
 
-`lib.mkIf` and `lib.mkMerge` also work around `crossConfig.nodes`, individual receiver entries, and intermediate path attributes. These select outgoing contributions during sender evaluation. Conditions and merges at the allowed option paths are also processed in the sender. Conditions inside nested values follow the receiving option type's semantics.
+`lib.mkIf` and `lib.mkMerge` also work around `crossConfig.contributions`, individual receiver entries, and intermediate path attributes. These select outgoing contributions during sender evaluation. Conditions and merges at the allowed option paths are also processed in the sender. Conditions inside nested values follow the receiving option type's semantics.
 
 Several contributions can target the same receiver and option. For example, with `services.nginx.virtualHosts` in `optionPaths`:
 
 ```nix
-crossConfig.nodes = lib.mkMerge [
+crossConfig.contributions = lib.mkMerge [
   {
     proxy.services.nginx.virtualHosts."app.example" = {
       locations."/api".proxyPass = "http://192.0.2.10:8080";
@@ -270,7 +270,7 @@ let
 in
 {
   networking.hostName = "application";
-  crossConfig.nodes.proxy.services.nginx.virtualHosts."app.example" =
+  crossConfig.contributions.proxy.services.nginx.virtualHosts."app.example" =
     { config, ... }: {
       serverName = lib.mkDefault "app.example";
       serverAliases = [
@@ -296,7 +296,7 @@ A sender can contribute to itself using its node identity. With `networking.host
 ```nix
 # Node application.
 networking.hosts."192.0.2.10" = [ "local.example" ];
-crossConfig.nodes.application.networking.hosts."192.0.2.10" = [
+crossConfig.contributions.application.networking.hosts."192.0.2.10" = [
   "service.example"
 ];
 # Both names appear in nodes.application.config.networking.hosts."192.0.2.10".
@@ -306,10 +306,10 @@ Two nodes can also contribute independent values to each other. Neither node mus
 
 ```nix
 # Node alpha, with networking.hosts in optionPaths.
-crossConfig.nodes.beta.networking.hosts."192.0.2.10" = [ "alpha.example" ];
+crossConfig.contributions.beta.networking.hosts."192.0.2.10" = [ "alpha.example" ];
 
 # Node beta, in its own module.
-crossConfig.nodes.alpha.networking.hosts."192.0.2.20" = [ "beta.example" ];
+crossConfig.contributions.alpha.networking.hosts."192.0.2.20" = [ "beta.example" ];
 ```
 
 This also works for hosts and guests, including a container contributing to its parent and itself. Each node imports `nixosModules.default` and supplies its own `crossConfig.name`, with the same collection and normalized path set.
@@ -319,12 +319,12 @@ An actual cycle between values still fails with Nix's native `infinite recursion
 ```nix
 # Node alpha module, with networking.domain in optionPaths.
 { config, ... }: {
-  crossConfig.nodes.beta.networking.domain = config.networking.domain;
+  crossConfig.contributions.beta.networking.domain = config.networking.domain;
 }
 
 # Node beta module.
 { config, ... }: {
-  crossConfig.nodes.alpha.networking.domain = config.networking.domain;
+  crossConfig.contributions.alpha.networking.domain = config.networking.domain;
 }
 ```
 

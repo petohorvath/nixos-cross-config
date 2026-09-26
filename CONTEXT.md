@@ -24,4 +24,5 @@ The node that declares a configuration contribution.
 The node whose configuration includes a contribution. A receiver can also be the sender of that contribution.
 
 **Configuration contribution**:
-Option definitions that a sender supplies for a receiver.
+Option definitions that a sender supplies for a receiver, declared through `crossConfig.contributions`.
+_Avoid_: Nodes (reserve "nodes" for the node collection)

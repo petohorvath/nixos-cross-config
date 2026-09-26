@@ -39,7 +39,7 @@ flakeParts.lib.mkFlake { inputs.self.outPath = ../.; } (
           }
         )
         {
-          application.crossConfig.nodes.proxy.services.nginx.virtualHosts."app.example" = {
+          application.crossConfig.contributions.proxy.services.nginx.virtualHosts."app.example" = {
             locations."/".proxyPass = "http://192.0.2.10:8080";
           };
           proxy.services.nginx = {

@@ -20,7 +20,7 @@ in
     modules = {
       sender = {
         _file = toString ./mk-tagged-nodes.nix;
-        crossConfig.nodes.receiver = lib.setAttrByPath path (lib.mkMerge senderDefinitions);
+        crossConfig.contributions.receiver = lib.setAttrByPath path (lib.mkMerge senderDefinitions);
       };
       receiver = {
         _file = toString ./mk-tagged-nodes.nix;

@@ -47,7 +47,7 @@ let
     assertion = builtins.seq contribution (builtins.hasAttr receiver cfg.nodeConfigurations);
     message = "nixos-cross-config: sender `${cfg.name}` targets unknown receiver `${receiver}`.";
   };
-  receiverAssertions = lib.mapAttrsToList mkReceiverAssertion cfg.nodes;
+  receiverAssertions = lib.mapAttrsToList mkReceiverAssertion cfg.contributions;
 
   # Required settings must also be checked on idle nodes with no paths.
   assertions = builtins.seq cfg.name (
@@ -63,7 +63,7 @@ in
         independent of the hostname.
       '';
     };
-    nodes = outgoingOption;
+    contributions = outgoingOption;
   };
 
   config = lib.mkMerge [

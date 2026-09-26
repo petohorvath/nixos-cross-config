@@ -12,7 +12,7 @@ let
       alpha =
         { lib, ... }:
         {
-          crossConfig.nodes.receiver.networking.search = lib.mkMerge [
+          crossConfig.contributions.receiver.networking.search = lib.mkMerge [
             (lib.mkAfter [ "after.example" ])
             (lib.mkOrder 250 [ "first.example" ])
             (lib.mkOrder 1250 [ "late.example" ])
@@ -21,7 +21,7 @@ let
       beta =
         { lib, ... }:
         {
-          crossConfig.nodes.receiver.networking.search = lib.mkMerge [
+          crossConfig.contributions.receiver.networking.search = lib.mkMerge [
             (lib.mkBefore [ "before.example" ])
             (lib.mkOrder 1750 [ "last.example" ])
           ];
@@ -42,7 +42,7 @@ let
       alpha =
         { lib, ... }:
         {
-          crossConfig.nodes.receiver.networking.search = lib.mkMerge [
+          crossConfig.contributions.receiver.networking.search = lib.mkMerge [
             (lib.mkForce (lib.mkBefore [ "alpha.example" ]))
             (lib.mkDefault (lib.mkOrder 1 [ "discarded-default.example" ]))
           ];
@@ -50,7 +50,7 @@ let
       beta =
         { lib, ... }:
         {
-          crossConfig.nodes.receiver.networking.search = lib.mkForce (lib.mkAfter [ "beta.example" ]);
+          crossConfig.contributions.receiver.networking.search = lib.mkForce (lib.mkAfter [ "beta.example" ]);
         };
       receiver =
         { lib, ... }:

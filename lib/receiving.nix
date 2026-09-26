@@ -36,7 +36,7 @@ let
       collectSenderDefinitions =
         sender: node:
         map (withContributionContext sender path) (
-          lib.attrByPath path [ ] (node.config.crossConfig.nodes.${receiver} or { })
+          lib.attrByPath path [ ] (node.config.crossConfig.contributions.${receiver} or { })
         );
     in
     lib.pipe nodeConfigurations [

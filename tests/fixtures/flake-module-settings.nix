@@ -24,7 +24,7 @@ in
   reservedCrossConfig = evaluatePaths [
     [
       "crossConfig"
-      "nodes"
+      "contributions"
     ]
   ];
   reservedModule = evaluatePaths [

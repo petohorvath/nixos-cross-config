@@ -31,7 +31,7 @@ let
         modules = {
           sender = {
             imports = modules;
-            crossConfig.nodes.receiver.inventory = outgoing;
+            crossConfig.contributions.receiver.inventory = outgoing;
           };
           receiver = {
             imports = modules;
@@ -94,7 +94,7 @@ let
         expected = [ ];
       };
       testEmptyContributions = {
-        expr = node.config.crossConfig.nodes;
+        expr = node.config.crossConfig.contributions;
         expected = { };
       };
       testAssertions = {
@@ -185,6 +185,16 @@ in
       type = "ThrownError";
       msg = messagePattern [
         "crossConfig.nodeCollection"
+        "does not exist"
+      ];
+    };
+  };
+  testRejectsOldContributionsName = {
+    expr = moduleRejections.oldContributionsName;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.nodes"
         "does not exist"
       ];
     };
@@ -286,7 +296,7 @@ in
       msg = messagePattern [
         "crossConfig.optionPaths"
         "reserved root"
-        "crossConfig.nodes"
+        "crossConfig.contributions"
         "receiver"
       ];
     };
@@ -320,7 +330,7 @@ in
       msg = messagePattern [
         "crossConfig.optionPaths"
         "reserved root"
-        "crossConfig.nodes"
+        "crossConfig.contributions"
         "receiver"
       ];
     };

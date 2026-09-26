@@ -94,7 +94,7 @@ in
             default = { };
             description = "Inventory with a conditional self contribution.";
           };
-          config.crossConfig.nodes.application.inventory.value =
+          config.crossConfig.contributions.application.inventory.value =
             lib.mkIf config.inventory.enable "contributed";
         };
       };
@@ -123,7 +123,7 @@ in
           ]
         ];
         modules = {
-          sender.crossConfig.nodes.receiver.gate = true;
+          sender.crossConfig.contributions.receiver.gate = true;
           receiver =
             { config, lib, ... }:
             {
@@ -190,7 +190,7 @@ in
           ]
         ];
         modules = {
-          sender.crossConfig.nodes.receiver.inventory.entries.writable.value = "contributed";
+          sender.crossConfig.contributions.receiver.inventory.entries.writable.value = "contributed";
           receiver =
             { lib, ... }:
             {
@@ -242,7 +242,7 @@ in
           ]
         ];
         modules = {
-          sender.crossConfig.nodes.receiver.inventory.entries.example.value = "contributed";
+          sender.crossConfig.contributions.receiver.inventory.entries.example.value = "contributed";
           receiver =
             { lib, ... }:
             {
@@ -289,7 +289,7 @@ in
           ]
         ];
         modules = {
-          sender.crossConfig.nodes.receiver.inventory.extra = "contributed";
+          sender.crossConfig.contributions.receiver.inventory.extra = "contributed";
           receiver =
             { lib, ... }:
             {
@@ -409,7 +409,7 @@ in
         ];
         modules = {
           idle = { };
-          sender.crossConfig.nodes.receiver.networking.firewall.allowedTCPPorts = [ 8080 ];
+          sender.crossConfig.contributions.receiver.networking.firewall.allowedTCPPorts = [ 8080 ];
           receiver = { };
         };
       };
@@ -465,7 +465,7 @@ in
         ];
         modules = {
           idle = inventoryModule;
-          sender.crossConfig.nodes.receiver.networking.firewall.allowedTCPPorts = [ 8080 ];
+          sender.crossConfig.contributions.receiver.networking.firewall.allowedTCPPorts = [ 8080 ];
           receiver = inventoryModule;
         };
       };
@@ -514,7 +514,7 @@ in
         ];
         modules = {
           idle = { };
-          sender.crossConfig.nodes.receiver.networking.firewall.allowedTCPPorts = [ 8080 ];
+          sender.crossConfig.contributions.receiver.networking.firewall.allowedTCPPorts = [ 8080 ];
           receiver = { };
         };
       };
@@ -555,7 +555,7 @@ in
           sender =
             { lib, ... }:
             {
-              crossConfig.nodes = {
+              crossConfig.contributions = {
                 receiver = {
                   unavailable.value = lib.mkIf false (throw "Disabled missing destination was evaluated.");
                   inventory.serial = lib.mkIf false (throw "Disabled read-only destination was evaluated.");
@@ -753,7 +753,7 @@ in
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
-        "crossConfig.nodes.receiver.inventory"
+        "crossConfig.contributions.receiver.inventory"
         "does not exist"
         "fixtures/destination-sender.nix"
       ];

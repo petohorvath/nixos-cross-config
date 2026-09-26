@@ -11,7 +11,7 @@ let
       mapSender =
         { lib, ... }:
         {
-          crossConfig.nodes = lib.mkMerge [
+          crossConfig.contributions = lib.mkMerge [
             (lib.mkDefault {
               mapReceiver.networking.search = [ "discarded.example" ];
               unselected.networking.search = [ "discarded.example" ];
@@ -24,7 +24,7 @@ let
       entrySender =
         { lib, ... }:
         {
-          crossConfig.nodes.entryReceiver = lib.mkMerge [
+          crossConfig.contributions.entryReceiver = lib.mkMerge [
             (lib.mkDefault { networking.search = [ "discarded.example" ]; })
             (lib.mkForce {
               networking.search = lib.mkBefore [ "selected.example" ];
@@ -34,14 +34,14 @@ let
       mapDefaultSender =
         { lib, ... }:
         {
-          crossConfig.nodes = lib.mkDefault {
+          crossConfig.contributions = lib.mkDefault {
             defaults.networking.search = lib.mkBefore [ "map-default.example" ];
           };
         };
       entryDefaultSender =
         { lib, ... }:
         {
-          crossConfig.nodes.defaults = lib.mkDefault {
+          crossConfig.contributions.defaults = lib.mkDefault {
             networking.search = lib.mkAfter [ "entry-default.example" ];
           };
         };

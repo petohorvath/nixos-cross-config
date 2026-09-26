@@ -27,11 +27,11 @@ let
     modules = {
       alpha = { config, ... }: {
         imports = [ inventoryModule ];
-        crossConfig.nodes.beta.inventory.payload.value = config.inventory.payload.value;
+        crossConfig.contributions.beta.inventory.payload.value = config.inventory.payload.value;
       };
       beta = { config, ... }: {
         imports = [ inventoryModule ];
-        crossConfig.nodes.alpha.inventory.payload.value = config.inventory.payload.value;
+        crossConfig.contributions.alpha.inventory.payload.value = config.inventory.payload.value;
       };
     };
   };

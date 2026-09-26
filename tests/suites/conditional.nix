@@ -13,7 +13,7 @@ let
     {
       config = lib.mkMerge [
         {
-          crossConfig.nodes = lib.mkMerge [
+          crossConfig.contributions = lib.mkMerge [
             {
               receiver = {
                 networking.hosts = lib.mkMerge [
@@ -48,7 +48,7 @@ let
           ];
         }
         (lib.mkIf enable {
-          crossConfig.nodes.receiver.networking.hosts."192.0.2.40" = [ senderHostName ];
+          crossConfig.contributions.receiver.networking.hosts."192.0.2.40" = [ senderHostName ];
         })
       ];
     };

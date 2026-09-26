@@ -258,7 +258,7 @@ in
           ]
         ];
         modules = {
-          sender.crossConfig.nodes = lib.mkMerge [
+          sender.crossConfig.contributions = lib.mkMerge [
             (lib.mkDefault { unknown = throw "Discarded receiver was forced."; })
             (lib.mkForce {
               receiver = lib.mkIf true {
@@ -339,7 +339,7 @@ in
         modules = {
           idle = inventoryModule;
           receiver = inventoryModule;
-          sender.crossConfig.nodes.receiver.inventory = {
+          sender.crossConfig.contributions.receiver.inventory = {
             missing = lib.mkIf false (throw "Disabled missing tag was evaluated.");
             locked = lib.mkIf false (throw "Disabled read-only tag was evaluated.");
             payload.missing = lib.mkIf false (throw "Disabled missing child was evaluated.");
@@ -382,7 +382,7 @@ in
         ];
         modules.alpha = { config, ... }: {
           imports = [ relationModule ];
-          crossConfig.nodes.alpha.inventory.payload.value =
+          crossConfig.contributions.alpha.inventory.payload.value =
             lib.mkIf config.inventory.payload.enable "from-self";
         };
       };
@@ -410,11 +410,11 @@ in
         modules = {
           alpha = {
             imports = [ relationModule ];
-            crossConfig.nodes.beta.inventory.payload.value = "from-alpha";
+            crossConfig.contributions.beta.inventory.payload.value = "from-alpha";
           };
           beta = {
             imports = [ relationModule ];
-            crossConfig.nodes.alpha.inventory.payload.value = "from-beta";
+            crossConfig.contributions.alpha.inventory.payload.value = "from-beta";
           };
         };
       };

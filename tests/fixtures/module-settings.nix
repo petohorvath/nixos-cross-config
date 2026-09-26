@@ -16,6 +16,7 @@ in
   invalidName = (evaluate (settings // { name = 42; })).config.assertions;
   invalidCollection = (evaluate (settings // { nodeConfigurations = [ ]; })).config.assertions;
   oldCollectionName = (evaluate (settings // { nodeCollection = { }; })).config.assertions;
+  oldContributionsName = (evaluate (settings // { nodes = { }; })).config.assertions;
   invalidPaths = evaluatePaths "inventory.values";
   invalidPath = evaluatePaths [ "inventory.values" ];
   invalidSegment = evaluatePaths [
@@ -28,7 +29,7 @@ in
   reservedCrossConfig = evaluatePaths [
     [
       "crossConfig"
-      "nodes"
+      "contributions"
     ]
   ];
   reservedModule = evaluatePaths [
@@ -49,7 +50,7 @@ in
       optionPaths = [
         [
           "crossConfig"
-          "nodes"
+          "contributions"
         ]
       ];
     } { modules = [ ]; }).config.assertions;

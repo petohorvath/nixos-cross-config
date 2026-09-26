@@ -10,7 +10,7 @@ let
       ]
     ];
     modules = {
-      sender.crossConfig.nodes.receiver = {
+      sender.crossConfig.contributions.receiver = {
         environment.etc."application.conf".text = "port=8080\n";
       };
       receiver.environment.etc."application.conf".mode = "0640";

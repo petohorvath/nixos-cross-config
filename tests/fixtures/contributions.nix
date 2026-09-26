@@ -14,19 +14,19 @@ let
 in
 {
   localConflict = evaluateReceiverDomain {
-    sender.crossConfig.nodes.receiver.networking.domain = "sender.example";
+    sender.crossConfig.contributions.receiver.networking.domain = "sender.example";
     receiver.networking.domain = "local.example";
   };
   senderConflict = evaluateReceiverDomain {
-    alpha.crossConfig.nodes.receiver.networking.domain = "alpha.example";
-    beta.crossConfig.nodes.receiver.networking.domain = "beta.example";
+    alpha.crossConfig.contributions.receiver.networking.domain = "alpha.example";
+    beta.crossConfig.contributions.receiver.networking.domain = "beta.example";
     receiver = { };
   };
   forcedLocalConflict = evaluateReceiverDomain {
     sender =
       { lib, ... }:
       {
-        crossConfig.nodes.receiver.networking.domain = lib.mkForce "sender.example";
+        crossConfig.contributions.receiver.networking.domain = lib.mkForce "sender.example";
       };
     receiver =
       { lib, ... }:
@@ -38,12 +38,12 @@ in
     alpha =
       { lib, ... }:
       {
-        crossConfig.nodes.receiver.networking.domain = lib.mkOverride 75 "alpha.example";
+        crossConfig.contributions.receiver.networking.domain = lib.mkOverride 75 "alpha.example";
       };
     beta =
       { lib, ... }:
       {
-        crossConfig.nodes.receiver.networking.domain = lib.mkOverride 75 "beta.example";
+        crossConfig.contributions.receiver.networking.domain = lib.mkOverride 75 "beta.example";
       };
     receiver.networking.domain = "discarded.example";
   };
@@ -51,7 +51,7 @@ in
     sender =
       { lib, ... }:
       {
-        crossConfig.nodes.receiver.networking.domain = lib.mkMerge [
+        crossConfig.contributions.receiver.networking.domain = lib.mkMerge [
           (lib.mkOverride 75 "first.example")
           (lib.mkOverride 75 "second.example")
         ];
@@ -71,7 +71,7 @@ in
         sender =
           { lib, ... }:
           {
-            crossConfig.nodes.receiver.services.nginx.virtualHosts."shared.example" = {
+            crossConfig.contributions.receiver.services.nginx.virtualHosts."shared.example" = {
               locations."/".proxyPass = lib.mkForce "http://sender:8080";
             };
           };
@@ -94,7 +94,7 @@ in
         ]
       ];
       modules = {
-        sender.crossConfig.nodes.receiver.networking.firewall.allowedTCPPorts = [
+        sender.crossConfig.contributions.receiver.networking.firewall.allowedTCPPorts = [
           "not-a-port"
         ];
         receiver = { };
@@ -106,7 +106,7 @@ in
         [ "assertions" ]
       ];
       modules = {
-        sender.crossConfig.nodes.receiver.assertions = [
+        sender.crossConfig.contributions.receiver.assertions = [
           {
             assertion = false;
             message = "The contributed receiver assertion failed.";

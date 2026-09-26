@@ -1,3 +1,3 @@
 {
-  crossConfig.nodes.receiver.inventory.value = "contributed";
+  crossConfig.contributions.receiver.inventory.value = "contributed";
 }

@@ -16,7 +16,7 @@ let
     ];
     modules = {
       sender = { lib, ... }: {
-        crossConfig.nodes.receiver.networking.hosts = lib.mkDefinition {
+        crossConfig.contributions.receiver.networking.hosts = lib.mkDefinition {
           file = "generated-hosts.nix";
           value."192.0.2.10" = [ "application.example" ];
         };

@@ -11,12 +11,12 @@ let
       alpha =
         { config, ... }:
         {
-          crossConfig.nodes.beta.networking.domain = config.networking.domain;
+          crossConfig.contributions.beta.networking.domain = config.networking.domain;
         };
       beta =
         { config, ... }:
         {
-          crossConfig.nodes.alpha.networking.domain = config.networking.domain;
+          crossConfig.contributions.alpha.networking.domain = config.networking.domain;
         };
     };
   };

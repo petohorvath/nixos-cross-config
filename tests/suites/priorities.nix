@@ -12,7 +12,7 @@ let
         sender =
           { lib, ... }:
           {
-            crossConfig.nodes.receiver.networking.domain = lib.mkDefault "contributed.example";
+            crossConfig.contributions.receiver.networking.domain = lib.mkDefault "contributed.example";
           };
         receiver.networking.domain = "receiver.example";
       };
@@ -20,7 +20,7 @@ let
     };
     receiverDefault = {
       modules = {
-        sender.crossConfig.nodes.receiver.networking.domain = "contributed.example";
+        sender.crossConfig.contributions.receiver.networking.domain = "contributed.example";
         receiver =
           { lib, ... }:
           {
@@ -34,9 +34,9 @@ let
         alpha =
           { lib, ... }:
           {
-            crossConfig.nodes.receiver.networking.domain = lib.mkForce "forced.example";
+            crossConfig.contributions.receiver.networking.domain = lib.mkForce "forced.example";
           };
-        beta.crossConfig.nodes.receiver.networking.domain = "beta.example";
+        beta.crossConfig.contributions.receiver.networking.domain = "beta.example";
         receiver.networking.domain = "receiver.example";
       };
       expected = "forced.example";
@@ -44,8 +44,8 @@ let
     receiverForce = {
       modules = {
         sender.imports = [
-          { crossConfig.nodes.receiver.networking.domain = "first.example"; }
-          { crossConfig.nodes.receiver.networking.domain = "second.example"; }
+          { crossConfig.contributions.receiver.networking.domain = "first.example"; }
+          { crossConfig.contributions.receiver.networking.domain = "second.example"; }
         ];
         receiver =
           { lib, ... }:
@@ -60,12 +60,12 @@ let
         alpha =
           { lib, ... }:
           {
-            crossConfig.nodes.receiver.networking.domain = lib.mkOverride 40 "custom.example";
+            crossConfig.contributions.receiver.networking.domain = lib.mkOverride 40 "custom.example";
           };
         beta =
           { lib, ... }:
           {
-            crossConfig.nodes.receiver.networking.domain = lib.mkForce "beta.example";
+            crossConfig.contributions.receiver.networking.domain = lib.mkForce "beta.example";
           };
         receiver =
           { lib, ... }:
@@ -80,12 +80,12 @@ let
         alpha =
           { lib, ... }:
           {
-            crossConfig.nodes.receiver.networking.domain = lib.mkOverride 75 "alpha.example";
+            crossConfig.contributions.receiver.networking.domain = lib.mkOverride 75 "alpha.example";
           };
         beta =
           { lib, ... }:
           {
-            crossConfig.nodes.receiver.networking.domain = lib.mkOverride 90 "beta.example";
+            crossConfig.contributions.receiver.networking.domain = lib.mkOverride 90 "beta.example";
           };
         receiver =
           { lib, ... }:
@@ -100,12 +100,12 @@ let
         alpha =
           { lib, ... }:
           {
-            crossConfig.nodes.receiver.networking.domain = lib.mkOverride 900 "custom.example";
+            crossConfig.contributions.receiver.networking.domain = lib.mkOverride 900 "custom.example";
           };
         beta =
           { lib, ... }:
           {
-            crossConfig.nodes.receiver.networking.domain = lib.mkDefault "beta.example";
+            crossConfig.contributions.receiver.networking.domain = lib.mkDefault "beta.example";
           };
         receiver =
           { lib, ... }:
@@ -120,7 +120,7 @@ let
         sender =
           { lib, ... }:
           {
-            crossConfig.nodes.receiver.networking.domain = lib.mkDefault "contributed.example";
+            crossConfig.contributions.receiver.networking.domain = lib.mkDefault "contributed.example";
           };
         receiver = { };
       };
@@ -131,7 +131,7 @@ let
         sender =
           { lib, ... }:
           {
-            crossConfig.nodes.receiver.networking.domain = lib.mkMerge [
+            crossConfig.contributions.receiver.networking.domain = lib.mkMerge [
               (lib.mkDefault "default.example")
               (lib.mkOverride 75 "custom.example")
               (lib.mkOverride 125 "weaker.example")
