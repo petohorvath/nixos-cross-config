@@ -14,9 +14,7 @@ let
           options.assertions = lib.mkOption {
             type = lib.types.listOf lib.types.raw;
             default = [ ];
-            description = ''
-              Assertions emitted by participating modules.
-            '';
+            description = "Assertions emitted by participating modules.";
           };
         }
       ]

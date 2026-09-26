@@ -8,9 +8,10 @@ let
 
   getDefinitions =
     receiver: contribution:
-    builtins.addErrorContext (
-      "while evaluating contributions from sender `${name}` " + "to receiver `${receiver}`:"
-    ) contribution._definitions;
+    builtins.addErrorContext (lib.concatStrings [
+      "while evaluating contributions from sender `${name}` "
+      "to receiver `${receiver}`:"
+    ]) contribution._definitions;
 
   mkPathAttrs =
     getValue:
@@ -23,9 +24,7 @@ let
     path:
     lib.mkOption {
       type = lib.types.raw;
-      description = ''
-        Definitions contributed to ${lib.showOption path}.
-      '';
+      description = "Definitions contributed to ${lib.showOption path}.";
     };
 
   mkContributionModule =

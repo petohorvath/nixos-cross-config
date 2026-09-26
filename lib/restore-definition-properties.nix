@@ -8,10 +8,8 @@ let
     else
       definition.value;
 
-  /*
-    Module evaluation strips override and ordering wrappers before exposing
-    definitions.
-  */
+  # Module evaluation strips override and ordering wrappers before exposing
+  # definitions.
   restoreDefinition = definition: {
     inherit (definition) file;
     value = lib.mkOverride option.highestPrio (restoreOrder definition);

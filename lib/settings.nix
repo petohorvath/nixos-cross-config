@@ -13,10 +13,8 @@ let
     if builtins.length definitions == 1 then
       (builtins.head definitions).value
     else
-      /*
-        Report only source locations: rendering conflicting values can force
-        nodes.
-      */
+      # Report only source locations: rendering conflicting values can force
+      # nodes.
       throw (
         "The option `${lib.showOption location}' is defined multiple times. "
         + "Supply one node collection using option priorities. Definitions: "

@@ -37,9 +37,7 @@ let
             lib.mkOption {
               type = lib.types.listOf lib.types.str;
               default = [ ];
-              description = ''
-                Received and local inventory values.
-              '';
+              description = "Received and local inventory values.";
             }
           );
           config = {

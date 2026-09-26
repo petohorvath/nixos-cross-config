@@ -8,6 +8,15 @@
   system ? "x86_64-linux",
 }:
 let
+  modules = {
+    application.crossConfig.nodes.proxy.services.nginx.virtualHosts."app.example" = {
+      locations."/".proxyPass = "http://192.0.2.10:8080";
+    };
+    proxy.services.nginx = {
+      enable = true;
+      virtualHosts."app.example".serverAliases = [ "www.app.example" ];
+    };
+  };
   sharedSettings = {
     imports = [ crossConfig.nixosModules.default ];
     crossConfig = {
@@ -19,15 +28,6 @@ let
           "virtualHosts"
         ]
       ];
-    };
-  };
-  modules = {
-    application.crossConfig.nodes.proxy.services.nginx.virtualHosts."app.example" = {
-      locations."/".proxyPass = "http://192.0.2.10:8080";
-    };
-    proxy.services.nginx = {
-      enable = true;
-      virtualHosts."app.example".serverAliases = [ "www.app.example" ];
     };
   };
   nodes = builtins.mapAttrs (

@@ -14,10 +14,8 @@
 let
   cfg = config.crossConfig;
 
-  /*
-    Path errors should remain useful even when the required node name is
-    missing.
-  */
+  # Path errors should remain useful even when the required node name is
+  # missing.
   nodeNameForErrors = if options.crossConfig.name.isDefined then cfg.name else null;
   settings = import ../lib/settings.nix {
     inherit lib;
@@ -45,7 +43,10 @@ let
 
   mkReceiverAssertion = receiver: contribution: {
     assertion = builtins.seq contribution (builtins.hasAttr receiver cfg.nodeConfigurations);
-    message = "nixos-cross-config: sender `${cfg.name}` " + "targets unknown receiver `${receiver}`.";
+    message = lib.concatStrings [
+      "nixos-cross-config: sender `${cfg.name}` "
+      "targets unknown receiver `${receiver}`."
+    ];
   };
   receiverAssertions = lib.mapAttrsToList mkReceiverAssertion cfg.nodes;
 
@@ -69,10 +70,8 @@ in
   config = lib.mkMerge [
     receivedConfig
     {
-      /*
-        Inspection checks local declarations; validate contributions only in the
-        main evaluation.
-      */
+      # Inspection checks local declarations; validate contributions only in
+      # the main evaluation.
       assertions = lib.optionals (!isInspectingDestinations) assertions;
     }
   ];

@@ -173,10 +173,8 @@ let
         inherit enclosingOption;
       }
     else
-      /*
-        Types without submodule metadata validate their attribute contents
-        natively.
-      */
+      # Types without submodule metadata validate their attribute contents
+      # natively.
       enclosingOption;
 
   findSubmoduleOption =
@@ -187,10 +185,8 @@ let
       enclosingOption,
     }:
     let
-      /*
-        The empty prefix stub may name an absent child; inspect declarations
-        first.
-      */
+      # The empty prefix stub may name an absent child; inspect declarations
+      # first.
       instance = configuration.extendModules {
         modules = [ { _module.check = false; } ];
       };
@@ -219,10 +215,8 @@ let
   inspectReceiverLocalOption =
     { destination, path }:
     let
-      /*
-        Inspect local submodule definitions without receiving our own
-        contribution.
-      */
+      # Inspect local submodule definitions without receiving our own
+      # contribution.
       localOptions =
         (extendModules {
           specialArgs.__nixosCrossConfigInspectPaths = inspectionPaths ++ [ path ];

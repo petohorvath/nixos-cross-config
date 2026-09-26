@@ -17,9 +17,7 @@ let
               type = lib.types.listOf lib.types.str;
               default = [ ];
               apply = map (value: "${name}:${value}");
-              description = ''
-                Values marked by the receiver after merging.
-              '';
+              description = "Values marked by the receiver after merging.";
             };
           };
           config = {

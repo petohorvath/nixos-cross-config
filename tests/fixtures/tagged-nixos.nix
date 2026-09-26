@@ -32,21 +32,15 @@ let
                     domain = lib.mkOption {
                       type = lib.types.str;
                       default = "application.example";
-                      description = ''
-                        The receiver-owned virtual host name.
-                      '';
+                      description = "The receiver-owned virtual host name.";
                     };
                   };
                 }
               );
-              description = ''
-                An HTTP publication with a writable upstream.
-              '';
+              description = "An HTTP publication with a writable upstream.";
             };
           };
-          description = ''
-            A tagged service publication consumed by nginx.
-          '';
+          description = "A tagged service publication consumed by nginx.";
         };
         config = {
           networking.firewall.allowedTCPPorts = [ 80 ];

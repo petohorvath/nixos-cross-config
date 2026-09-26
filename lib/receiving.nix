@@ -75,10 +75,8 @@ let
             ${segment} = if lib.isOption destination then mergeAtOption rest else buildPath rest destination;
           };
     in
-    /*
-      Keep declaration inspection below its namespace so module arguments
-      resolve.
-    */
+    # Keep declaration inspection below its namespace so module arguments
+    # resolve.
     buildPath path options;
 
   mkReceivingNamespace =

@@ -25,9 +25,7 @@ let
         options.inventory = lib.mkOption {
           type = types.${wrapper};
           default = if wrapper == "tagged" then { value = "local"; } else { };
-          description = ''
-            Inventory using a native option-type wrapper.
-          '';
+          description = "Inventory using a native option-type wrapper.";
         };
       }
     );
@@ -65,9 +63,7 @@ let
           }
         );
         default = { };
-        description = ''
-          Inventory with name-dependent write permissions.
-        '';
+        description = "Inventory with name-dependent write permissions.";
       };
     }
   );
@@ -82,9 +78,7 @@ let
               locked = lib.mkOption {
                 type = lib.types.bool;
                 default = false;
-                description = ''
-                  Whether the receiver locks its inventory.
-                '';
+                description = "Whether the receiver locks its inventory.";
               };
               value = lib.mkOption {
                 type = lib.types.str;
@@ -97,9 +91,7 @@ let
           }
         );
         default = { };
-        description = ''
-          Inventory with local write permissions.
-        '';
+        description = "Inventory with local write permissions.";
       };
       config.inventory.locked = true;
     }
@@ -110,9 +102,7 @@ let
       options.inventory = lib.mkOption {
         type = lib.types.submodule { };
         default = { };
-        description = ''
-          Submodule without the registered destination.
-        '';
+        description = "Submodule without the registered destination.";
       };
     }
   );
@@ -124,15 +114,11 @@ let
           options.value = lib.mkOption {
             type = lib.types.str;
             readOnly = true;
-            description = ''
-              Read-only receiving submodule option.
-            '';
+            description = "Read-only receiving submodule option.";
           };
         };
         default = { };
-        description = ''
-          Submodule with a read-only destination.
-        '';
+        description = "Submodule with a read-only destination.";
       };
     }
   );
@@ -155,9 +141,7 @@ let
         type = lib.types.str;
         readOnly = true;
         default = "local";
-        description = ''
-          Read-only destination with a default.
-        '';
+        description = "Read-only destination with a default.";
       };
     }
   );
@@ -167,9 +151,7 @@ let
       options.inventory.value = lib.mkOption {
         type = lib.types.str;
         readOnly = true;
-        description = ''
-          Read-only destination with a local definition.
-        '';
+        description = "Read-only destination with a local definition.";
       };
       config.inventory.value = "local";
     }
@@ -179,9 +161,7 @@ let
     {
       options.inventory.value = lib.mkOption {
         type = lib.types.int;
-        description = ''
-          Destination requiring an integer.
-        '';
+        description = "Destination requiring an integer.";
       };
     }
   );
@@ -190,9 +170,7 @@ let
     {
       options.inventory.value = lib.mkOption {
         type = lib.types.str;
-        description = ''
-          Destination with a conflicting local definition.
-        '';
+        description = "Destination with a conflicting local definition.";
       };
       config.inventory.value = "local";
     }

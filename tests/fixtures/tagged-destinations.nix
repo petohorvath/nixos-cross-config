@@ -11,14 +11,10 @@ let
               type = lib.types.submodule {
                 options.value = lib.mkOption {
                   type = lib.types.int;
-                  description = ''
-                    A child requiring an integer.
-                  '';
+                  description = "A child requiring an integer.";
                 };
               };
-              description = ''
-                A tag receiving an invalid child value.
-              '';
+              description = "A tag receiving an invalid child value.";
             };
         }).config.inventory.payload.value;
       taggedConflict =
@@ -48,9 +44,7 @@ let
         lib:
         lib.mkOption {
           type = lib.types.submodule { };
-          description = ''
-            A writable tag without the contributed child.
-          '';
+          description = "A writable tag without the contributed child.";
         };
     };
     taggedReadOnlyChild = mkReceiver {
@@ -58,9 +52,7 @@ let
         lib:
         lib.mkOption {
           type = readOnlySubmodule lib;
-          description = ''
-            A writable tag containing a read-only child.
-          '';
+          description = "A writable tag containing a read-only child.";
         };
     };
     taggedReadOnlyName = mkReceiver {
@@ -73,15 +65,11 @@ let
                 type = lib.types.str;
                 default = "local";
                 readOnly = name == "payload";
-                description = ''
-                  A child locked by its original tag name.
-                '';
+                description = "A child locked by its original tag name.";
               };
             }
           );
-          description = ''
-            A tag with name-dependent child permissions.
-          '';
+          description = "A tag with name-dependent child permissions.";
         };
     };
     taggedReadOnlyLocal = mkReceiver {
@@ -102,9 +90,7 @@ let
             lib:
             lib.mkOption {
               type = wrap lib (readOnlySubmodule lib);
-              description = ''
-                A writable tag wrapping a read-only child.
-              '';
+              description = "A writable tag wrapping a read-only child.";
             };
         }
       )
@@ -168,14 +154,10 @@ let
         options.value = lib.mkOption {
           type = lib.types.str;
           default = "local";
-          description = ''
-            A writable tagged field.
-          '';
+          description = "A writable tagged field.";
         };
       };
-      description = ''
-        A writable tag.
-      '';
+      description = "A writable tag.";
     };
   readOnlySubmodule =
     lib:
@@ -184,9 +166,7 @@ let
         type = lib.types.str;
         readOnly = true;
         default = "local";
-        description = ''
-          A read-only child below a writable tag.
-        '';
+        description = "A read-only child below a writable tag.";
       };
     };
 in
