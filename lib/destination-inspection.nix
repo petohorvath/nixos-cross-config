@@ -8,6 +8,8 @@ path:
 let
   restoreDefinitionProperties = import ./restore-definition-properties.nix { inherit lib; };
 
+  # Returns `{ prefix, remaining, option }` for the first option on the path,
+  # or null when no declaration matches.
   findDeclaration =
     prefix: remaining: declarations:
     if lib.isOption declarations then
@@ -32,7 +34,7 @@ let
   */
   evaluateOption =
     {
-      optionPath,
+      prefix,
       option,
       definitions,
     }:
@@ -44,12 +46,12 @@ let
           _file = builtins.head declarations;
         }
         // {
-          options = lib.setAttrByPath optionPath option;
+          options = lib.setAttrByPath prefix option;
         };
 
       definitionModule = definition: {
         _file = definition.file;
-        config = lib.setAttrByPath optionPath definition.value;
+        config = lib.setAttrByPath prefix definition.value;
       };
 
       evaluation = lib.evalModules {
@@ -57,19 +59,25 @@ let
       };
     in
     # Inspection consumes definitions, leaving the final value and apply lazy.
-    lib.getAttrFromPath optionPath evaluation.options;
+    lib.getAttrFromPath prefix evaluation.options;
 
+  /*
+    The `find*` helpers resolve `remaining` below the option at `prefix`.
+    They return the destination option, the nearest enclosing option when
+    its type validates the rest natively, or null when no declaration or
+    tag matches.
+  */
   findLocalOption =
     {
       prefix,
-      path,
+      remaining,
       option,
     }:
-    if path == [ ] || option.readOnly or false then
+    if remaining == [ ] || option.readOnly or false then
       option
     else
       findTypeOption {
-        inherit path prefix;
+        inherit prefix remaining;
         inherit (option) type;
         definitions = restoreDefinitionProperties option;
         enclosingOption = option;
@@ -78,51 +86,51 @@ let
   findTypeOption =
     {
       prefix,
-      path,
+      remaining,
       type,
       definitions,
       enclosingOption,
     }:
     let
       probe = evaluateOption {
-        optionPath = prefix;
+        inherit prefix;
         option = lib.mkOption { inherit type; };
         definitions = definitions ++ [
           {
             file = "nixos-cross-config destination inspection";
-            value = lib.setAttrByPath (lib.init path) { };
+            value = lib.setAttrByPath (lib.init remaining) { };
           }
         ];
       };
     in
-    if path == [ ] then
+    if remaining == [ ] then
       enclosingOption
     else if type.name == "nullOr" || type.name == "unique" then
       findTypeOption {
-        inherit enclosingOption path prefix;
+        inherit enclosingOption prefix remaining;
         type = type.nestedTypes.elemType;
         definitions = builtins.filter (definition: definition.value != null) probe.definitionsWithLocations;
       }
     else if type.name == "attrTag" then
       findTagOption {
-        inherit path prefix type;
+        inherit prefix remaining type;
         definitions = probe.definitionsWithLocations;
       }
     else
       findMetadataOption {
-        inherit enclosingOption path prefix;
+        inherit enclosingOption prefix remaining;
         metadata = probe.valueMeta;
       };
 
   findTagOption =
     {
       prefix,
-      path,
+      remaining,
       type,
       definitions,
     }:
     let
-      segment = builtins.head path;
+      segment = builtins.head remaining;
       tagPath = prefix ++ [ segment ];
       tag = (type.getSubOptions prefix).${segment} or null;
       childDefinitions = lib.concatMap (
@@ -140,9 +148,9 @@ let
     else
       findLocalOption {
         prefix = tagPath;
-        path = builtins.tail path;
+        remaining = builtins.tail remaining;
         option = evaluateOption {
-          optionPath = tagPath;
+          prefix = tagPath;
           option = tag;
           definitions = childDefinitions;
         };
@@ -151,24 +159,24 @@ let
   findMetadataOption =
     {
       prefix,
-      path,
+      remaining,
       metadata,
       enclosingOption,
     }:
-    if path == [ ] then
+    if remaining == [ ] then
       enclosingOption
     else if metadata ? configuration then
       findSubmoduleOption {
-        inherit enclosingOption path prefix;
+        inherit enclosingOption prefix remaining;
         inherit (metadata) configuration;
       }
     else if metadata ? attrs then
       let
-        segment = builtins.head path;
+        segment = builtins.head remaining;
       in
       findMetadataOption {
         prefix = prefix ++ [ segment ];
-        path = builtins.tail path;
+        remaining = builtins.tail remaining;
         metadata = metadata.attrs.${segment} or { };
         inherit enclosingOption;
       }
@@ -180,7 +188,7 @@ let
   findSubmoduleOption =
     {
       prefix,
-      path,
+      remaining,
       configuration,
       enclosingOption,
     }:
@@ -190,17 +198,16 @@ let
       instance = configuration.extendModules {
         modules = [ { _module.check = false; } ];
       };
-      destination = findDeclaration prefix path instance.options;
+      declaration = findDeclaration prefix remaining instance.options;
       freeformType = instance._module.freeformType;
     in
-    if destination != null then
+    if declaration != null then
       findLocalOption {
-        inherit (destination) option prefix;
-        path = destination.remaining;
+        inherit (declaration) option prefix remaining;
       }
     else if freeformType != null then
       findTypeOption {
-        inherit enclosingOption path prefix;
+        inherit enclosingOption prefix remaining;
         type = freeformType;
         definitions = [
           {
@@ -212,8 +219,9 @@ let
     else
       null;
 
-  inspectReceiverLocalOption =
-    { destination, path }:
+  destination = findDeclaration [ ] path options;
+
+  receiverLocalOption =
     let
       # Inspect local submodule definitions without receiving our own
       # contribution.
@@ -223,20 +231,15 @@ let
         }).options;
     in
     findLocalOption {
-      inherit (destination) prefix;
-      path = destination.remaining;
+      inherit (destination) prefix remaining;
       option = lib.getAttrFromPath destination.prefix localOptions;
     };
-
-  destination = findDeclaration [ ] path options;
 
   requiresLocalInspection = destination.remaining != [ ] && !(destination.option.readOnly or false);
 in
 if destination == null then
   null
 else if requiresLocalInspection then
-  inspectReceiverLocalOption {
-    inherit destination path;
-  }
+  receiverLocalOption
 else
   destination.option
