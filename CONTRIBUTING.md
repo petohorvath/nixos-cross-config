@@ -4,7 +4,7 @@ Follow the [shared project policy](https://github.com/petohorvath/nixos-project-
 
 ## Changes
 
-Work on a branch and open a PR with a Conventional Commit title, such as `fix: Preserve contribution source locations`. Describe the resulting behavior, compatibility effects, and validation. Run root `nix fmt --no-update-lock-file` and `nix flake check --no-update-lock-file`. Run the [policy compatibility runner](docs/development.md#compatibility-checks) for the approved stable and unstable revisions from one trusted record snapshot. Add meaningful regression coverage for behavior changes. The checks do not run VMs.
+Work on a branch and open a PR with a Conventional Commit title, such as `fix: Preserve contribution source locations`. Describe the resulting behavior, compatibility effects, and validation. Run the root formatter and flake checks listed in the [development instructions](docs/development.md#prerequisites). Run the [policy compatibility runner](docs/development.md#compatibility-checks) for the approved stable and unstable revisions from one trusted record snapshot. Add meaningful regression coverage for behavior changes. The checks do not run VMs.
 
 Every merge needs human approval and passing required checks. Squash each PR to one Conventional Commit using its title. The maintainer may approve and merge without a second reviewer. Record explicit breaking changes in the title and changelog.
 
