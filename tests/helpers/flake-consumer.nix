@@ -1,6 +1,7 @@
 {
   crossConfig,
   flakeParts,
+  mkReceiverLib,
   nixpkgs,
   system,
 }:
@@ -30,9 +31,7 @@ let
     }:
     lib.nixosSystem {
       inherit system;
-      specialArgs.lib = lib // {
-        mkOption = arguments: lib.mkOption arguments // { receiverLibrary = name; };
-      };
+      specialArgs.lib = mkReceiverLib name;
       modules = [
         configuredModule
         {

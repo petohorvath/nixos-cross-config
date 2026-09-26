@@ -2,6 +2,7 @@
   allAssertionsPass,
   evaluateModule,
   lib,
+  mkReceiverLib,
   ...
 }:
 let
@@ -18,9 +19,7 @@ let
   mkNode =
     { name, receiver }:
     evaluateModule {
-      specialArgs.lib = lib // {
-        mkOption = arguments: lib.mkOption arguments // { receiverLibrary = name; };
-      };
+      specialArgs.lib = mkReceiverLib name;
       modules = [
         {
           options = {
