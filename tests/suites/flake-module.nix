@@ -112,11 +112,19 @@ let
     { config, ... }:
     let
       nodes = {
-        alpha = mkNode config.flake.nixosModules.crossConfig "alpha" {
-          crossConfig.nodes.guest.inventory.values = lib.mkBefore [ "from-alpha" ];
+        alpha = mkNode {
+          configuredModule = config.flake.nixosModules.crossConfig;
+          name = "alpha";
+          nodeModule = {
+            crossConfig.nodes.guest.inventory.values = lib.mkBefore [ "from-alpha" ];
+          };
         };
-        guest = mkNode config.flake.nixosModules.crossConfig "guest" {
-          crossConfig.nodes.alpha.inventory.values = lib.mkBefore [ "from-guest" ];
+        guest = mkNode {
+          configuredModule = config.flake.nixosModules.crossConfig;
+          name = "guest";
+          nodeModule = {
+            crossConfig.nodes.alpha.inventory.values = lib.mkBefore [ "from-guest" ];
+          };
         };
       };
     in
@@ -321,7 +329,11 @@ in
       consumer = plainFlakeConsumer.mkConsumer {
         crossConfig.optionPaths = [ ];
       };
-      node = mkNode consumer.nixosModules.crossConfig "idle" { };
+      node = mkNode {
+        configuredModule = consumer.nixosModules.crossConfig;
+        name = "idle";
+        nodeModule = { };
+      };
     in
     {
       testEmptyPaths = {

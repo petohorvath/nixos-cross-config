@@ -23,7 +23,11 @@ let
       inherit modules system;
     };
   mkNode =
-    configuredModule: name: nodeModule:
+    {
+      configuredModule,
+      name,
+      nodeModule,
+    }:
     lib.nixosSystem {
       inherit system;
       specialArgs.lib = lib // {
@@ -58,7 +62,11 @@ let
       {
         imports = sharedModules;
         flake.nixosConfigurations = lib.genAttrs [ "alpha" "beta" ] (
-          name: mkNode config.flake.nixosModules.crossConfig name nodeModule
+          name:
+          mkNode {
+            configuredModule = config.flake.nixosModules.crossConfig;
+            inherit name nodeModule;
+          }
         );
       }
     );
