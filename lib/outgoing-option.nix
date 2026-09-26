@@ -8,10 +8,7 @@ let
 
   getDefinitions =
     receiver: contribution:
-    builtins.addErrorContext (lib.concatStrings [
-      "while evaluating contributions from sender `${name}` "
-      "to receiver `${receiver}`:"
-    ]) contribution._definitions;
+    builtins.addErrorContext "while evaluating contributions from sender `${name}` to receiver `${receiver}`:" contribution._definitions;
 
   mkPathAttrs =
     getValue:

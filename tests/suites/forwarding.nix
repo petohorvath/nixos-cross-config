@@ -1,6 +1,5 @@
 {
   checkAssertions,
-  lib,
   messagePattern,
   mkNodes,
   ...
@@ -47,10 +46,7 @@ in
       ) nodes.receiver.options.networking.hosts.definitionsWithLocations
     );
     expected = [
-      (lib.concatStrings [
-        "generated-hosts.nix (sender `sender`, receiver `receiver`, "
-        "destination `networking.hosts`)"
-      ])
+      "generated-hosts.nix (sender `sender`, receiver `receiver`, destination `networking.hosts`)"
     ];
   };
   testAssertions = {

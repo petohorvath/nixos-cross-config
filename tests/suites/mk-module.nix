@@ -64,10 +64,7 @@ let
       testSourceLocations = {
         expr = map (definition: definition.file) node.options.inventory.values.definitionsWithLocations;
         expected = [
-          (lib.concatStrings [
-            "${sourcePath} (sender `${sender}`, receiver `${name}`, "
-            "destination `inventory.values`)"
-          ])
+          "${sourcePath} (sender `${sender}`, receiver `${name}`, destination `inventory.values`)"
           sourcePath
         ];
       };

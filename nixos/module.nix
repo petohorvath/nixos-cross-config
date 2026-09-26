@@ -43,10 +43,7 @@ let
 
   mkReceiverAssertion = receiver: contribution: {
     assertion = builtins.seq contribution (builtins.hasAttr receiver cfg.nodeConfigurations);
-    message = lib.concatStrings [
-      "nixos-cross-config: sender `${cfg.name}` "
-      "targets unknown receiver `${receiver}`."
-    ];
+    message = "nixos-cross-config: sender `${cfg.name}` targets unknown receiver `${receiver}`.";
   };
   receiverAssertions = lib.mapAttrsToList mkReceiverAssertion cfg.nodes;
 
