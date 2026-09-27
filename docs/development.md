@@ -36,7 +36,7 @@ Policy `v0.4.0` runs the same compatibility checker locally and in CI. It select
 
 The member workflow must select `v0.4.0` and declare both Linux architectures through `required_architectures`; the project lock must match its committed copy. Central records supply enrollment and the approved pin pair.
 
-The procedures in this section keep clones and evidence in temporary directories outside the member checkout. Run each procedure in one shell, together with the [CI and policy](#ci-and-policy) command that reuses `$RECORDS_DIR`; in a new shell the variables naming those directories are empty and the commands fail.
+The procedures in this section keep clones and evidence in temporary directories outside the member checkout. Run each procedure, and the [CI and policy](#ci-and-policy) command that reuses `$RECORDS_DIR`, in one shell. In a new shell, the variables naming those directories are empty and the commands fail.
 
 Clone a trusted current record checkout from policy `main`:
 
@@ -58,10 +58,10 @@ nix run --no-update-lock-file github:petohorvath/nixos-project-policy/v0.4.0 -- 
 
 Keep the record snapshot fixed for both runs, then repeat on the other native Linux architecture. A local run covers its host architecture. Each run creates a temporary evidence directory and reports its path as `artifacts`; to choose the location, pass `--output` with a new directory outside the member checkout, such as `"$(mktemp -d)/stable"`. The runner writes `result.json` for a completed attempt and `metadata.json` when metadata is available. Its evidence identifies selected and resolved revisions, commands, host check names, commits, and the record digest. Nix may reuse cached builds; a successful result does not mean every test process executed again. Static policy checks report `compatibility: "not-run"` and do not replace this evidence.
 
-After the last command that uses `$RECORDS_DIR`, remove the records checkout:
+After the last command that uses `$RECORDS_DIR`, including the CI and policy `ci` command, remove the temporary checkout cloned above:
 
 ```bash
-rm -rf "$RECORDS_DIR"
+rm -rf "${RECORDS_DIR:?}"
 ```
 
 Ordinary compatibility runs use the approved pair. To test proposed pins, supply a reviewed record checkout with the proposed `approved.stable` and `approved.unstable` revisions through `--policy-root`. Keep that snapshot fixed and retain exact source revisions and results in the pin-update PR. Success against proposed records does not approve pins. The [runner reference](https://github.com/petohorvath/nixos-project-policy/blob/v0.4.0/docs/checker.md#compatibility-execution-and-evidence) defines selection and evidence, and [CI and policy](#ci-and-policy) describes workflow settings and merge gates.
