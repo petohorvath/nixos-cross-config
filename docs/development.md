@@ -34,20 +34,25 @@ Behavior suites and their registry live in [tests/suites](../tests/suites/). The
 
 Policy `v0.4.0` runs the same compatibility checker locally and in CI. It selects exact stable and unstable revisions from a trusted policy-record checkout, verifies the effective root input, requires nonempty host checks, and runs the full root `nix flake check`. It checks that the member sources and committed lock remain unchanged and writes metadata and result evidence outside the member checkout.
 
-Use a trusted current record checkout at `../nixos-project-policy-records`. The member workflow must select `v0.4.0` and declare both Linux architectures through `required_architectures`; the project lock must match its committed copy. Central records supply enrollment and the approved pin pair. From the repository root, run each approved revision into a new evidence directory:
+The member workflow must select `v0.4.0` and declare both Linux architectures through `required_architectures`; the project lock must match its committed copy. Central records supply enrollment and the approved pin pair. Clone a trusted current record checkout from policy `main` into a temporary directory, so the checkout stays outside every project directory:
+
+```bash
+records=$(mktemp -d)/nixos-project-policy-records
+git clone https://github.com/petohorvath/nixos-project-policy.git "$records"
+```
+
+From the repository root, run each approved revision:
 
 ```bash
 nix run --no-update-lock-file github:petohorvath/nixos-project-policy/v0.4.0 -- \
-  --policy-root ../nixos-project-policy-records \
-  compatibility . --project nixos-cross-config --channel stable \
-  --output ../cross-config-stable-evidence
+  --policy-root "$records" \
+  compatibility . --project nixos-cross-config --channel stable
 nix run --no-update-lock-file github:petohorvath/nixos-project-policy/v0.4.0 -- \
-  --policy-root ../nixos-project-policy-records \
-  compatibility . --project nixos-cross-config --channel unstable \
-  --output ../cross-config-unstable-evidence
+  --policy-root "$records" \
+  compatibility . --project nixos-cross-config --channel unstable
 ```
 
-Keep the record snapshot fixed for both runs, then repeat on the other native Linux architecture. A local run covers its host architecture. The runner writes `result.json` for a completed attempt and `metadata.json` when metadata is available. Its evidence identifies selected and resolved revisions, commands, host check names, commits, and the record digest. Nix may reuse cached builds; a successful result does not mean every test process executed again. Static policy checks report `compatibility: "not-run"` and do not replace this evidence.
+Keep the record snapshot fixed for both runs, then repeat on the other native Linux architecture. A local run covers its host architecture. Each run creates a temporary evidence directory and reports its path as `artifacts`; to keep evidence elsewhere, pass `--output` with a new directory outside the member checkout. The runner writes `result.json` for a completed attempt and `metadata.json` when metadata is available. Its evidence identifies selected and resolved revisions, commands, host check names, commits, and the record digest. Nix may reuse cached builds; a successful result does not mean every test process executed again. Static policy checks report `compatibility: "not-run"` and do not replace this evidence.
 
 Ordinary compatibility runs use the approved pair. To test proposed pins, supply a reviewed record checkout with the proposed `approved.stable` and `approved.unstable` revisions through `--policy-root`. Keep that snapshot fixed and retain exact source revisions and results in the pin-update PR. Success against proposed records does not approve pins. The [runner reference](https://github.com/petohorvath/nixos-project-policy/blob/v0.4.0/docs/checker.md#compatibility-execution-and-evidence) defines selection and evidence, and [CI and policy](#ci-and-policy) describes workflow settings and merge gates.
 
@@ -66,9 +71,11 @@ The override deliberately changes the effective input graph without writing the 
 
 Use the saved `result.json` to select the project `revision`, `checkerRevision`, and `policyRecordsRevision`, along with the reported architecture and expected nixpkgs revision. Set `PROJECT_REV`, `CHECKER_REV`, and `POLICY_RECORD_REV` to those full commits. The checker checkout must be the clean release commit, and the records must be the reported snapshot rather than a later policy `main`.
 
-From a scratch directory outside the member checkout, create separate checkouts:
+Create a temporary scratch directory outside the member checkout, and create separate checkouts inside it:
 
 ```bash
+scratch=$(mktemp -d)
+cd "$scratch"
 git clone https://github.com/petohorvath/nixos-cross-config.git nixos-cross-config-repro
 git -C nixos-cross-config-repro fetch origin "$PROJECT_REV"
 git -C nixos-cross-config-repro checkout --detach "$PROJECT_REV"
@@ -101,7 +108,7 @@ nix run --no-update-lock-file ./nixos-project-policy-checker -- \
 nix flake check ./nixos-cross-config-repro --no-update-lock-file --print-build-logs
 ```
 
-Compare each replay's record digest, source digests, system, and expected and resolved revisions with the saved evidence. Dirty local sources require their exact contents as well as the reported commit. For proposed pins, preserve the proposed record snapshot. Keep the record checkout fixed throughout replay.
+Compare each replay's record digest, source digests, system, and expected and resolved revisions with the saved evidence. Dirty local sources require their exact contents as well as the reported commit. For proposed pins, preserve the proposed record snapshot. Keep the record checkout fixed throughout replay. Copy any evidence to retain, then remove `$scratch`.
 
 The separate final command validates the committed default. Repeat compatibility execution on both required architectures to reproduce the full matrix. A focused fixture or cached check result must be reported with its actual scope; neither establishes a fresh execution of every test or changes enrollment and merge gates.
 
@@ -163,11 +170,11 @@ The [CI workflow](../.github/workflows/check.yml) selects the published immutabl
 
 The shared workflow captures one member commit, release commit, and central-record commit. Compliance, committed-default project tests, and stable/unstable compatibility checks run in independent jobs on each declared architecture. Compliance smoke-tests development-shell startup and evaluates the formatter. Project tests require nonempty host checks before running the full root check. Formatting and lint remain project-owned root checks, enforced by both committed-default and compatibility jobs. Compatibility evidence is uploaded even when execution fails, without masking failure.
 
-The workflow reference, `policy_version`, documentation links, and executing checker must select the same release. Current central records supply enrollment and approved pins; an ordinary policy upgrade requires no central copy of member settings or release selection. From the member root, obtain the planned matrix and mandatory status names with a trusted current record snapshot:
+The workflow reference, `policy_version`, documentation links, and executing checker must select the same release. Current central records supply enrollment and approved pins; an ordinary policy upgrade requires no central copy of member settings or release selection. From the member root, obtain the planned matrix and mandatory status names with a trusted current record snapshot, cloned into `$records` as described in [Compatibility checks](#compatibility-checks):
 
 ```bash
 nix run --no-update-lock-file github:petohorvath/nixos-project-policy/v0.4.0 -- \
-  --policy-root ../nixos-project-policy-records ci . --project nixos-cross-config
+  --policy-root "$records" ci . --project nixos-cross-config
 ```
 
 The required statuses are `Policy / Verify policy version and load shared pins`, plus `Policy / Compliance (<architecture>)`, `Policy / Project tests (<architecture>)`, `Policy / Compatibility (stable, <architecture>)`, and `Policy / Compatibility (unstable, <architecture>)` for both declared architectures. The `ci` result provides the complete set and matrices; it does not establish that jobs ran or gates are active.
