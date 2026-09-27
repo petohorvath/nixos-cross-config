@@ -36,32 +36,32 @@ Policy `v0.4.0` runs the same compatibility checker locally and in CI. It select
 
 The member workflow must select `v0.4.0` and declare both Linux architectures through `required_architectures`; the project lock must match its committed copy. Central records supply enrollment and the approved pin pair.
 
-The procedures in this section keep clones and evidence in temporary directories outside the member checkout. Run each procedure, and the [CI and policy](#ci-and-policy) command that reuses `$RECORDS_DIR`, in one shell. In a new shell, the variables naming those directories are empty and the commands fail.
+The procedures in this section keep clones and evidence in temporary directories outside the member checkout. Run each procedure, and the [CI and policy](#ci-and-policy) command that reuses `$NIXOS_CROSS_CONFIG_RECORDS_DIR`, in one shell. In a new shell, the variables naming those directories are empty and the commands fail. Set each variable only through its `mktemp -d` command and never point it at another checkout, because the cleanup commands delete whatever directory it names.
 
 Clone a trusted current record checkout from policy `main`:
 
 ```bash
-RECORDS_DIR=$(mktemp -d)
-git clone --branch main https://github.com/petohorvath/nixos-project-policy.git "$RECORDS_DIR"
+NIXOS_CROSS_CONFIG_RECORDS_DIR=$(mktemp -d)
+git clone --branch main https://github.com/petohorvath/nixos-project-policy.git "$NIXOS_CROSS_CONFIG_RECORDS_DIR"
 ```
 
 From the repository root, run each approved revision:
 
 ```bash
 nix run --no-update-lock-file github:petohorvath/nixos-project-policy/v0.4.0 -- \
-  --policy-root "$RECORDS_DIR" \
+  --policy-root "$NIXOS_CROSS_CONFIG_RECORDS_DIR" \
   compatibility . --project nixos-cross-config --channel stable
 nix run --no-update-lock-file github:petohorvath/nixos-project-policy/v0.4.0 -- \
-  --policy-root "$RECORDS_DIR" \
+  --policy-root "$NIXOS_CROSS_CONFIG_RECORDS_DIR" \
   compatibility . --project nixos-cross-config --channel unstable
 ```
 
 Keep the record snapshot fixed for both runs, then repeat on the other native Linux architecture. A local run covers its host architecture. Each run creates a temporary evidence directory and reports its path as `artifacts`; to choose the location, pass `--output` with a new directory outside the member checkout, such as `"$(mktemp -d)/stable"`. The runner writes `result.json` for a completed attempt and `metadata.json` when metadata is available. Its evidence identifies selected and resolved revisions, commands, host check names, commits, and the record digest. Nix may reuse cached builds; a successful result does not mean every test process executed again. Static policy checks report `compatibility: "not-run"` and do not replace this evidence.
 
-After the last command that uses `$RECORDS_DIR`, including the CI and policy `ci` command, remove the temporary checkout cloned above:
+After the last command that uses `$NIXOS_CROSS_CONFIG_RECORDS_DIR`, including the CI and policy `ci` command, remove the temporary checkout cloned above:
 
 ```bash
-rm -rf "${RECORDS_DIR:?}"
+rm -rf "${NIXOS_CROSS_CONFIG_RECORDS_DIR:?}"
 ```
 
 Ordinary compatibility runs use the approved pair. To test proposed pins, supply a reviewed record checkout with the proposed `approved.stable` and `approved.unstable` revisions through `--policy-root`. Keep that snapshot fixed and retain exact source revisions and results in the pin-update PR. Success against proposed records does not approve pins. The [runner reference](https://github.com/petohorvath/nixos-project-policy/blob/v0.4.0/docs/checker.md#compatibility-execution-and-evidence) defines selection and evidence, and [CI and policy](#ci-and-policy) describes workflow settings and merge gates.
@@ -84,8 +84,8 @@ Use the saved `result.json` to select the project `revision`, `checkerRevision`,
 Create separate checkouts in a scratch directory, and run the remaining replay commands from it:
 
 ```bash
-SCRATCH_DIR=$(mktemp -d)
-cd "$SCRATCH_DIR"
+NIXOS_CROSS_CONFIG_SCRATCH_DIR=$(mktemp -d)
+cd "$NIXOS_CROSS_CONFIG_SCRATCH_DIR"
 git clone https://github.com/petohorvath/nixos-cross-config.git nixos-cross-config-repro
 git -C nixos-cross-config-repro fetch origin "$PROJECT_REV"
 git -C nixos-cross-config-repro checkout --detach "$PROJECT_REV"
@@ -125,7 +125,7 @@ The separate final command validates the committed default. Repeat compatibility
 Copy any evidence to retain, leave the scratch directory, and remove it:
 
 ```bash
-cd - && rm -rf "$SCRATCH_DIR"
+cd - && rm -rf "${NIXOS_CROSS_CONFIG_SCRATCH_DIR:?}"
 ```
 
 ## Focused checks
@@ -186,11 +186,11 @@ The [CI workflow](../.github/workflows/check.yml) selects the published immutabl
 
 The shared workflow captures one member commit, release commit, and central-record commit. Compliance, committed-default project tests, and stable/unstable compatibility checks run in independent jobs on each declared architecture. Compliance smoke-tests development-shell startup and evaluates the formatter. Project tests require nonempty host checks before running the full root check. Formatting and lint remain project-owned root checks, enforced by both committed-default and compatibility jobs. Compatibility evidence is uploaded even when execution fails, without masking failure.
 
-The workflow reference, `policy_version`, documentation links, and executing checker must select the same release. Current central records supply enrollment and approved pins; an ordinary policy upgrade requires no central copy of member settings or release selection. From the member root, obtain the planned matrix and mandatory status names with a trusted current record snapshot, cloned into `$RECORDS_DIR` in the current shell as described in [Compatibility checks](#compatibility-checks):
+The workflow reference, `policy_version`, documentation links, and executing checker must select the same release. Current central records supply enrollment and approved pins; an ordinary policy upgrade requires no central copy of member settings or release selection. From the member root, obtain the planned matrix and mandatory status names with a trusted current record snapshot, cloned into `$NIXOS_CROSS_CONFIG_RECORDS_DIR` in the current shell as described in [Compatibility checks](#compatibility-checks):
 
 ```bash
 nix run --no-update-lock-file github:petohorvath/nixos-project-policy/v0.4.0 -- \
-  --policy-root "$RECORDS_DIR" ci . --project nixos-cross-config
+  --policy-root "$NIXOS_CROSS_CONFIG_RECORDS_DIR" ci . --project nixos-cross-config
 ```
 
 The required statuses are `Policy / Verify policy version and load shared pins`, plus `Policy / Compliance (<architecture>)`, `Policy / Project tests (<architecture>)`, `Policy / Compatibility (stable, <architecture>)`, and `Policy / Compatibility (unstable, <architecture>)` for both declared architectures. The `ci` result provides the complete set and matrices; it does not establish that jobs ran or gates are active.
