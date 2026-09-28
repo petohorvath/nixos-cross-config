@@ -30,7 +30,7 @@ Destination inspection must not force disabled contribution payloads or introduc
 
 ## Module-system dependencies
 
-Inspection reads nixpkgs module-system data that the NixOS manual does not fully document. Compatibility runs against the approved stable and unstable revisions exercise these dependencies; [ADR 0005](adr/0005-separate-nixpkgs-selection-from-compatibility-coverage.md) assigns that coverage to the shared policy.
+Inspection reads nixpkgs module-system data that the NixOS manual does not fully document. Policy test runs with the stable and unstable nixpkgs pins exercise these dependencies; [ADR 0005](adr/0005-separate-nixpkgs-selection-from-compatibility-coverage.md) assigns that coverage to the shared policy.
 
 - The evaluated option's `valueMeta` exposes submodule `configuration` and per-attribute `attrs` metadata. nixpkgs tests it but does not document it in the manual. If its shape changes, nested destinations are no longer inspected and missing or read-only destinations are accepted.
 - The submodule `configuration` supplies `extendModules`, `options`, `config`, and `_module.freeformType` for receiver-local declarations and freeform types.

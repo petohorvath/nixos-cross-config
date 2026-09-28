@@ -32,41 +32,16 @@ Behavior suites and their registry live in [tests/suites](../tests/suites/). The
 
 ## Compatibility checks
 
-Policy `v0.4.0` runs the same compatibility checker locally and in CI. It selects exact stable and unstable revisions from a trusted policy-record checkout, verifies the effective root input, requires nonempty host checks, and runs the full root `nix flake check`. It checks that the member sources and committed lock remain unchanged and writes metadata and result evidence outside the member checkout.
+Policy `v0.5` bundles a stable and an unstable nixpkgs pin with each release. CI runs the root `nix flake check` with the locked nixpkgs and with each pin through a native `--override-input nixpkgs` on both Linux systems. Each run requires nonempty host checks and fails if the run changes the project sources or `flake.lock`. The pins stay outside the project lock and consumer dependency graphs, so the root lock records the development default independently. [ADR-0005](adr/0005-separate-nixpkgs-selection-from-compatibility-coverage.md) records this boundary.
 
-The member workflow must select `v0.4.0` and declare both Linux architectures through `required_architectures`; the project lock must match its committed copy. Central records supply enrollment and the approved pin pair.
-
-The procedures in this section keep clones and evidence in temporary directories outside the member checkout. Run each procedure, and the [CI and policy](#ci-and-policy) command that reuses `$NIXOS_CROSS_CONFIG_RECORDS_DIR`, in one shell. In a new shell, the variables naming those directories are empty and the commands fail. Set each variable only through its `mktemp -d` command and never point it at another checkout, because the cleanup commands delete whatever directory it names.
-
-Clone a trusted current record checkout from policy `main`:
+Run the policy's test modes locally from the repository root; each covers the host system:
 
 ```bash
-NIXOS_CROSS_CONFIG_RECORDS_DIR=$(mktemp -d)
-git clone --branch main https://github.com/petohorvath/nixos-project-policy.git "$NIXOS_CROSS_CONFIG_RECORDS_DIR"
+nix run github:petohorvath/nixos-project-policy/v0.5 -- test . --nixpkgs stable
+nix run github:petohorvath/nixos-project-policy/v0.5 -- test . --nixpkgs unstable
 ```
 
-From the repository root, run each approved revision:
-
-```bash
-nix run --no-update-lock-file github:petohorvath/nixos-project-policy/v0.4.0 -- \
-  --policy-root "$NIXOS_CROSS_CONFIG_RECORDS_DIR" \
-  compatibility . --project nixos-cross-config --channel stable
-nix run --no-update-lock-file github:petohorvath/nixos-project-policy/v0.4.0 -- \
-  --policy-root "$NIXOS_CROSS_CONFIG_RECORDS_DIR" \
-  compatibility . --project nixos-cross-config --channel unstable
-```
-
-Keep the record snapshot fixed for both runs, then repeat on the other native Linux architecture. A local run covers its host architecture. Each run creates a temporary evidence directory and reports its path as `artifacts`; to choose the location, pass `--output` with a new directory outside the member checkout, such as `"$(mktemp -d)/stable"`. The runner writes `result.json` for a completed attempt and `metadata.json` when metadata is available. Its evidence identifies selected and resolved revisions, commands, host check names, commits, and the record digest. Nix may reuse cached builds; a successful result does not mean every test process executed again. Static policy checks report `compatibility: "not-run"` and do not replace this evidence.
-
-After the last command that uses `$NIXOS_CROSS_CONFIG_RECORDS_DIR`, including the CI and policy `ci` command, remove the temporary checkout cloned above:
-
-```bash
-rm -rf "${NIXOS_CROSS_CONFIG_RECORDS_DIR:?}"
-```
-
-Ordinary compatibility runs use the approved pair. To test proposed pins, supply a reviewed record checkout with the proposed `approved.stable` and `approved.unstable` revisions through `--policy-root`. Keep that snapshot fixed and retain exact source revisions and results in the pin-update PR. Success against proposed records does not approve pins. The [runner reference](https://github.com/petohorvath/nixos-project-policy/blob/v0.4.0/docs/checker.md#compatibility-execution-and-evidence) defines selection and evidence, and [CI and policy](#ci-and-policy) describes workflow settings and merge gates.
-
-The root lock records the development default independently of the compatibility pair. A shared-pin update requires new compatibility evidence without requiring a default-lock update. Compatibility selections remain outside member lockfiles and consumer dependency graphs. [ADR-0005](adr/0005-separate-nixpkgs-selection-from-compatibility-coverage.md) records this boundary.
+Nix may reuse cached builds; a successful result does not mean every test process executed again.
 
 For a focused investigation at another exact revision, set `NIXPKGS_REV` to its full commit and use a native override:
 
@@ -75,58 +50,7 @@ nix flake check --override-input nixpkgs "github:NixOS/nixpkgs/$NIXPKGS_REV" \
   --no-write-lock-file --print-build-logs
 ```
 
-The override deliberately changes the effective input graph without writing the lock. Use `--no-update-lock-file` alone, without an override or `--no-write-lock-file`, to validate the committed default. An arbitrary override is an investigation result, not a policy-approved compatibility result.
-
-### Reproduce an exact result
-
-Use the saved `result.json` to select the project `revision`, `checkerRevision`, and `policyRecordsRevision`, along with the reported architecture and expected nixpkgs revision. Set `PROJECT_REV`, `CHECKER_REV`, and `POLICY_RECORD_REV` to those full commits. The checker checkout must be the clean release commit, and the records must be the reported snapshot rather than a later policy `main`.
-
-Create separate checkouts in a scratch directory, and run the remaining replay commands from it:
-
-```bash
-NIXOS_CROSS_CONFIG_SCRATCH_DIR=$(mktemp -d)
-cd "$NIXOS_CROSS_CONFIG_SCRATCH_DIR"
-git clone https://github.com/petohorvath/nixos-cross-config.git nixos-cross-config-repro
-git -C nixos-cross-config-repro fetch origin "$PROJECT_REV"
-git -C nixos-cross-config-repro checkout --detach "$PROJECT_REV"
-git clone https://github.com/petohorvath/nixos-project-policy.git nixos-project-policy-checker
-git -C nixos-project-policy-checker fetch origin "$CHECKER_REV"
-git -C nixos-project-policy-checker checkout --detach "$CHECKER_REV"
-git clone https://github.com/petohorvath/nixos-project-policy.git nixos-project-policy-records
-git -C nixos-project-policy-records fetch origin "$POLICY_RECORD_REV"
-git -C nixos-project-policy-records checkout --detach "$POLICY_RECORD_REV"
-```
-
-Validate the captured records and compare the reported `policyRecordsDigest` with the original evidence before replaying:
-
-```bash
-nix run --no-update-lock-file ./nixos-project-policy-checker -- \
-  --policy-root ./nixos-project-policy-records validate
-```
-
-Run the same external checker on the reported native architecture, writing fresh evidence directories:
-
-```bash
-nix run --no-update-lock-file ./nixos-project-policy-checker -- \
-  --policy-root ./nixos-project-policy-records \
-  compatibility ./nixos-cross-config-repro --project nixos-cross-config \
-  --channel stable --output ./replay-stable
-nix run --no-update-lock-file ./nixos-project-policy-checker -- \
-  --policy-root ./nixos-project-policy-records \
-  compatibility ./nixos-cross-config-repro --project nixos-cross-config \
-  --channel unstable --output ./replay-unstable
-nix flake check ./nixos-cross-config-repro --no-update-lock-file --print-build-logs
-```
-
-Compare each replay's record digest, source digests, system, and expected and resolved revisions with the saved evidence. Dirty local sources require their exact contents as well as the reported commit. For proposed pins, preserve the proposed record snapshot. Keep the record checkout fixed throughout replay.
-
-The separate final command validates the committed default. Repeat compatibility execution on both required architectures to reproduce the full matrix. A focused fixture or cached check result must be reported with its actual scope; neither establishes a fresh execution of every test or changes enrollment and merge gates.
-
-Copy any evidence to retain, leave the scratch directory, and remove it:
-
-```bash
-cd - && rm -rf "${NIXOS_CROSS_CONFIG_SCRATCH_DIR:?}"
-```
+The override deliberately changes the effective input graph without writing the lock. Use `--no-update-lock-file` alone, without an override or `--no-write-lock-file`, to validate the committed default. An arbitrary override is an investigation result, not a policy result.
 
 ## Focused checks
 
@@ -151,7 +75,7 @@ nix develop --override-input nixpkgs "github:NixOS/nixpkgs/$NIXPKGS_REV" \
   --arg nixpkgs "(builtins.getFlake \"github:NixOS/nixpkgs/$NIXPKGS_REV\")"
 ```
 
-The shell override selects the tools; the explicit argument selects the tested configurations and the nixpkgs library used by flake-parts. Neither command writes the lock. A focused run does not replace the full root check or policy compatibility execution.
+The shell override selects the tools; the explicit argument selects the tested configurations and the nixpkgs library used by flake-parts. Neither command writes the lock. A focused run does not replace the full root check or the policy test runs.
 
 ### Test definitions
 
@@ -182,24 +106,23 @@ The ordinary node helpers exercise `nixosModules.default` through the public fla
 
 ## CI and policy
 
-The [CI workflow](../.github/workflows/check.yml) selects the published immutable policy release `v0.4.0` and names its caller job `Policy`. The caller owns `project`, `policy_version`, and `required_architectures`, retaining `x86_64-linux` and `aarch64-linux`. The project has no VM targets or additional gates, so `vm_targets` and `additional_required_checks` use their empty defaults. Policy code stays outside the member's flake inputs and build graph.
+The [CI workflow](../.github/workflows/check.yml) calls shared policy `v0.5` through the moving minor-series tag and names its caller job `Policy`. It sets no inputs, so the policy runs on its default systems, `x86_64-linux` and `aarch64-linux`. The project has no VM tests and no additional required checks. Policy code stays outside the flake inputs and build graph.
 
-The shared workflow captures one member commit, release commit, and central-record commit. Compliance, committed-default project tests, and stable/unstable compatibility checks run in independent jobs on each declared architecture. Compliance smoke-tests development-shell startup and evaluates the formatter. Project tests require nonempty host checks before running the full root check. Formatting and lint remain project-owned root checks, enforced by both committed-default and compatibility jobs. Compatibility evidence is uploaded even when execution fails, without masking failure.
-
-The workflow reference, `policy_version`, documentation links, and executing checker must select the same release. Current central records supply enrollment and approved pins; an ordinary policy upgrade requires no central copy of member settings or release selection. From the member root, obtain the planned matrix and mandatory status names with a trusted current record snapshot, cloned into `$NIXOS_CROSS_CONFIG_RECORDS_DIR` in the current shell as described in [Compatibility checks](#compatibility-checks):
+The policy's `Check` job applies the input and public-output rules, starts the default development shell, and evaluates the formatter. Its `Tests` jobs run the root checks as described in [Compatibility checks](#compatibility-checks); formatting and lint run there as project-owned root checks. Run the same check locally from the repository root:
 
 ```bash
-nix run --no-update-lock-file github:petohorvath/nixos-project-policy/v0.4.0 -- \
-  --policy-root "$NIXOS_CROSS_CONFIG_RECORDS_DIR" ci . --project nixos-cross-config
+nix run github:petohorvath/nixos-project-policy/v0.5 -- check .
 ```
 
-The required statuses are `Policy / Verify policy version and load shared pins`, plus `Policy / Compliance (<architecture>)`, `Policy / Project tests (<architecture>)`, `Policy / Compatibility (stable, <architecture>)`, and `Policy / Compatibility (unstable, <architecture>)` for both declared architectures. The `ci` result provides the complete set and matrices; it does not establish that jobs ran or gates are active.
+Nix caches the `v0.5` reference for up to an hour; add `--refresh` after `nix run` to use a patch release published within that time.
 
-For policy upgrades, follow the selected release's [maintenance procedure](https://github.com/petohorvath/nixos-project-policy/blob/v0.4.0/docs/maintenance.md):
+Require these statuses on `main` for both systems:
 
-1. Update policy links, the workflow reference, and `policy_version` together. Preserve architecture and test coverage; review must explicitly justify any reduction.
-2. Run compliance with `check . --project nixos-cross-config --shell`, committed-default checks, and both compatibility revisions on both architectures. Obtain a complete member CI run and inspect the actual emitted statuses on the reviewable PR.
-3. Compare the generated set with observed PR statuses and GitHub merge gates. Require the nine statuses listed above, with strict up-to-date checking. Formatting and lint run under `Policy / Project tests (<architecture>)` through this project's root checks; separate `Policy / Formatting and lint (<architecture>)` statuses are not part of the v0.4.0 gate set. Obtain separate authorization for future live merge-setting changes and retain verification evidence on the PR.
-4. Obtain human approval and merge the member PR. Ordinary upgrades leave the central enrollment roster and approved pins unchanged.
+- `Policy / Check (<system>)`
+- `Policy / Tests (locked, <system>)`
+- `Policy / Tests (stable, <system>)`
+- `Policy / Tests (unstable, <system>)`
 
-Selecting the release or passing local checks does not configure GitHub settings, change enrollment, or approve pins. Current checks use trusted records from policy `main`; exact replay uses the captured snapshot. Compatibility-pair updates and development-default updates remain separate operations.
+`Policy / VM tests` appears as a skipped job and is not required. The workflow's `Plan` job writes the required statuses to its step summary.
+
+Policy patch releases move `v0.5` and carry pin bumps and fixes without a caller change. A new minor series marks breaking rule changes; adopting it requires updating the workflow reference, the policy links, and the local commands together. Passing local checks does not configure GitHub settings or authorize a merge.
