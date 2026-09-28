@@ -34,9 +34,10 @@ Behavior suites and their registry live in [tests/suites](../tests/suites/). The
 
 Policy `v0.5` bundles a stable and an unstable nixpkgs pin with each release. CI runs the root `nix flake check` with the locked nixpkgs and with each pin through a native `--override-input nixpkgs` on both Linux systems. Each run requires nonempty host checks and fails if the run changes the project sources or `flake.lock`. The pins stay outside the project lock and consumer dependency graphs, so the root lock records the development default independently. [ADR-0005](adr/0005-separate-nixpkgs-selection-from-compatibility-coverage.md) records this boundary.
 
-Run the policy's test modes locally from the repository root; each covers the host system:
+Run the policy's `test` command locally from the repository root; each run covers the host system:
 
 ```bash
+nix run github:petohorvath/nixos-project-policy/v0.5 -- test . --nixpkgs locked
 nix run github:petohorvath/nixos-project-policy/v0.5 -- test . --nixpkgs stable
 nix run github:petohorvath/nixos-project-policy/v0.5 -- test . --nixpkgs unstable
 ```
