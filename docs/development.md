@@ -32,7 +32,7 @@ Behavior suites and their registry live in [tests/suites](../tests/suites/). The
 
 ## Compatibility checks
 
-CI runs the root `nix flake check` with the locked nixpkgs and with the [shared policy's](https://github.com/petohorvath/nixos-project-policy) stable and unstable nixpkgs pins, applied through a native `--override-input nixpkgs`, on both Linux systems. The pins stay outside the project lock and consumer dependency graphs, so the root lock records the development default independently. [ADR-0005](adr/0005-separate-nixpkgs-selection-from-compatibility-coverage.md) records this boundary. To run the pinned checks locally, follow the policy README's [local check](https://github.com/petohorvath/nixos-project-policy#local-check) at the release that the [CI workflow](../.github/workflows/check.yml) calls.
+The root lock records the development default. CI also runs the root checks against the shared policy's stable and unstable nixpkgs pins, as [CI and policy](#ci-and-policy) describes. [ADR-0005](adr/0005-separate-nixpkgs-selection-from-compatibility-coverage.md) records this boundary.
 
 For a focused investigation at another exact revision, set `NIXPKGS_REV` to its full commit and use a native override:
 
@@ -97,6 +97,10 @@ The ordinary node helpers exercise `nixosModules.default` through the public fla
 
 ## CI and policy
 
-The [CI workflow](../.github/workflows/check.yml) calls the [shared policy](https://github.com/petohorvath/nixos-project-policy) workflow in a job named `Policy`. The workflow's `uses:` reference selects the policy release, and it is the only place this repository names a policy version; upgrading the policy changes that line and adds a changelog entry. The caller sets no inputs, so the policy runs on its default systems, `x86_64-linux` and `aarch64-linux`. The project has no VM tests. Policy code stays outside the flake inputs and build graph, and formatting and lint stay in project-owned root checks.
+The [CI workflow](../.github/workflows/check.yml) calls the [shared project policy](https://github.com/petohorvath/nixos-project-policy/blob/v0.5/POLICY.md) in a job named `Policy`. The workflow's `uses:` reference selects the policy release. Outside the changelog, that reference and the policy link in this paragraph are the only places that name the policy version; a policy upgrade updates both and adds a changelog entry.
 
-The policy's `POLICY.md` lists the statuses to require, and the workflow's `Plan` job writes them to its step summary on every run. Passing local checks does not configure GitHub settings or authorize a merge.
+The caller sets no inputs, so the policy runs on its default systems, `x86_64-linux` and `aarch64-linux`. The project has no VM tests. Policy code stays outside the flake inputs and build graph.
+
+The policy checks the inputs, public outputs, development shell, and formatter. It also runs the root `nix flake check` with the locked nixpkgs and with its bundled stable and unstable nixpkgs pins, applied through a native `--override-input nixpkgs`; formatting and lint run there as project-owned root checks. The pins stay outside the project lock and consumer dependency graphs. To run the same checks locally, use the policy's `check .` and `test . --nixpkgs locked|stable|unstable` commands as its README describes.
+
+The policy lists the statuses to require, and the workflow's `Plan` job writes them to its step summary on every run. Passing local checks does not configure GitHub settings or authorize a merge.

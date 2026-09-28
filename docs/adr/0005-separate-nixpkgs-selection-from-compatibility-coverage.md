@@ -4,7 +4,7 @@ status: accepted
 
 # Separate nixpkgs selection from compatibility coverage
 
-The root flake exposes one nixpkgs input, named `nixpkgs`, and its lock records the project's chosen development default. Consumers select their own revision with `follows` or native input overrides. Root `nix flake check` tests that selected revision; the shared policy owns the stable and unstable pins and runs the compatibility checks with them. Each policy release bundles both pins, which stay outside the project's dependency graph and leave the development default independent.
+The root flake exposes one nixpkgs input, named `nixpkgs`, and its lock records the project's chosen development default. Consumers select their own revision with `follows` or native input overrides. Root `nix flake check` tests that selected revision; the shared policy owns the stable and unstable pins and runs the root checks with them. The pins stay outside the project's dependency graph, so the development default stays independent.
 
 Root `flake.nix` returns `flake-parts.lib.mkFlake` directly. It declares the supported systems and the public `nixosModules.default`, `flakeModules.default`, and `lib` outputs. A `dev` partition assembles `checks`, `devShells`, and `formatter` through `perSystem`, keeping development wiring out of the root module. Shell, formatter, treefmt, and check assembly files live under `dev/`. The partition inherits the root inputs and introduces no additional flake or lockfile. The formatter is supplied to the default shell without a duplicate package output. `.envrc` remains at the root with `use flake`.
 
@@ -14,14 +14,8 @@ The unified collection replaces the earlier `dev/fixtures.nix` interface with se
 
 Compatibility uses the same root CLI with `--override-input nixpkgs` at an exact revision and `--no-write-lock-file`. The default run uses `--no-update-lock-file` to reject missing or stale lock selections. Each run evaluates applicable shell and formatter outputs and builds every declared host check. Fixtures evaluate example systems without building them. Offline fixture execution uses a temporary writable evaluation store.
 
-The policy runner verifies the pin override, nonempty host checks, and unchanged project sources and lock, then runs the full root check. The locked, stable, and unstable runs are required on `x86_64-linux` and `aarch64-linux`. The policy's `Check` job, which covers inputs, public outputs, the development shell, and the formatter, stays separate from these test runs; project-owned formatting and lint run through root checks. Pin bumps, compatibility execution, and reporting belong to the policy implementation; the caller stays small and stores no copy of the pins.
-
 The returned module keeps the receiver's `lib`, source attribution, and contribution behavior. Plain Nix consumers import `nixos/module.nix`, `flake-module.nix`, or `(import ./lib).mkModule` without development inputs. The constructor lives in `lib/default.nix` and records that file as its default module location. Calling `(import ./flake.nix).outputs { }` is no longer supported, so the root needs no alternate evaluation path or shared export binding. Tests cover both the public flake exports assembled with supplied inputs and the direct imports; compatibility runs exercise the public flake CLI.
 
 ## Rejected alternative
 
-The earlier decision used a separately locked compatibility flake that imported the parent flake and called its output function for each revision. [Issue #19](https://github.com/petohorvath/nixos-cross-config/issues/19) reopens that decision because the wrapper couples coverage to the repository layout, duplicates output aggregation, and reconstructs normal flake evaluation. Native overrides replace that wrapper and its second lockfile. Requiring the development default to equal the approved stable pin is also replaced by independent selection under policy `v0.2.0`.
-
-## Policy activation
-
-The caller job is named `Policy` and calls the shared policy workflow without inputs. The [development instructions](../development.md#ci-and-policy) describe the release selection and required statuses. Live merge-setting changes require separate authorization; passing local checks does not configure gates or authorize a merge.
+The earlier decision used a separately locked compatibility flake that imported the parent flake and called its output function for each revision. [Issue #19](https://github.com/petohorvath/nixos-cross-config/issues/19) reopens that decision because the wrapper couples coverage to the repository layout, duplicates output aggregation, and reconstructs normal flake evaluation. Native overrides replace that wrapper and its second lockfile. Requiring the development default to equal the approved stable pin is also replaced by independent selection.

@@ -139,7 +139,7 @@ Keep each host's hardware configuration and existing `system.stateVersion`. The 
 
 All nodes in a collection must use one nixpkgs revision and be accessible within one Nix computation. Source modules can come from separate repositories, and each node can have its own module evaluation. Node construction and deployment remain the caller's responsibility.
 
-Development supports `x86_64-linux` and `aarch64-linux`. The root lock selects NixOS 26.05 for ordinary checks. CI calls the shared policy, which runs the root checks on both systems with the locked nixpkgs and with the policy's stable and unstable pins through native input overrides. The project has no VM suite or tagged release yet. See [CI and policy](docs/development.md#ci-and-policy) for the checks and required statuses.
+Development supports `x86_64-linux` and `aarch64-linux`. The root lock selects NixOS 26.05 for ordinary checks. CI also runs the root checks through the shared project policy. The project has no VM suite or tagged release yet. See [CI and policy](docs/development.md#ci-and-policy) for the policy's checks and required statuses.
 
 ## Documentation
 
