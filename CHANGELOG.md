@@ -8,7 +8,7 @@
 - `nixosModules.default` as the primary consumer interface, with required node identity, lazy node collection, and composable allowed-path options. Keep `lib.mkModule` as a compatibility adapter and retain plain-import access to both interfaces.
 - Root development shells for x86_64 Linux and aarch64 Linux, with direnv activation and tools from the selected nixpkgs revision.
 - Root formatting for Nix, shell, Markdown, YAML, and JSON, plus statix, deadnix, and workflow checks.
-- An immutable shared-policy CI caller, contributor guidance, release rules, and an MIT license for original code.
+- A shared-policy CI caller, contributor guidance, release rules, and an MIT license for original code.
 
 ### Changed
 
@@ -21,7 +21,7 @@
 - Keep explicit `systems` bindings and public flake outputs, preserving the default nixpkgs revision in the root lock.
 - Run named value comparisons, expected errors, native recursion cases, and diagnostic message assertions through one native nix-unit collection.
 - **Breaking (development interface):** replace separate evaluation, diagnostic, and value-cycle check outputs with `checks.<system>.tests`. The development shell provides nix-unit for focused runs, including all assertions for each selected test. Rename the collection loader from `dev/fixtures.nix` to `tests/entrypoint.nix` and remove its separate `tests` and `failures` trees. Rejection tests now require the intended error message as well as its type.
-- Select shared policy release `v0.4.0` and declare both Linux architectures in the member-owned `Policy` caller. Preserve independent root defaults and verified stable/unstable compatibility runs. Keep formatting and lint in project-owned root checks alongside separate compliance and committed-default jobs.
+- **Breaking (CI statuses):** call shared policy `v0.5` through the minor-series tag, with no caller inputs; the policy's default systems are `x86_64-linux` and `aarch64-linux`. The policy checks inputs, public outputs, the development shell, and the formatter, and runs root `nix flake check` with the locked, stable, and unstable nixpkgs revisions. Formatting and lint stay in project-owned root checks.
 
 ### Removed
 
@@ -73,4 +73,4 @@ Replace `checks.<system>.evaluation`, `checks.<system>.diagnostics`, and `checks
 
 For example, replace `.#checks.x86_64-linux.unstable-diagnostics` with `.#checks.x86_64-linux.tests` and supply the exact unstable revision through `--override-input nixpkgs` and `--no-write-lock-file`.
 
-Policy `v0.4.0` owns compatibility execution while the member caller owns release selection and required architectures. Central records now contain enrollment identities and approved pins, with no copied member settings or activation state. Remove obsolete `Policy / Formatting and lint (<architecture>)` merge requirements only through an authorized settings change after verifying that the retained `Policy / Project tests (<architecture>)` jobs enforce root formatting and lint checks. Test proposed pins using a reviewed record checkout through `--policy-root`; candidate-batch registration and `--batch` are removed. Follow the [compatibility and policy guidance](docs/development.md#compatibility-checks) for the external runner, exact-result replay, and gate verification.
+Policy `v0.5` replaces the required statuses. Replace `Policy / Verify policy version and load shared pins`, `Policy / Compliance (<system>)`, `Policy / Project tests (<system>)`, and `Policy / Compatibility (stable|unstable, <system>)` with `Policy / Check (<system>)` and `Policy / Tests (locked|stable|unstable, <system>)` for both Linux systems in the branch protection of `main`. The project has no VM tests, so `Policy / VM tests` is skipped and not required. Run the policy check locally with `nix run github:petohorvath/nixos-project-policy/v0.5 -- check .`; `--policy-root` and the record checkout are no longer used. See [CI and policy](docs/development.md#ci-and-policy).
