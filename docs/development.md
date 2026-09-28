@@ -32,17 +32,7 @@ Behavior suites and their registry live in [tests/suites](../tests/suites/). The
 
 ## Compatibility checks
 
-Policy `v0.5` bundles a stable and an unstable nixpkgs pin with each release. CI runs the root `nix flake check` with the locked nixpkgs and with each pin through a native `--override-input nixpkgs` on both Linux systems. Each run requires nonempty host checks and fails if the run changes the project sources or `flake.lock`. The pins stay outside the project lock and consumer dependency graphs, so the root lock records the development default independently. [ADR-0005](adr/0005-separate-nixpkgs-selection-from-compatibility-coverage.md) records this boundary.
-
-Run the policy's `test` command locally from the repository root; each run covers the host system:
-
-```bash
-nix run github:petohorvath/nixos-project-policy/v0.5 -- test . --nixpkgs locked
-nix run github:petohorvath/nixos-project-policy/v0.5 -- test . --nixpkgs stable
-nix run github:petohorvath/nixos-project-policy/v0.5 -- test . --nixpkgs unstable
-```
-
-Nix may reuse cached builds; a successful result does not mean every test process executed again.
+CI runs the root `nix flake check` with the locked nixpkgs and with the [shared policy's](https://github.com/petohorvath/nixos-project-policy) stable and unstable nixpkgs pins, applied through a native `--override-input nixpkgs`, on both Linux systems. The pins stay outside the project lock and consumer dependency graphs, so the root lock records the development default independently. [ADR-0005](adr/0005-separate-nixpkgs-selection-from-compatibility-coverage.md) records this boundary. To run the pinned checks locally, follow the policy README's [local check](https://github.com/petohorvath/nixos-project-policy#local-check) at the release that the [CI workflow](../.github/workflows/check.yml) calls.
 
 For a focused investigation at another exact revision, set `NIXPKGS_REV` to its full commit and use a native override:
 
@@ -107,23 +97,6 @@ The ordinary node helpers exercise `nixosModules.default` through the public fla
 
 ## CI and policy
 
-The [CI workflow](../.github/workflows/check.yml) calls shared policy `v0.5` through the moving minor-series tag and names its caller job `Policy`. It sets no inputs, so the policy runs on its default systems, `x86_64-linux` and `aarch64-linux`. The project has no VM tests and no additional required checks. Policy code stays outside the flake inputs and build graph.
+The [CI workflow](../.github/workflows/check.yml) calls the [shared policy](https://github.com/petohorvath/nixos-project-policy) workflow in a job named `Policy`. The workflow's `uses:` reference selects the policy release, and it is the only place this repository names a policy version; upgrading the policy changes that line and adds a changelog entry. The caller sets no inputs, so the policy runs on its default systems, `x86_64-linux` and `aarch64-linux`. The project has no VM tests. Policy code stays outside the flake inputs and build graph, and formatting and lint stay in project-owned root checks.
 
-The policy's `Check` job applies the input and public-output rules, starts the default development shell, and evaluates the formatter. Its `Tests` jobs run the root checks as described in [Compatibility checks](#compatibility-checks); formatting and lint run there as project-owned root checks. Run the same check locally from the repository root:
-
-```bash
-nix run github:petohorvath/nixos-project-policy/v0.5 -- check .
-```
-
-Nix caches the `v0.5` reference for up to an hour; add `--refresh` after `nix run` to use a patch release published within that time.
-
-Require these statuses on `main` for both systems:
-
-- `Policy / Check (<system>)`
-- `Policy / Tests (locked, <system>)`
-- `Policy / Tests (stable, <system>)`
-- `Policy / Tests (unstable, <system>)`
-
-`Policy / VM tests` appears as a skipped job and is not required. The workflow's `Plan` job writes the required statuses to its step summary.
-
-Policy patch releases move `v0.5` and carry pin bumps and fixes without a caller change. A new minor series marks breaking rule changes; adopting it requires updating the workflow reference, the policy links, and the local commands together. Passing local checks does not configure GitHub settings or authorize a merge.
+The policy's `POLICY.md` lists the statuses to require, and the workflow's `Plan` job writes them to its step summary on every run. Passing local checks does not configure GitHub settings or authorize a merge.

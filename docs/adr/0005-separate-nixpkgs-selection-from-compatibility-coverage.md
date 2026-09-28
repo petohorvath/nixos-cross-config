@@ -4,7 +4,7 @@ status: accepted
 
 # Separate nixpkgs selection from compatibility coverage
 
-The root flake exposes one nixpkgs input, named `nixpkgs`, and its lock records the project's chosen development default. Consumers select their own revision with `follows` or native input overrides. Root `nix flake check` tests that selected revision; the shared policy owns the stable and unstable pins and runs the compatibility checks with them. Policy `v0.5` supports this separation: each policy release bundles both pins, which stay outside the project's dependency graph and leave the development default independent.
+The root flake exposes one nixpkgs input, named `nixpkgs`, and its lock records the project's chosen development default. Consumers select their own revision with `follows` or native input overrides. Root `nix flake check` tests that selected revision; the shared policy owns the stable and unstable pins and runs the compatibility checks with them. Each policy release bundles both pins, which stay outside the project's dependency graph and leave the development default independent.
 
 Root `flake.nix` returns `flake-parts.lib.mkFlake` directly. It declares the supported systems and the public `nixosModules.default`, `flakeModules.default`, and `lib` outputs. A `dev` partition assembles `checks`, `devShells`, and `formatter` through `perSystem`, keeping development wiring out of the root module. Shell, formatter, treefmt, and check assembly files live under `dev/`. The partition inherits the root inputs and introduces no additional flake or lockfile. The formatter is supplied to the default shell without a duplicate package output. `.envrc` remains at the root with `use flake`.
 
@@ -24,6 +24,4 @@ The earlier decision used a separately locked compatibility flake that imported 
 
 ## Policy activation
 
-The caller uses `name: Policy` and calls the policy workflow through the moving `v0.5` minor-series tag without inputs, so the policy's default systems, `x86_64-linux` and `aarch64-linux`, apply. Policy patch releases move that tag and deliver pin bumps without a change to this repository; a new minor series requires a reviewed PR that updates the reference.
-
-The [development instructions](../development.md#ci-and-policy) list the required statuses. Formatting and lint remain in project-owned root checks. Live merge-setting changes require separate authorization; passing local checks does not configure gates or authorize a merge.
+The caller job is named `Policy` and calls the shared policy workflow without inputs. The [development instructions](../development.md#ci-and-policy) describe the release selection and required statuses. Live merge-setting changes require separate authorization; passing local checks does not configure gates or authorize a merge.

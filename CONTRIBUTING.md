@@ -1,10 +1,10 @@
 # Contributing
 
-Follow the [shared project policy](https://github.com/petohorvath/nixos-project-policy/blob/v0.5.0/POLICY.md) and the local [development instructions](docs/development.md).
+Follow the [shared project policy](https://github.com/petohorvath/nixos-project-policy) at the release that the [CI workflow](.github/workflows/check.yml) calls, and the local [development instructions](docs/development.md).
 
 ## Changes
 
-Work on a branch and open a PR with a Conventional Commit title, such as `fix: Preserve contribution source locations`. Describe the resulting behavior, compatibility effects, and validation. Run the root formatter and flake checks listed in the [development instructions](docs/development.md#prerequisites). Run the [policy check](docs/development.md#ci-and-policy) and the [policy tests](docs/development.md#compatibility-checks) with the stable and unstable pins. Add meaningful regression coverage for behavior changes. The checks do not run VMs.
+Work on a branch and open a PR with a Conventional Commit title, such as `fix: Preserve contribution source locations`. Describe the resulting behavior, compatibility effects, and validation. Run the root formatter and flake checks listed in the [development instructions](docs/development.md#prerequisites). Run the [policy's local check](docs/development.md#compatibility-checks) with its stable and unstable pins. Add meaningful regression coverage for behavior changes. The checks do not run VMs.
 
 Every merge needs human approval and passing required checks. Squash each PR to one Conventional Commit using its title. The maintainer may approve and merge without a second reviewer. Record explicit breaking changes in the title and changelog.
 
@@ -18,7 +18,7 @@ The `dev` partition provides root `devShells`, `formatter`, and `checks` using t
 
 The optional `flakeModules.default` adapter declares shared path and collection settings at flake scope and provides the consumer's `nixosModules.crossConfig`. The configured module supplies `mkDefault` settings, uses the receiver's `lib`, and leaves identity and construction to each caller-owned node. Its collection defaults lazily to the consumer's `flake.nixosConfigurations`. Preserve direct access through `flake-module.nix` and keep standalone usage independent of flake-parts evaluation. Its development input follows the selected `nixpkgs` for `nixpkgs-lib`.
 
-The root lock records the development default independently of the policy's stable and unstable pins. Policy `v0.5` checks the inputs, public outputs, development shell, and formatter, and runs the root checks, including project-owned formatting and lint, with the locked nixpkgs and both pins. Keep the required GitHub statuses aligned with the [CI and policy](docs/development.md#ci-and-policy) list. Report executed checks, cached results, and unverified systems separately; local success does not configure merge gates.
+The root lock records the development default independently of the policy's stable and unstable pins. The shared policy checks the inputs, public outputs, development shell, and formatter, and runs the root checks, including project-owned formatting and lint, with the locked nixpkgs and both pins. Keep the required GitHub statuses aligned with the policy as described in [CI and policy](docs/development.md#ci-and-policy). Report executed checks, cached results, and unverified systems separately; local success does not configure merge gates.
 
 ## Releases
 
