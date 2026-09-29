@@ -9,10 +9,7 @@
   nodeName ? null,
 }:
 let
-  reservedRoots = [
-    "crossConfig"
-    "_module"
-  ];
+  reservedRoots = import ./reserved-roots.nix;
 
   mergeNodeConfigurations =
     location: definitions:
@@ -59,8 +56,6 @@ let
     ];
 in
 {
-  inherit reservedRoots;
-
   options = {
     nodeConfigurations = lib.mkOption {
       type = nodeConfigurationsType;
