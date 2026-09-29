@@ -14,8 +14,12 @@ The set of named nodes participating in configuration contributions.
 A node's name within its node collection, independent of its hostname.
 
 **Allowed option paths**:
-The shared set of option paths that a node collection permits for contributions. A receiver must declare a writable option at a path to receive a contribution there.
+The shared set of option paths that a node collection permits for contributions. On each receiver, an allowed option path names a destination.
 _Avoid_: Forwarding surface
+
+**Destination**:
+The option path on a receiver where a configuration contribution's definitions are placed. A destination is writable, missing, or read-only; only a writable destination accepts contributions.
+_Avoid_: Target (for paths)
 
 **Sender**:
 The node that declares a configuration contribution.
