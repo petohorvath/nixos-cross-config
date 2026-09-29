@@ -1,3 +1,9 @@
+/*
+  Declares the settings shared by every node in a collection, so both the
+  NixOS module and the flake module can offer them. Per-node options such as
+  crossConfig.name stay in nixos/module.nix; a flake-level default for them
+  would give every node the same identity.
+*/
 {
   lib,
   nodeName ? null,
