@@ -27,7 +27,9 @@ let
     merge = mergeNodeConfigurations;
   };
 
-  optionPathsType = (lib.types.listOf (lib.types.nonEmptyListOf lib.types.str)) // {
+  optionPathType = lib.types.nonEmptyListOf lib.types.str;
+
+  optionPathsType = lib.types.listOf optionPathType // {
     # An explicit empty list is valid, but an unset registration list is not.
     emptyValue = { };
   };
