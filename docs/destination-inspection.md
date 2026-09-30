@@ -8,7 +8,13 @@ The generated receiving configuration takes its outer namespace names from the r
 
 The shared allowed-path list comes from `crossConfig.optionPaths`. Normal option merging and priorities select registrations before normalization removes duplicate paths. The setup namespace `crossConfig` and module-system namespace `_module` stay outside generated receiving definitions, and registrations under those roots fail explicitly. These names remain valid inside ordinary receiving options. [ADR 0004](adr/0004-declare-a-shared-forwarding-surface.md) records why path registrations must remain independent of receiving configuration even though they are now module options.
 
-The destination module receives the receiver's `lib`, declarations, `extendModules`, special arguments, and allowed paths. It resolves each allowed path once per evaluation and shares the result between placement and assertions. `receivingDefinition` places a path's definitions, taking attribute names from the receiver's declarations alone and forcing the deep check only inside the matched option's value. `status` classifies the destination as writable, missing, or read-only for assertions, and `isInspecting` tells the NixOS module to skip assertions inside an inspection evaluation. The special argument that marks inspection evaluations stays private to the module. It shares [definition-property restoration](../lib/restore-definition-properties.nix) with the sending module so both preserve priorities, ordering, and source locations.
+The destination module receives the receiver's `lib`, declarations, `extendModules`, special arguments, and allowed paths. It resolves each allowed path once per evaluation and shares the result between placement and assertions through three exports:
+
+- `receivingDefinition` places a path's definitions. It takes attribute names from the receiver's declarations alone and forces the deep check only inside the matched option's value.
+- `status` classifies the destination as writable, missing, or read-only for assertions.
+- `isInspecting` tells the NixOS module to skip assertions inside an inspection evaluation. The special argument that marks these evaluations stays private to the module.
+
+The module shares [definition-property restoration](../lib/restore-definition-properties.nix) with the sending module so both preserve priorities, ordering, and source locations.
 
 For a path inside a submodule, deep resolution uses `extendModules` to inspect the receiver while omitting contributions at that path. This lets receiver-local module functions, instance names, configuration, and freeform types determine whether the destination exists and is writable. These evaluations inspect destination metadata; they do not discover allowed paths or introduce a registration evaluation stage.
 

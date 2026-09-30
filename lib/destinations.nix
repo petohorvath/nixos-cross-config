@@ -264,10 +264,11 @@ let
     lib.mapNullable resolveBelow (findDeclaration [ ] path options);
 
   # Placement and assertions share each path's deep resolution.
-  destinations = lib.pipe optionPaths [
+  resolvedDestinations = lib.pipe optionPaths [
     (map (path: lib.nameValuePair (builtins.toJSON path) (resolveDestination path)))
     builtins.listToAttrs
   ];
+  resolvedDestination = path: resolvedDestinations.${builtins.toJSON path};
 
   statusOf =
     option:
@@ -299,7 +300,7 @@ in
   receivingDefinition =
     path: definitions:
     let
-      destination = destinations.${builtins.toJSON path};
+      destination = resolvedDestination path;
 
       mergeAtOption =
         remaining:
@@ -339,5 +340,5 @@ in
 
     Returns "writable", "missing", or "read-only".
   */
-  status = path: statusOf destinations.${builtins.toJSON path};
+  status = path: statusOf (resolvedDestination path);
 }
