@@ -220,27 +220,26 @@ let
     else
       null;
 
-  destination = findDeclaration [ ] path options;
+  # Inspect local submodule definitions without receiving our own
+  # contribution.
+  localOptions =
+    (extendModules {
+      specialArgs.__nixosCrossConfigInspectionPaths = inspectionPaths ++ [ path ];
+    }).options;
 
-  receiverLocalOption =
-    let
-      # Inspect local submodule definitions without receiving our own
-      # contribution.
-      localOptions =
-        (extendModules {
-          specialArgs.__nixosCrossConfigInspectionPaths = inspectionPaths ++ [ path ];
-        }).options;
-    in
-    findLocalOption {
-      inherit (destination) prefix remaining;
-      option = lib.getAttrFromPath destination.prefix localOptions;
-    };
-
-  requiresLocalInspection = destination.remaining != [ ] && !(destination.option.readOnly or false);
+  # Only paths below a writable option need the receiver evaluated again.
+  resolveDestination =
+    {
+      prefix,
+      remaining,
+      option,
+    }:
+    if remaining == [ ] || option.readOnly or false then
+      option
+    else
+      findLocalOption {
+        inherit prefix remaining;
+        option = lib.getAttrFromPath prefix localOptions;
+      };
 in
-if destination == null then
-  null
-else if requiresLocalInspection then
-  receiverLocalOption
-else
-  destination.option
+lib.mapNullable resolveDestination (findDeclaration [ ] path options)

@@ -1,12 +1,15 @@
+/*
+  Declares the settings shared by every node in a collection, so both the
+  NixOS module and the flake module can offer them. Per-node options such as
+  crossConfig.name stay in nixos/module.nix; a flake-level default for them
+  would give every node the same identity.
+*/
 {
   lib,
   nodeName ? null,
 }:
 let
-  reservedRoots = [
-    "crossConfig"
-    "_module"
-  ];
+  reservedRoots = import ./reserved-roots.nix;
 
   mergeNodeConfigurations =
     location: definitions:
@@ -27,7 +30,9 @@ let
     merge = mergeNodeConfigurations;
   };
 
-  optionPathsType = (lib.types.listOf (lib.types.nonEmptyListOf lib.types.str)) // {
+  optionPathType = lib.types.nonEmptyListOf lib.types.str;
+
+  optionPathsType = lib.types.listOf optionPathType // {
     # An explicit empty list is valid, but an unset registration list is not.
     emptyValue = { };
   };
@@ -51,8 +56,6 @@ let
     ];
 in
 {
-  inherit reservedRoots;
-
   options = {
     nodeConfigurations = lib.mkOption {
       type = nodeConfigurationsType;

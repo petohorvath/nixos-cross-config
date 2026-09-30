@@ -6,11 +6,11 @@
   optionPaths,
   options,
   receiver,
-  reservedRoots,
 }:
 let
-  # Declarations fix the outer names before any allowed paths are inspected.
-  receivingOptions = removeAttrs options reservedRoots;
+  # Reserved roots never receive paths, but defining them here would make
+  # crossConfig and _module.args depend on optionPaths and recurse.
+  receivingOptions = removeAttrs options (import ./reserved-roots.nix);
 
   findReceivingOption = import ./destination-inspection.nix {
     inherit

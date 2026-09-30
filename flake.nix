@@ -1,5 +1,5 @@
 {
-  description = "Configuration contributions between caller-owned NixOS nodes";
+  description = "Define NixOS options for one node from another node's modules";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
@@ -10,14 +10,14 @@
   };
 
   outputs =
-    inputs:
-    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+    inputs@{ flake-parts, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [
         "x86_64-linux"
         "aarch64-linux"
       ];
 
-      imports = [ inputs.flake-parts.flakeModules.partitions ];
+      imports = [ flake-parts.flakeModules.partitions ];
 
       partitions.dev.module = ./dev;
 

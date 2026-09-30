@@ -39,7 +39,6 @@ let
       ;
     inherit (cfg) nodeConfigurations optionPaths;
     receiver = cfg.name;
-    inherit (settings) reservedRoots;
   };
   inherit (receiving) destinationAssertions receivedConfig;
 
