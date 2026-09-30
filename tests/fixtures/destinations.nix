@@ -1,5 +1,11 @@
 { mkNodes }:
 let
+  siblingEntries = [
+    "alpha"
+    "beta"
+    "gamma"
+  ];
+
   mkReceiver =
     receiver:
     (mkNodes {
@@ -206,6 +212,41 @@ in
         );
       }
     )).sender;
+  readOnlySiblingDestination =
+    (mkNodes {
+      optionPaths = map (entry: [
+        "inventory"
+        "entries"
+        entry
+        "value"
+      ]) siblingEntries;
+      modules = {
+        sender = ./destination-sibling-sender.nix;
+        receiver =
+          { lib, ... }:
+          {
+            options.inventory.entries = lib.mkOption {
+              type = lib.types.attrsOf (
+                lib.types.submodule (
+                  { name, ... }:
+                  {
+                    options.value = lib.mkOption {
+                      type = lib.types.str;
+                      readOnly = name == "beta";
+                      default = "local";
+                      description = ''
+                        Only the `beta` entry rejects contributions.
+                      '';
+                    };
+                  }
+                )
+              );
+              default = { };
+              description = "Sibling entries with one read-only value.";
+            };
+          };
+      };
+    }).receiver;
   unregisteredDestination =
     (mkNodes {
       optionPaths = [ ];
