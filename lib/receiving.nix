@@ -1,6 +1,5 @@
 {
-  extendModules,
-  inspectionPaths,
+  destinations,
   lib,
   nodeConfigurations,
   optionPaths,
@@ -11,15 +10,6 @@ let
   # Reserved roots never receive paths, but defining them here would make
   # crossConfig and _module.args depend on optionPaths and recurse.
   receivingOptions = removeAttrs options (import ./reserved-roots.nix);
-
-  findReceivingOption = import ./destination-inspection.nix {
-    inherit
-      extendModules
-      inspectionPaths
-      lib
-      options
-      ;
-  };
 
   withContributionContext =
     sender: path: definition:
@@ -44,51 +34,15 @@ let
       lib.concatLists
     ];
 
-  isWritable = option: option != null && !(option.readOnly or false);
-
-  mkReceivingDefinition =
-    path:
-    let
-      definitions = lib.mkMerge (collectDefinitions path);
-      option = findReceivingOption path;
-
-      mergeAtOption =
-        remaining:
-        if remaining == [ ] then
-          definitions
-        else
-          # Inspect instances only inside their declared writable option.
-          # A false `lib.mkIf` would still push its attributes into the path;
-          # an empty merge defines none.
-          lib.mkMerge (lib.optional (isWritable option) (lib.setAttrByPath remaining definitions));
-
-      mkPathDefinitions =
-        remaining: declarations:
-        if remaining == [ ] then
-          { }
-        else
-          let
-            segment = builtins.head remaining;
-            rest = builtins.tail remaining;
-            destination = declarations.${segment} or null;
-          in
-          lib.optionalAttrs (destination != null && (!lib.isOption destination || isWritable destination)) {
-            ${segment} =
-              if lib.isOption destination then mergeAtOption rest else mkPathDefinitions rest destination;
-          };
-    in
-    # Keep declaration inspection below its namespace so module arguments
-    # resolve.
-    mkPathDefinitions path options;
-
   mkReceivingNamespace =
     root: _:
     lib.pipe optionPaths [
-      (builtins.filter (path: builtins.head path == root && !(builtins.elem path inspectionPaths)))
+      (builtins.filter (path: builtins.head path == root))
       (lib.concatMap (
         path:
         let
-          definition = mkReceivingDefinition path;
+          # Resolve below the namespace so module arguments resolve.
+          definition = destinations.receivingDefinition path (collectDefinitions path);
         in
         lib.optional (builtins.hasAttr root definition) definition.${root}
       ))
@@ -98,14 +52,13 @@ let
   mkDestinationAssertion =
     path:
     let
-      option = findReceivingOption path;
       definitions = collectDefinitions path;
-      reason = if option == null then "missing" else "read-only";
+      status = destinations.status path;
     in
     {
-      assertion = definitions == [ ] || isWritable option;
+      assertion = definitions == [ ] || status == "writable";
       message =
-        "nixos-cross-config: receiver `${receiver}` has a ${reason} destination `${lib.showOption path}`.\nContributions: "
+        "nixos-cross-config: receiver `${receiver}` has a ${status} destination `${lib.showOption path}`.\nContributions: "
         + lib.concatMapStringsSep ", " (definition: definition.file) definitions
         + "\n";
     };

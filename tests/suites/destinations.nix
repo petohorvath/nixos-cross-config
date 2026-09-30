@@ -230,6 +230,59 @@ in
       };
     };
 
+  siblingSubmoduleOptions =
+    let
+      entries = [
+        "alpha"
+        "beta"
+        "gamma"
+      ];
+      nodes = mkNodes {
+        optionPaths = map (entry: [
+          "inventory"
+          "entries"
+          entry
+          "value"
+        ]) entries;
+        modules = {
+          sender = ../fixtures/destination-sibling-sender.nix;
+          receiver =
+            { lib, ... }:
+            {
+              options.inventory.entries = lib.mkOption {
+                type = lib.types.attrsOf (
+                  lib.types.submodule {
+                    options.value = lib.mkOption {
+                      type = lib.types.str;
+                      default = "local";
+                      description = "Value receiving one sibling contribution.";
+                    };
+                  }
+                );
+                default = { };
+                description = "Sibling entries below one submodule option.";
+              };
+              config.inventory.entries.delta.value = "local-delta";
+            };
+        };
+      };
+    in
+    {
+      testValues = {
+        expr = lib.mapAttrs (_: entry: entry.value) nodes.receiver.config.inventory.entries;
+        expected = {
+          alpha = "contributed-alpha";
+          beta = "contributed-beta";
+          gamma = "contributed-gamma";
+          delta = "local-delta";
+        };
+      };
+      testAssertions = {
+        expr = allAssertionsPass nodes;
+        expected = true;
+      };
+    };
+
   receiverLocalSubmoduleDeclaration =
     let
       nodes = mkNodes {
@@ -705,6 +758,18 @@ in
     expectedError = {
       type = "ThrownError";
       msg = messagePattern ([ "read-only destination" ] ++ contributionOrigin);
+    };
+  };
+  testRejectsReadOnlySiblingDestination = {
+    expr = destinationRejections.readOnlySiblingDestination;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "read-only destination `inventory.entries.beta.value`"
+        "sender `sender`"
+        "receiver `receiver`"
+        "fixtures/destination-sibling-sender.nix"
+      ];
     };
   };
   testRejectsReadOnlySubmoduleDestination = {
