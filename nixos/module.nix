@@ -28,15 +28,17 @@ let
     sender = cfg.name;
   };
 
-  inspectionPaths = specialArgs.__nixosCrossConfigInspectionPaths or [ ];
-  isInspectingDestinations = inspectionPaths != [ ];
-  receiving = import ../lib/receiving.nix {
+  destinations = import ../lib/destinations.nix {
     inherit
       extendModules
-      inspectionPaths
       lib
       options
+      specialArgs
       ;
+    inherit (cfg) optionPaths;
+  };
+  receiving = import ../lib/receiving.nix {
+    inherit destinations lib options;
     inherit (cfg) nodeConfigurations optionPaths;
     receiver = cfg.name;
   };
@@ -70,7 +72,7 @@ in
     {
       # Inspection checks local declarations; validate contributions only in
       # the main evaluation.
-      assertions = lib.optionals (!isInspectingDestinations) assertions;
+      assertions = lib.optionals (!destinations.isInspecting) assertions;
     }
   ];
 }

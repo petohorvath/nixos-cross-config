@@ -1,11 +1,25 @@
+/*
+  Resolves and places contributions at destinations: option paths on the
+  receiver where contributions' definitions go.
+
+  Resolution has two phases. Structural resolution walks the receiver's
+  declarations and is safe while receiving attribute names are built. Deep
+  resolution re-evaluates the receiver through `extendModules` to inspect
+  submodule instances, so it may only be forced inside a matched option's
+  value; forcing it earlier makes the names recurse.
+*/
 {
   extendModules,
-  inspectionPaths,
   lib,
+  optionPaths,
   options,
+  specialArgs,
 }:
-path:
 let
+  # Paths whose destinations enclosing evaluations are inspecting; each
+  # inspection re-evaluates the receiver without receiving at its own path.
+  inspectionPaths = specialArgs.__nixosCrossConfigInspectionPaths or [ ];
+
   restoreDefinitionProperties = import ./restore-definition-properties.nix { inherit lib; };
 
   # Returns `{ prefix, remaining, option }` for the first option on the path,
@@ -220,26 +234,110 @@ let
     else
       null;
 
-  # Inspect local submodule definitions without receiving our own
-  # contribution.
-  localOptions =
-    (extendModules {
-      specialArgs.__nixosCrossConfigInspectionPaths = inspectionPaths ++ [ path ];
-    }).options;
-
-  # Only paths below a writable option need the receiver evaluated again.
+  /*
+    Resolves `path` below its structural declaration. Only paths below a
+    writable option need the receiver evaluated again, without receiving our
+    own contribution at `path`, so that receiver-local submodule definitions
+    decide the destination.
+  */
   resolveDestination =
-    {
-      prefix,
-      remaining,
-      option,
-    }:
-    if remaining == [ ] || option.readOnly or false then
-      option
+    path:
+    let
+      resolveBelow =
+        {
+          prefix,
+          remaining,
+          option,
+        }:
+        if remaining == [ ] || option.readOnly or false then
+          option
+        else
+          findLocalOption {
+            inherit prefix remaining;
+            option =
+              lib.getAttrFromPath prefix
+                (extendModules {
+                  specialArgs.__nixosCrossConfigInspectionPaths = inspectionPaths ++ [ path ];
+                }).options;
+          };
+    in
+    lib.mapNullable resolveBelow (findDeclaration [ ] path options);
+
+  # Placement and assertions share each path's deep resolution.
+  destinations = lib.pipe optionPaths [
+    (map (path: lib.nameValuePair (builtins.toJSON path) (resolveDestination path)))
+    builtins.listToAttrs
+  ];
+
+  statusOf =
+    option:
+    if option == null then
+      "missing"
+    else if option.readOnly or false then
+      "read-only"
     else
-      findLocalOption {
-        inherit prefix remaining;
-        option = lib.getAttrFromPath prefix localOptions;
-      };
+      "writable";
+
+  isWritable = option: statusOf option == "writable";
 in
-lib.mapNullable resolveDestination (findDeclaration [ ] path options)
+{
+  # Whether this evaluation inspects destinations for an enclosing one.
+  isInspecting = inspectionPaths != [ ];
+
+  /*
+    Places definitions at a destination.
+
+    Inputs:
+    - path: an allowed option path.
+    - definitions: the definitions contributed at `path`.
+
+    Returns a receiver configuration fragment. Its attribute names come from
+    the receiver's declarations alone; the deep writability check stays
+    inside the matched option's value. The fragment is empty for a path
+    whose destination this evaluation is inspecting.
+  */
+  receivingDefinition =
+    path: definitions:
+    let
+      destination = destinations.${builtins.toJSON path};
+
+      mergeAtOption =
+        remaining:
+        if remaining == [ ] then
+          lib.mkMerge definitions
+        else
+          # A false `lib.mkIf` would still push its attributes into the path;
+          # an empty merge defines none.
+          lib.mkMerge (
+            lib.optional (isWritable destination) (lib.setAttrByPath remaining (lib.mkMerge definitions))
+          );
+
+      # Repeats the structural walk so attribute names never force deep
+      # resolution.
+      mkPathDefinitions =
+        remaining: declarations:
+        if remaining == [ ] then
+          { }
+        else
+          let
+            segment = builtins.head remaining;
+            rest = builtins.tail remaining;
+            declaration = declarations.${segment} or null;
+          in
+          lib.optionalAttrs (declaration != null && (!lib.isOption declaration || isWritable declaration)) {
+            ${segment} =
+              if lib.isOption declaration then mergeAtOption rest else mkPathDefinitions rest declaration;
+          };
+    in
+    if builtins.elem path inspectionPaths then { } else mkPathDefinitions path options;
+
+  /*
+    Classifies a destination for assertions.
+
+    Inputs:
+    - path: an allowed option path.
+
+    Returns "writable", "missing", or "read-only".
+  */
+  status = path: statusOf destinations.${builtins.toJSON path};
+}
