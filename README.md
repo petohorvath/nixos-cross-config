@@ -145,7 +145,7 @@ Development supports `x86_64-linux` and `aarch64-linux`. The root lock selects N
 
 - [API reference](docs/api.md): module settings, compatibility adapter, contributions, merging, conditions, and errors.
 - [Development and checks](docs/development.md).
-- [Domain glossary](CONTEXT.md).
+- [Domain glossary](GLOSSARY.md).
 - [Architectural decisions](docs/adr/).
 - [Destination inspection design](docs/destination-inspection.md): how the implementation checks receiving options.
 

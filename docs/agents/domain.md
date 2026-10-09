@@ -3,13 +3,13 @@
 This repo uses a single-context layout:
 
 ```text
-CONTEXT.md
+GLOSSARY.md
 docs/adr/
 ```
 
 ## Before exploration
 
-Read root `CONTEXT.md` and the ADRs in `docs/adr/` relevant to the task.
+Read root `GLOSSARY.md` and the ADRs in `docs/adr/` relevant to the task.
 
 Skip missing files silently. The `domain-modeling` skill creates domain documentation lazily when terminology or decisions are resolved.
 
