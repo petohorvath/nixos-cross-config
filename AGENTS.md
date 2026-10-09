@@ -16,4 +16,4 @@ The five default triage labels are used. See `docs/agents/triage-labels.md` befo
 
 ### Domain docs
 
-Single-context layout: root `CONTEXT.md` and `docs/adr/`. See `docs/agents/domain.md` before exploring the repo.
+Single-context layout: root `GLOSSARY.md` and `docs/adr/`. See `docs/agents/domain.md` before exploring the repo.
