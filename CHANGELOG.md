@@ -21,7 +21,7 @@
 - Keep explicit `systems` bindings and public flake outputs, preserving the default nixpkgs revision in the root lock.
 - Run named value comparisons, expected errors, native recursion cases, and diagnostic message assertions through one native nix-unit collection.
 - **Breaking (development interface):** replace separate evaluation, diagnostic, and value-cycle check outputs with `checks.<system>.tests`. The development shell provides nix-unit for focused runs, including all assertions for each selected test. Rename the collection loader from `dev/fixtures.nix` to `tests/entrypoint.nix` and remove its separate `tests` and `failures` trees. Rejection tests now require the intended error message as well as its type.
-- **Breaking (CI statuses):** call shared policy `v0.6` through the minor-series tag, with no caller inputs; the policy's default systems are `x86_64-linux` and `aarch64-linux`. The policy checks inputs, public outputs, the development shell, and the formatter, evaluates every root output, and builds every `checks` entry with the locked, stable, and unstable nixpkgs revisions. Formatting and lint stay in project-owned root checks.
+- **Breaking (CI statuses):** call shared policy `v0.6` through the minor-series tag, with no caller inputs; the policy's default systems are `x86_64-linux` and `aarch64-linux`. The policy checks inputs, public outputs, the development shell, and the formatter. It also evaluates every root output and builds the `checks` entries with the locked, stable, and unstable nixpkgs revisions. Formatting and lint stay in project-owned root checks.
 
 ### Removed
 
