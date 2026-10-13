@@ -12,6 +12,14 @@ nix fmt --no-update-lock-file
 nix flake check --no-update-lock-file --print-build-logs
 ```
 
+A cold `nix flake check` can exceed ten minutes when other checks share the machine. Start it in the background from shells that stop or detach long foreground commands, such as agent tool runners.
+
+When piping the check's output, read its exit status from `${PIPESTATUS[0]}` in the same command, before anything else runs; `$?` reports the last command in the pipeline. Judge the result by that status rather than by trailing output:
+
+```bash
+nix flake check --no-update-lock-file --print-build-logs 2>&1 | tail -5; echo "exit=${PIPESTATUS[0]}"
+```
+
 `nix develop` is the explicit shell entrypoint. The default shell supports `x86_64-linux` and `aarch64-linux` and supplies Nix, nix-unit, nil, nixfmt, statix, deadnix, Git, shfmt, Prettier, actionlint, and the root formatter. All tools come from the selected `nixpkgs` input. Overriding that input also selects the shell and formatter tools. No KVM access or VM execution is required.
 
 The root `.envrc` loads nix-direnv before calling `use flake`. nix-direnv caches the development environment and protects its dependencies from Nix garbage collection. Development configuration lives in `dev/`, with one root `flake.nix` and `flake.lock`; `dev/` is a flake-parts partition, not a separate flake. `.prettierrc.json` stays at the root for editor discovery.
