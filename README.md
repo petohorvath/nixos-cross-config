@@ -6,26 +6,26 @@ nixos-cross-config is a NixOS module that lets one NixOS configuration define op
 
 Each participating NixOS configuration is a **node**, and the caller builds all of them into one **node collection**. Every node imports the module and sets its **node identity**: its name in the collection, which can differ from its hostname. A **sender** defines a **contribution** under `crossConfig.contributions.<receiver>`, and the **receiver**'s configuration includes those definitions. A node can be both, including a receiver of its own contributions.
 
-Contributions are allowed only at the **allowed option paths** that every node shares in `crossConfig.optionPaths`. The receiver's own modules must declare the option at each such path; contributions define existing options and never add imports or declarations. Contributed and local definitions merge under ordinary NixOS rules, so `lib.mkDefault`, `lib.mkForce`, `lib.mkIf`, and list ordering work as they do in any module, and a local definition has no extra priority.
+Contributions are allowed only at the **allowed option paths** that every node shares in `crossConfig.optionPaths`. The receiver's own modules must declare each option that receives contributions; contributions define existing options and never add imports or declarations. Contributed and local definitions merge under ordinary NixOS rules, so `lib.mkDefault`, `lib.mkForce`, `lib.mkIf`, and list ordering work as they do in any module, and a local definition has no extra priority.
 
-Everything happens during evaluation. The receiver's resulting configuration contains its contributions and deploys through the usual process; there is no runtime exchange between machines. The [glossary](GLOSSARY.md) defines these terms, and the [architectural decisions](docs/adr/) record the reasoning behind the design.
+Everything happens during evaluation. The receiver's resulting configuration contains its contributions and deploys through the usual process; there is no runtime exchange between machines. The [glossary](GLOSSARY.md) defines these terms. The [architectural decisions](docs/adr/) record the reasoning behind the design, and the [destination inspection design](docs/destination-inspection.md) explains how receiving options are checked.
 
 ## Entry points
 
-| Flake output           | Plain Nix import          | Purpose                                                                                |
-| ---------------------- | ------------------------- | -------------------------------------------------------------------------------------- |
-| `nixosModules.default` | `nixos/module.nix`        | The NixOS module. Import it on every participating node.                               |
-| `flakeModules.default` | `flake-module.nix`        | Optional flake-parts module that shares the collection settings at flake scope.        |
-| `lib.mkModule`         | `(import ./lib).mkModule` | Compatibility constructor for existing consumers; it configures the same NixOS module. |
+| Flake output           | Plain Nix import                             | Purpose                                                                                |
+| ---------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `nixosModules.default` | [`nixos/module.nix`](nixos/module.nix)       | The NixOS module. Import it on every participating node.                               |
+| `flakeModules.default` | [`flake-module.nix`](flake-module.nix)       | Optional flake-parts module that shares the collection settings at flake scope.        |
+| `lib.mkModule`         | [`(import ./lib).mkModule`](lib/default.nix) | Compatibility constructor for existing consumers; it configures the same NixOS module. |
 
 Every entry point configures the NixOS module with the receiving evaluation's `lib`, and plain Nix imports evaluate no development inputs. The [API reference](docs/api.md#compatibility-adapter) explains how to migrate from `lib.mkModule` to `nixosModules.default`.
 
 ## Requirements
 
-- All nodes in a collection use one nixpkgs revision and are evaluated within one Nix computation. Their source modules can come from separate repositories.
+- All nodes in a collection use one nixpkgs revision and are evaluated within one Nix computation. Each node can have its own module evaluation, and source modules can come from separate repositories.
 - Each entry in the collection exposes its evaluated configuration as `.config`, as `nixpkgs.lib.nixosSystem` results do. Nodes built by other host and guest helpers qualify; the [host and guest tests](tests/suites/host-guest.nix) include a guest created through NixOS's `containers` option.
 
-The checks run against NixOS 26.05 and the shared project policy's stable and unstable nixpkgs revisions, on `x86_64-linux` and `aarch64-linux`.
+The checks run against NixOS 26.05 and the [shared project policy](docs/development.md#ci-and-policy)'s stable and unstable nixpkgs revisions, on `x86_64-linux` and `aarch64-linux`.
 
 ## Install
 
@@ -48,7 +48,7 @@ Every node must use the same collection and allowed option paths, so define thos
 
 ## Usage
 
-The following flake builds two NixOS container configurations, `application` and `proxy`. The application contributes the proxy settings for its virtual host, and the proxy defines a server alias for the same host locally:
+The following flake defines two NixOS container configurations, `application` and `proxy`. The application contributes the proxy settings for its virtual host, and the proxy defines a server alias for the same host locally:
 
 ```nix
 {
@@ -131,11 +131,11 @@ crossConfig.contributions.proxy.services.nginx.virtualHosts."app.example" = {
 };
 ```
 
-Read the merged result from the receiver's configuration, such as `nodes.proxy.config`; the evaluated value of `crossConfig.contributions` is internal. A priority at or below the allowed option path applies on the receiver, as `lib.mkDefault` does here, so the proxy can still override the backend. A priority on `crossConfig.contributions` or a receiver entry only selects definitions within the sender.
+Read the merged result from the receiver's configuration, such as `nodes.proxy.config`; the evaluated value of `crossConfig.contributions` is internal. A priority at or below the allowed option path applies on the receiver, as `lib.mkDefault` does here, so the proxy can still override the backend.
 
-A contribution outside the allowed option paths fails evaluation of the sender, and conflicting values fail with the receiving option's usual type or merge error. A contribution to an unknown receiver, or to a missing or read-only option, fails NixOS assertions instead. Reading a contributed value alone does not check assertions, so evaluate `config.system.build.toplevel` or `config.assertions` to validate a configuration. Errors name the sender, receiver, path, and source file where available.
+Some invalid contributions, such as one to a missing receiving option, fail only NixOS assertions. Reading a contributed value alone does not check them, so evaluate `config.system.build.toplevel` or `config.assertions` to validate a configuration.
 
-The [API reference](docs/api.md) covers priorities, list ordering, conditions, sender values inside receiving submodules, self and reciprocal contributions, and every validation error.
+The [API reference](docs/api.md) covers priorities, list ordering, conditions, sender values inside receiving submodules, self and reciprocal contributions, and validation errors.
 
 ## Share settings with flake-parts
 
@@ -152,7 +152,7 @@ The configured module supplies the shared settings with `lib.mkDefault`, so exte
 
 ## Contributing
 
-Pull requests are welcome; every merge needs human approval and passing required checks. Report bugs and ask questions in [GitHub Issues](https://github.com/petohorvath/nixos-cross-config/issues). [CONTRIBUTING.md](CONTRIBUTING.md) describes the workflow, public contract, and release rules, and the [development instructions](docs/development.md) cover the development shell, formatter, and checks.
+Pull requests are welcome, and issues are tracked in [GitHub Issues](https://github.com/petohorvath/nixos-cross-config/issues). [CONTRIBUTING.md](CONTRIBUTING.md) describes the workflow, public contract, and release rules, and the [development instructions](docs/development.md) cover the development shell, formatter, and checks.
 
 ## License
 
