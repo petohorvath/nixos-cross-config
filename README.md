@@ -1,12 +1,54 @@
 # nixos-cross-config
 
-Define NixOS options for one node from another node's modules. For example, an application node can define its nginx virtual host on a proxy node. NixOS merges these definitions with the proxy's local settings.
+nixos-cross-config is a NixOS module that lets one NixOS configuration define options on another configuration in the same flake or evaluation. An application's modules can define the nginx virtual host it needs on a proxy, and NixOS merges that definition with the proxy's own settings. Configuration that one machine needs from another can live with the service that needs it, so the receiving host doesn't have to repeat it.
 
-## Quickstart
+## Overview
 
-This example evaluates two NixOS container configurations: `application` and `proxy`. Each named configuration is a **node**. The application is the **sender**, and the proxy is the **receiver**. The virtual host definition that the application supplies is a **contribution**.
+Each participating NixOS configuration is a **node**, and the caller builds all of them into one **node collection**. Every node imports the module and sets its **node identity**: its name in the collection, which can differ from its hostname. A **sender** defines a **contribution** under `crossConfig.contributions.<receiver>`, and the **receiver**'s configuration includes those definitions. A node can be both, including a receiver of its own contributions.
 
-With Nix and the `nix-command` and `flakes` features enabled, save the following as `flake.nix` in a new directory:
+Contributions are allowed only at the **allowed option paths** that every node shares in `crossConfig.optionPaths`. The receiver's own modules must declare the option at each such path; contributions define existing options and never add imports or declarations. Contributed and local definitions merge under ordinary NixOS rules, so `lib.mkDefault`, `lib.mkForce`, `lib.mkIf`, and list ordering work as they do in any module, and a local definition has no extra priority.
+
+Everything happens during evaluation. The receiver's resulting configuration contains its contributions and deploys through the usual process; there is no runtime exchange between machines. The [glossary](GLOSSARY.md) defines these terms, and the [architectural decisions](docs/adr/) record the reasoning behind the design.
+
+## Entry points
+
+| Flake output           | Plain Nix import          | Purpose                                                                                |
+| ---------------------- | ------------------------- | -------------------------------------------------------------------------------------- |
+| `nixosModules.default` | `nixos/module.nix`        | The NixOS module. Import it on every participating node.                               |
+| `flakeModules.default` | `flake-module.nix`        | Optional flake-parts module that shares the collection settings at flake scope.        |
+| `lib.mkModule`         | `(import ./lib).mkModule` | Compatibility constructor for existing consumers; it configures the same NixOS module. |
+
+Every entry point configures the NixOS module with the receiving evaluation's `lib`, and plain Nix imports evaluate no development inputs. The [API reference](docs/api.md#compatibility-adapter) explains how to migrate from `lib.mkModule` to `nixosModules.default`.
+
+## Requirements
+
+- All nodes in a collection use one nixpkgs revision and are evaluated within one Nix computation. Their source modules can come from separate repositories.
+- Each entry in the collection exposes its evaluated configuration as `.config`, as `nixpkgs.lib.nixosSystem` results do. Nodes built by other host and guest helpers qualify; the [host and guest tests](tests/suites/host-guest.nix) include a guest created through NixOS's `containers` option.
+
+The checks run against NixOS 26.05 and the shared project policy's stable and unstable nixpkgs revisions, on `x86_64-linux` and `aarch64-linux`.
+
+## Install
+
+Add the flake input and let it follow the consumer's nixpkgs:
+
+```nix
+inputs.crossConfig.url = "github:petohorvath/nixos-cross-config";
+inputs.crossConfig.inputs.nixpkgs.follows = "nixpkgs";
+```
+
+Import `crossConfig.nixosModules.default` on every participating node and set its three required options. Without flakes, import `nixos/module.nix` from a checkout instead.
+
+| Option                           | Value                                                                                                                          |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `crossConfig.name`               | This node's identity in the collection, such as `"application"`.                                                               |
+| `crossConfig.nodeConfigurations` | The lazy attribute set of all nodes in the collection.                                                                         |
+| `crossConfig.optionPaths`        | The list of allowed option paths, each a nonempty list of literal attribute names. An explicit `[ ]` permits no contributions. |
+
+Every node must use the same collection and allowed option paths, so define those two in a settings module that all nodes import, and set `crossConfig.name` on each node. Path lists from several modules merge, and duplicate paths deliver contributions once. Importing the module enables both sending and receiving; there is no separate enable option.
+
+## Usage
+
+The following flake builds two NixOS container configurations, `application` and `proxy`. The application contributes the proxy settings for its virtual host, and the proxy defines a server alias for the same host locally:
 
 ```nix
 {
@@ -14,37 +56,35 @@ With Nix and the `nix-command` and `flakes` features enabled, save the following
   inputs.crossConfig.url = "github:petohorvath/nixos-cross-config";
   inputs.crossConfig.inputs.nixpkgs.follows = "nixpkgs";
 
-  outputs = { nixpkgs, crossConfig, ... }:
+  outputs =
+    { nixpkgs, crossConfig, ... }:
     let
-      system = "x86_64-linux";
-
       modules = {
-        application = {
-          crossConfig.contributions.proxy.services.nginx.virtualHosts."app.example" = {
-            locations."/".proxyPass = "http://192.0.2.10:8080";
-          };
+        application.crossConfig.contributions.proxy.services.nginx.virtualHosts."app.example" = {
+          locations."/".proxyPass = "http://192.0.2.10:8080";
         };
-
-        proxy = {
-          services.nginx = {
-            enable = true;
-            virtualHosts."app.example".serverAliases = [ "www.app.example" ];
-          };
+        proxy.services.nginx = {
+          enable = true;
+          virtualHosts."app.example".serverAliases = [ "www.app.example" ];
         };
       };
-
-      # Both nodes import the same collection settings.
       sharedSettings = {
         imports = [ crossConfig.nixosModules.default ];
         crossConfig = {
           nodeConfigurations = nodes;
-          optionPaths = [ [ "services" "nginx" "virtualHosts" ] ];
+          optionPaths = [
+            [
+              "services"
+              "nginx"
+              "virtualHosts"
+            ]
+          ];
         };
       };
-
-      nodes = builtins.mapAttrs (name: module:
+      nodes = builtins.mapAttrs (
+        name: module:
         nixpkgs.lib.nixosSystem {
-          inherit system;
+          system = "x86_64-linux";
           modules = [
             sharedSettings
             {
@@ -64,95 +104,56 @@ With Nix and the `nix-command` and `flakes` features enabled, save the following
 }
 ```
 
-The `nodes` attribute set contains both evaluated configurations. The shared module supplies that collection lazily through `crossConfig.nodeConfigurations`. Each node sets `crossConfig.name` to its collection identity: `application` or `proxy`, independently of its hostname.
+`sharedSettings` passes the `nodes` collection to every node lazily, and each node's identity comes from its attribute name rather than its hostname. The container settings keep the example independent of host hardware.
 
-The container settings keep this example independent of host hardware. The backend address is illustrative; the example evaluates configuration without starting an application or deploying either node.
-
-If the directory is in a Git repository, run `git add flake.nix` before evaluation. Run the following command from the directory containing `flake.nix`; Nix creates `flake.lock` to pin the inputs:
+Save the flake as `flake.nix` in a new directory, and run `git add flake.nix` if the directory is in a Git repository. With the `nix-command` and `flakes` features enabled, evaluate the proxy's virtual host:
 
 ```bash
 nix eval --json .#nixosConfigurations.proxy.config.services.nginx.virtualHosts \
-  --apply 'hosts: hosts."app.example".locations."/".proxyPass'
-# "http://192.0.2.10:8080"
+  --apply 'hosts: { inherit (hosts."app.example") serverAliases; proxyPass = hosts."app.example".locations."/".proxyPass; }'
 ```
 
-The result is part of the proxy's normal NixOS configuration. Its virtual host also keeps the locally defined `serverAliases = [ "www.app.example" ];`.
+The result merges the application's contribution with the proxy's local definition:
 
-The repository's [minimal example](examples/minimal.nix) uses the same setup and runs in the test suite. See [focused checks](docs/development.md#focused-checks) to run its `example` suite from a checkout.
-
-## API
-
-### `nixosModules.default`
-
-```nix
-{
-  imports = [ crossConfig.nixosModules.default ];
-  crossConfig = {
-    name = "application";
-    nodeConfigurations = nodes;
-    optionPaths = [ [ "services" "nginx" "virtualHosts" ] ];
-  };
-}
+```text
+{"proxyPass":"http://192.0.2.10:8080","serverAliases":["www.app.example"]}
 ```
 
-Import this module on every participating node. All three settings are required:
+Nix creates `flake.lock` on the first evaluation. The backend address is illustrative; evaluation neither starts an application nor deploys either node. The same setup is in [examples/minimal.nix](examples/minimal.nix), which the test suite evaluates.
 
-| Option                           | Value                                                                                                                                  |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `crossConfig.name`               | This node's key in the collection, such as `"application"`. It can differ from `networking.hostName`.                                  |
-| `crossConfig.nodeConfigurations` | The shared, lazy attribute set of nodes. Each entry exposes its evaluated configuration as `.config`.                                  |
-| `crossConfig.optionPaths`        | The shared list of allowed paths. Each path is a nonempty list of literal string segments. An explicit `[ ]` permits no contributions. |
+## Contributions
 
-Importing the module enables both sending and receiving. There is no separate enable option. The receiver's own modules must declare the options that receive contributions.
-
-Share the collection and registrations through imported settings modules. Path lists merge with normal option priorities, and duplicate paths deliver contributions only once. Every participant must use the same collection and normalized path set. Register paths independently of receiving configuration and put service-dependent conditions on contributions. The roots `crossConfig` and `_module` are reserved; those names remain valid below an ordinary receiving root.
-
-Existing consumers can continue calling `crossConfig.lib.mkModule { inherit name nodes optionPaths; }`. This compatibility adapter configures the same module. The [API reference](docs/api.md#compatibility-adapter) explains plain-import access and migration.
-
-### `flakeModules.default`
-
-Flake-parts consumers can import `crossConfig.flakeModules.default` and set `crossConfig.optionPaths` once at flake scope. The adapter provides `config.flake.nixosModules.crossConfig`; each participating node imports that configured NixOS module and sets its own `crossConfig.name`. The node collection defaults lazily to the consumer's `flake.nixosConfigurations`, or `crossConfig.nodeConfigurations` can select an explicit collection containing subsets or guests.
-
-The caller still constructs every node and imports the configured module explicitly. Shared settings enter NixOS as `mkDefault` definitions, so extend path lists at flake scope: an ordinary node-level list replaces the supplied default. See the [flake-parts guide](docs/flake-parts.md) and [evaluated example](examples/flake-parts.nix). Flake-parts remains optional for standalone consumers.
-
-### `crossConfig.contributions`
-
-In the sender's module, set `crossConfig.contributions.<receiver>.<option-path>`:
+A sender defines contributions with ordinary nested assignments, starting with the receiver's identity and continuing with an allowed option path:
 
 ```nix
 crossConfig.contributions.proxy.services.nginx.virtualHosts."app.example" = {
-  locations."/".proxyPass = "http://192.0.2.10:8080";
+  locations."/".proxyPass = lib.mkDefault "http://192.0.2.10:8080";
 };
 ```
 
-Read the merged result from `nodes.<receiver>.config`, as the quickstart command does. The evaluated representation of `crossConfig.contributions` is internal.
+Read the merged result from the receiver's configuration, such as `nodes.proxy.config`; the evaluated value of `crossConfig.contributions` is internal. A priority at or below the allowed option path applies on the receiver, as `lib.mkDefault` does here, so the proxy can still override the backend. A priority on `crossConfig.contributions` or a receiver entry only selects definitions within the sender.
 
-Contributions and local definitions use normal NixOS merging rules. A local definition has no extra priority. Use `lib.mkDefault`, `lib.mkForce`, and list ordering helpers where needed. The [API reference](docs/api.md) explains merging, conditions, validation, and evaluation limits.
+A contribution outside the allowed option paths fails evaluation of the sender, and conflicting values fail with the receiving option's usual type or merge error. A contribution to an unknown receiver, or to a missing or read-only option, fails NixOS assertions instead. Reading a contributed value alone does not check assertions, so evaluate `config.system.build.toplevel` or `config.assertions` to validate a configuration. Errors name the sender, receiver, path, and source file where available.
 
-## Use with existing configurations
+The [API reference](docs/api.md) covers priorities, list ordering, conditions, sender values inside receiving submodules, self and reciprocal contributions, and every validation error.
 
-Add the library input to the existing flake and import `nixosModules.default` on each participating node. Supply the existing collection through `crossConfig.nodeConfigurations`, compose `crossConfig.optionPaths` in shared settings modules, and set each node's `crossConfig.name` locally.
+## Share settings with flake-parts
 
-Keep each host's hardware configuration and existing `system.stateVersion`. The library accepts nodes built by existing host and guest helpers as long as each entry exposes `.config`. The [host and guest example in the tests](tests/suites/host-guest.nix) shows how to include a guest created through NixOS's `containers` option.
+Flake-parts consumers can import `crossConfig.flakeModules.default` and set `crossConfig.optionPaths` once at flake scope. The node collection defaults to the flake's `nixosConfigurations`; set `crossConfig.nodeConfigurations` at flake scope to select a subset or include guests. The module provides `config.flake.nixosModules.crossConfig`, which each node imports explicitly alongside its own `crossConfig.name`.
 
-## Support
+The configured module supplies the shared settings with `lib.mkDefault`, so extend path lists at flake scope: an ordinary node-level list replaces the shared list instead of adding to it. The [flake-parts guide](docs/flake-parts.md) shows default and explicit collections, and [examples/flake-parts.nix](examples/flake-parts.nix) is the evaluated example.
 
-All nodes in a collection must use one nixpkgs revision and be accessible within one Nix computation. Source modules can come from separate repositories, and each node can have its own module evaluation. Node construction and deployment remain the caller's responsibility.
+## Limitations
 
-Development supports `x86_64-linux` and `aarch64-linux`. The root lock selects NixOS 26.05 for ordinary checks. CI also runs the root checks through the shared project policy. The project has no VM suite or tagged release yet. See [CI and policy](docs/development.md#ci-and-policy) for the policy's checks and required statuses.
-
-## Documentation
-
-- [API reference](docs/api.md): module settings, compatibility adapter, contributions, merging, conditions, and errors.
-- [Development and checks](docs/development.md).
-- [Domain glossary](GLOSSARY.md).
-- [Architectural decisions](docs/adr/).
-- [Destination inspection design](docs/destination-inspection.md): how the implementation checks receiving options.
-
-## Development
-
-The root flake supplies the development shell, formatter, and checks through a partition in `dev/`, using one selected `nixpkgs` input. The checks cover the examples. Run `nix fmt --no-update-lock-file` and `nix flake check --no-update-lock-file` from the repository root. Inside the development shell, `nix-unit tests/entrypoint.nix --attr merging` selects a suite from the same collection, including its error-message assertions. Native input overrides select another exact revision for the whole evaluation without changing the committed lock. [Development instructions](docs/development.md) cover prerequisites, exact-revision compatibility checks, focused checks, and CI.
+- No release is tagged yet. The [changelog](CHANGELOG.md) lists the unreleased breaking changes and their migration steps.
+- Allowed option paths, node identities, and the receiver's imports and option declarations cannot depend on received values. Register paths unconditionally and put service-dependent conditions on the contributions.
+- Allowed option paths cannot start with `crossConfig` or `_module`. These names remain valid deeper in a path.
+- Node construction, discovery, and deployment remain the caller's responsibility.
 
 ## Contributing
 
-Follow [CONTRIBUTING.md](CONTRIBUTING.md) for the shared policy, PR workflow, public contracts, and release rules. [CHANGELOG.md](CHANGELOG.md) records unreleased changes and migration notes. Original code is licensed under [MIT](LICENSE).
+Pull requests are welcome; every merge needs human approval and passing required checks. Report bugs and ask questions in [GitHub Issues](https://github.com/petohorvath/nixos-cross-config/issues). [CONTRIBUTING.md](CONTRIBUTING.md) describes the workflow, public contract, and release rules, and the [development instructions](docs/development.md) cover the development shell, formatter, and checks.
+
+## License
+
+Licensed under [MIT](LICENSE).
