@@ -15,7 +15,7 @@
 - **Breaking:** rename `crossConfig.nodeCollection` to `crossConfig.nodeConfigurations` at NixOS and flake-parts scope.
 - **Breaking:** rename the outgoing option `crossConfig.nodes` to `crossConfig.contributions`, so `nodes` no longer names both the node collection and the contributions a sender supplies. The `lib.mkModule` argument `nodes` is unchanged.
 - **Breaking:** reject allowed paths rooted at `crossConfig` or `_module` through both interfaces; nested attributes and tags with these names remain supported. Validate required settings and nonempty string-segment paths, and normalize duplicate registrations so contributions arrive once.
-- Explain usage with a complete README example and API summary, and move detailed behavior to a separate API reference.
+- Explain usage with a complete README example and move detailed behavior to a separate API reference.
 - Return `mkFlake` directly from the root flake, with public module and library exports declared there. Keep shell, formatter, treefmt, and check assembly configuration in a `dev` partition, preserving root development commands and `.envrc`.
 - **Breaking:** select tools, fixtures, checks, and examples through one root `nixpkgs` input; remove stable/unstable labels from focused fixtures and root check names. Test runners still accept `nixpkgs` explicitly. Root `nix flake check` validates the selected revision. Native input overrides select another revision for the complete root check interface without changing the committed default.
 - Keep explicit `systems` bindings and public flake outputs, preserving the default nixpkgs revision in the root lock.
