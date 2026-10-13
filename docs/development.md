@@ -97,10 +97,10 @@ The ordinary node helpers exercise `nixosModules.default` through the public fla
 
 ## CI and policy
 
-The [CI workflow](../.github/workflows/check.yml) calls the [shared project policy](https://github.com/petohorvath/nixos-project-policy/blob/v0.5/POLICY.md) in a job named `Policy`. The workflow's `uses:` reference selects the policy release. Outside the changelog, that reference and the policy link in this paragraph are the only places that name the policy version; a policy upgrade updates both and adds a changelog entry.
+The [CI workflow](../.github/workflows/check.yml) calls the [shared project policy](https://github.com/petohorvath/nixos-project-policy/blob/v0.6/POLICY.md) in a job named `Policy`. The workflow's `uses:` reference selects the policy release. Outside the changelog, that reference and the policy link in this paragraph are the only places that name the policy version; a policy upgrade updates both and adds a changelog entry.
 
 The caller sets no inputs, so the policy runs on its default systems, `x86_64-linux` and `aarch64-linux`. The project has no VM tests. Policy code stays outside the flake inputs and build graph.
 
-The policy checks the inputs, public outputs, development shell, and formatter. It also runs the root `nix flake check` with the locked nixpkgs and with its bundled stable and unstable nixpkgs pins, applied through a native `--override-input nixpkgs`; formatting and lint run there as project-owned root checks. The pins stay outside the project lock and consumer dependency graphs. To run the same checks locally, use the policy's `check .` and `test . --nixpkgs locked|stable|unstable` commands as its README describes.
+The policy checks the inputs, public outputs, development shell, and formatter. It also evaluates every root output and builds every `checks` entry with the locked nixpkgs and with its bundled stable and unstable nixpkgs pins, applied through a native `--override-input nixpkgs`; formatting and lint run there as project-owned root checks. A stable or unstable run whose revision equals that of an earlier run passes without building. The pins stay outside the project lock and consumer dependency graphs. To run the same checks locally, use the policy's `check .` and `test . --nixpkgs locked|stable|unstable` commands as its README describes.
 
 The policy lists the statuses to require, and the workflow's `Plan` job writes them to its step summary on every run. Passing local checks does not configure GitHub settings or authorize a merge.
