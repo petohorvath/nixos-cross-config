@@ -1,4 +1,4 @@
-{ mkNodes }:
+{ checkAssertions, mkNodeCollection }:
 let
   siblingEntries = [
     "alpha"
@@ -8,7 +8,7 @@ let
 
   mkReceiver =
     receiver:
-    (mkNodes {
+    (mkNodeCollection {
       optionPaths = [
         [
           "inventory"
@@ -53,7 +53,7 @@ let
 
   mkUnknownReceiver =
     sender:
-    mkNodes {
+    mkNodeCollection {
       optionPaths = [
         [
           "inventory"
@@ -86,8 +86,14 @@ in
       }
     )).config.inventory.value;
 }
-// builtins.mapAttrs (_: node: node.config.system.build.toplevel.drvPath) {
-  missingDestination = mkReceiver { };
+// {
+  # Keep one receiver-side and one sender-side rejection reported by NixOS
+  # while building the system.
+  missingDestination = (mkReceiver { }).config.system.build.toplevel.drvPath;
+  unknownReceiver =
+    (mkUnknownReceiver ./destination-sender.nix).sender.config.system.build.toplevel.drvPath;
+}
+// builtins.mapAttrs (_: checkAssertions) {
   readOnlyNamedDestination = mkReceiver (
     { lib, ... }:
     {
@@ -203,7 +209,6 @@ in
   readOnlyNullableDestination = mkReadOnlyWrapper "nullable";
   readOnlyUniqueDestination = mkReadOnlyWrapper "unique";
   readOnlyTaggedDestination = mkReadOnlyWrapper "tagged";
-  unknownReceiver = (mkUnknownReceiver ./destination-sender.nix).sender;
   unknownReceiverWithDisabledContribution =
     (mkUnknownReceiver (
       { lib, ... }: {
@@ -213,7 +218,7 @@ in
       }
     )).sender;
   readOnlySiblingDestination =
-    (mkNodes {
+    (mkNodeCollection {
       optionPaths = map (entry: [
         "inventory"
         "entries"
@@ -248,7 +253,7 @@ in
       };
     }).receiver;
   unregisteredDestination =
-    (mkNodes {
+    (mkNodeCollection {
       optionPaths = [ ];
       modules = {
         sender = ./destination-sender.nix;

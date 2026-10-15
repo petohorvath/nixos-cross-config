@@ -1,6 +1,6 @@
-{ mkNodes }:
+{ mkNodeCollection }:
 let
-  nodes = mkNodes {
+  nodes = mkNodeCollection {
     optionPaths = [
       [
         "services"

@@ -7,13 +7,9 @@
 let
   inherit (nixpkgs) lib;
   evaluation = import ./evaluate-module.nix { inherit crossConfig lib; };
-  mkNodes = import ./mk-nodes.nix { inherit crossConfig nixpkgs system; };
-  mkModuleNodes = import ./mk-module-nodes.nix {
-    inherit lib;
-    inherit (evaluation) evaluateModule;
-  };
-  mkTaggedNodes = import ./mk-tagged-nodes.nix {
-    inherit lib mkModuleNodes;
+  mkNodeCollection = import ./mk-node-collection.nix {
+    inherit crossConfig lib system;
+    inherit (evaluation) evaluateModules;
   };
   mkReceiverLib = import ./mk-receiver-lib.nix { inherit lib; };
   flakeConsumer = import ./flake-consumer.nix {
@@ -25,37 +21,47 @@ let
       system
       ;
   };
-in
-evaluation
-// {
-  inherit
-    flakeConsumer
-    lib
-    mkModuleNodes
-    mkNodes
-    mkReceiverLib
-    mkTaggedNodes
-    ;
-  messagePattern = import ./message-pattern.nix { inherit lib; };
   allAssertionsPass =
     nodes:
     lib.pipe nodes [
       builtins.attrValues
       (builtins.all (node: builtins.all (entry: entry.assertion) node.config.assertions))
     ];
-  contributionRejections = import ../fixtures/contributions.nix { inherit mkNodes; };
-  destinationRejections = import ../fixtures/destinations.nix { inherit mkNodes; };
+  # Fail as NixOS `toplevel` does, so assertion messages match on both
+  # evaluators.
+  checkAssertions = node: lib.asserts.checkAssertWarn node.config.assertions [ ] node;
+in
+{
+  inherit (evaluation) evaluateModule;
+  inherit
+    allAssertionsPass
+    checkAssertions
+    crossConfig
+    flakeConsumer
+    lib
+    mkNodeCollection
+    mkReceiverLib
+    ;
+  messagePattern = import ./message-pattern.nix { inherit lib; };
+  contributionRejections = import ../fixtures/contributions.nix {
+    inherit checkAssertions mkNodeCollection;
+  };
+  destinationRejections = import ../fixtures/destinations.nix {
+    inherit checkAssertions mkNodeCollection;
+  };
   moduleRejections = import ../fixtures/module-settings.nix {
     inherit (evaluation) evaluateConstructor evaluateModule;
   };
   flakeRejections = import ../fixtures/flake-module-settings.nix {
     inherit (flakeConsumer) evaluateConsumer;
   };
-  taggedNixos = import ../fixtures/tagged-nixos.nix { inherit mkNodes; };
+  taggedNixos = import ../fixtures/tagged-nixos.nix { inherit mkNodeCollection; };
   taggedPermissionsOption = import ../fixtures/tagged-permissions.nix { inherit lib; };
-  taggedRejections = import ../fixtures/tagged-destinations.nix { inherit mkNodes; };
-  taggedValueCycle = import ../fixtures/tagged-value-cycle.nix { inherit mkNodes; };
-  valueCycle = import ../fixtures/value-cycle.nix { inherit mkNodes; };
+  taggedRejections = import ../fixtures/tagged-destinations.nix {
+    inherit checkAssertions mkNodeCollection;
+  };
+  taggedValueCycle = import ../fixtures/tagged-value-cycle.nix { inherit mkNodeCollection; };
+  valueCycle = import ../fixtures/value-cycle.nix { inherit mkNodeCollection; };
   minimalExample = import ../../examples/minimal.nix { inherit crossConfig nixpkgs system; };
   flakeExample = import ../../examples/flake-parts.nix {
     inherit

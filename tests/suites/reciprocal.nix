@@ -1,11 +1,11 @@
 {
   allAssertionsPass,
-  mkNodes,
+  mkNodeCollection,
   valueCycle,
   ...
 }:
 let
-  nodes = mkNodes {
+  nodes = mkNodeCollection {
     optionPaths = [
       [
         "networking"
