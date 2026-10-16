@@ -5,7 +5,7 @@
   crossConfig,
   evaluateModules,
   lib,
-  system,
+  sharedPkgsModule,
 }:
 {
   optionPaths,
@@ -42,9 +42,9 @@ let
     nixos =
       name: module:
       lib.nixosSystem {
-        inherit system;
         specialArgs = specialArgs name;
         modules = [
+          sharedPkgsModule
           (adapterModule name)
           {
             networking.hostName = "${name}-hostname";

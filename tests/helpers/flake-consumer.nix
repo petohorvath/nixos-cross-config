@@ -3,7 +3,7 @@
   flake-parts,
   mkReceiverLib,
   nixpkgs,
-  system,
+  sharedPkgsModule,
 }:
 let
   inherit (nixpkgs) lib;
@@ -21,7 +21,7 @@ let
   mkUnconfiguredNode =
     modules:
     lib.nixosSystem {
-      inherit modules system;
+      modules = [ sharedPkgsModule ] ++ modules;
     };
   mkNode =
     {
@@ -30,9 +30,9 @@ let
       nodeModule,
     }:
     lib.nixosSystem {
-      inherit system;
       specialArgs.lib = mkReceiverLib name;
       modules = [
+        sharedPkgsModule
         configuredModule
         {
           options.inventory = lib.genAttrs [ "values" "literal.values" ] (

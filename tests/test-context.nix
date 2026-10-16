@@ -18,9 +18,16 @@ let
     flakeModules.default = ../flake-module.nix;
   };
 
+  # Every NixOS node that the helpers build reads this one package set;
+  # instantiating nixpkgs per node costs memory that nix-unit never frees.
+  sharedPkgsModule = {
+    imports = [ nixpkgs.nixosModules.readOnlyPkgs ];
+    nixpkgs.pkgs = nixpkgs.legacyPackages.${system};
+  };
+
   evaluation = import ./helpers/evaluate-module.nix { inherit crossConfig lib; };
   mkNodeCollection = import ./helpers/mk-node-collection.nix {
-    inherit crossConfig lib system;
+    inherit crossConfig lib sharedPkgsModule;
     inherit (evaluation) evaluateModules;
   };
   mkReceiverLib = import ./helpers/mk-receiver-lib.nix { inherit lib; };
@@ -30,7 +37,7 @@ let
       flake-parts
       mkReceiverLib
       nixpkgs
-      system
+      sharedPkgsModule
       ;
   };
   # Fail as NixOS `toplevel` does, so assertion messages match on both
