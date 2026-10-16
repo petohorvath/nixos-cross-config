@@ -7,17 +7,25 @@
 }:
 let
   inherit (nixpkgs) lib;
-  consumerModule = module: {
+  consumerModule = flakeModule: module: {
     imports = [
-      crossConfig.flakeModules.default
+      flakeModule
       module
     ];
     systems = [ ];
   };
-  evaluateConsumer =
-    module: flake-parts.lib.evalFlakeModule { inputs.self.outPath = ../..; } (consumerModule module);
+  # Evaluate a consumer of any flake module, such as the flake's own export.
+  evaluateFlakeModule =
+    flakeModule: module:
+    flake-parts.lib.evalFlakeModule { inputs.self.outPath = ../..; } (
+      consumerModule flakeModule module
+    );
+  evaluateConsumer = evaluateFlakeModule crossConfig.flakeModules.default;
   mkConsumer =
-    module: flake-parts.lib.mkFlake { inputs.self.outPath = ../..; } (consumerModule module);
+    module:
+    flake-parts.lib.mkFlake { inputs.self.outPath = ../..; } (
+      consumerModule crossConfig.flakeModules.default module
+    );
   mkUnconfiguredNode =
     modules:
     lib.nixosSystem {
@@ -73,6 +81,7 @@ in
 {
   inherit
     evaluateConsumer
+    evaluateFlakeModule
     mkConsumer
     mkNode
     mkPairConsumer

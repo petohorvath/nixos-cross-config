@@ -1,6 +1,6 @@
-{ crossConfig, helpers, ... }:
+{ helpers, ... }:
 let
-  inherit (helpers) allAssertionsPass mkNodeCollection;
+  inherit (helpers) allAssertionsPass mkNodeCollection withNixosModule;
   optionPaths = [
     [
       "networking"
@@ -16,8 +16,7 @@ let
         crossConfig.contributions.guest.networking.hosts."192.0.2.10" = [
           "host-to-guest.example"
         ];
-        containers.application.config = {
-          imports = [ crossConfig.nixosModules.default ];
+        containers.application.config = withNixosModule {
           crossConfig = {
             name = "guest";
             inherit optionPaths;

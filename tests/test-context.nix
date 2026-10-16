@@ -45,10 +45,12 @@ let
   checkAssertions = node: lib.asserts.checkAssertWarn node.config.assertions [ ] node;
 in
 {
-  inherit crossConfig lib self;
+  inherit lib self;
+  # Suites reach the modules through the helpers.
+  crossConfig = { inherit (crossConfig) lib; };
 
   helpers = {
-    inherit (evaluation) evaluateModule;
+    inherit (evaluation) evaluateModule evaluateModules withNixosModule;
     inherit
       checkAssertions
       flakeConsumer
