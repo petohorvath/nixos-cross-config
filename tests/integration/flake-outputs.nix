@@ -1,12 +1,11 @@
-# The flake exposes the same code that testContext imports from source.
+# The flake, self, exposes the same code that testContext imports from source.
 {
   crossConfig,
-  helpers,
   lib,
+  self,
   ...
 }:
 let
-  inherit (helpers) flakeOutputs;
   definitionPositions = attrs: lib.mapAttrs (name: _: builtins.unsafeGetAttrPos name attrs) attrs;
   # flake-parts wraps each exported NixOS module in layers of imports.
   importedPaths =
@@ -18,15 +17,15 @@ let
 in
 {
   testLib = {
-    expr = definitionPositions flakeOutputs.lib;
+    expr = definitionPositions self.lib;
     expected = definitionPositions crossConfig.lib;
   };
   testNixosModule = {
-    expr = importedPaths flakeOutputs.nixosModules.default;
+    expr = importedPaths self.nixosModules.default;
     expected = [ crossConfig.nixosModules.default ];
   };
   testFlakeModule = {
-    expr = flakeOutputs.flakeModules.default;
+    expr = self.flakeModules.default;
     expected = crossConfig.flakeModules.default;
   };
 }

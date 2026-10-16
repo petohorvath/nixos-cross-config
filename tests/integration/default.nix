@@ -1,21 +1,18 @@
-# Integration suites for nix-unit, evaluated through NixOS and flake-parts.
-# Run them locally with the root flake's locked inputs:
-# nix-unit tests/integration --attr merging
-let
-  rootInputs = (builtins.getFlake (toString ../..)).inputs;
-  rebuild = import ../helpers/evaluation-inputs.nix;
-in
 {
-  nixpkgs ? rootInputs.nixpkgs,
-  # flake-parts follows nixpkgs, so rebuild it against the selected one.
-  flake-parts ? rebuild {
-    path = rootInputs.flake-parts.outPath;
-    inputs.nixpkgs-lib = nixpkgs;
-  },
-  system ? builtins.currentSystem,
+  flake-parts,
+  nixpkgs,
+  self,
+  system,
 }:
 let
-  testContext = import ../test-context.nix { inherit flake-parts nixpkgs system; };
+  testContext = import ../test-context.nix {
+    inherit
+      flake-parts
+      nixpkgs
+      self
+      system
+      ;
+  };
 in
 {
   conditional = import ./conditional.nix testContext;

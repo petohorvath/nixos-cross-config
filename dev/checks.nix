@@ -1,8 +1,4 @@
-{
-  formatter,
-  inputs,
-  pkgs,
-}:
+{ formatter, pkgs }:
 let
   sourceDir = pkgs.lib.cleanSource ../.;
 
@@ -20,7 +16,7 @@ let
       touch "$out"
     '';
 in
-pkgs.lib.attrsets.unionOfDisjoint (import ../tests { inherit inputs pkgs; }) {
+{
   formatting = mkCheck {
     name = "cross-config-formatting";
     packages = [ formatter ];

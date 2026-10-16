@@ -1,9 +1,10 @@
 # Builds testContext, the argument of every nix-unit suite. The unit entry
-# point passes no flake-parts, so only the helpers and fixtures of the
-# integration suites read it.
+# point passes neither flake-parts nor self, so only the helpers, fixtures,
+# and suites of the integration entry point read them.
 {
   flake-parts ? null,
   nixpkgs,
+  self ? null,
   system,
 }:
 let
@@ -37,7 +38,7 @@ let
   checkAssertions = node: lib.asserts.checkAssertWarn node.config.assertions [ ] node;
 in
 {
-  inherit crossConfig lib;
+  inherit crossConfig lib self;
 
   helpers = {
     inherit (evaluation) evaluateModule;
@@ -47,7 +48,6 @@ in
       mkNodeCollection
       mkReceiverLib
       ;
-    flakeOutputs = import ./helpers/flake-outputs.nix { inherit flake-parts nixpkgs; };
     messagePattern = import ./helpers/message-pattern.nix { inherit lib; };
     allAssertionsPass =
       nodes:

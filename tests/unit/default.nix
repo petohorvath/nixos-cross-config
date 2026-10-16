@@ -1,12 +1,4 @@
-# Unit suites for nix-unit. Run them locally with the root flake's locked
-# inputs: nix-unit tests/unit --attr settings
-let
-  rootInputs = (builtins.getFlake (toString ../..)).inputs;
-in
-{
-  nixpkgs ? rootInputs.nixpkgs,
-  system ? builtins.currentSystem,
-}:
+{ nixpkgs, system }:
 let
   testContext = import ../test-context.nix { inherit nixpkgs system; };
 in
