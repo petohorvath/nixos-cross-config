@@ -1,5 +1,6 @@
-{ minimalExample, ... }:
+{ fixtures, ... }:
 let
+  inherit (fixtures) minimalExample;
   virtualHost = minimalExample.proxy.config.services.nginx.virtualHosts."app.example";
 in
 {

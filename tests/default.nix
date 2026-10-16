@@ -1,48 +1,35 @@
-{
-  formatter,
-  inputs,
-  pkgs,
-  system,
-}:
+{ inputs, pkgs }:
 let
-  sourceDir = pkgs.lib.cleanSource ../.;
-
-  mkCheck =
-    {
-      name,
-      packages,
-      script,
-    }:
-    pkgs.runCommand name { nativeBuildInputs = packages; } ''
-      cp -R ${sourceDir} source
-      chmod -R u+w source
-      cd source
-      ${script}
-      touch "$out"
-    '';
-in
-{
-  tests = pkgs.callPackage ./checks.nix {
-    inherit (inputs) nixpkgs;
-    flakeParts = inputs.flake-parts;
-    inherit system;
-  };
-  formatting = mkCheck {
-    name = "cross-config-formatting";
-    packages = [ formatter ];
-    script = "cross-config-fmt --ci";
-  };
-  lint = mkCheck {
-    name = "cross-config-lint";
-    packages = [
-      pkgs.statix
-      pkgs.deadnix
-      pkgs.actionlint
+  inherit (pkgs) lib;
+  repo = "cross-config";
+  # The files the suites read, so documentation edits do not rebuild them.
+  srcDir = lib.fileset.toSource {
+    root = ../.;
+    fileset = lib.fileset.unions [
+      ../examples
+      ../flake-module.nix
+      ../flake.nix
+      ../lib
+      ../nixos
+      ./.
     ];
-    script = ''
-      statix check .
-      deadnix --fail .
-      actionlint .github/workflows/*.yml
-    '';
   };
-}
+  runNixUnit = import ./runners/nix-unit.nix {
+    inherit
+      inputs
+      pkgs
+      repo
+      srcDir
+      ;
+  };
+in
+lib.foldl' lib.attrsets.unionOfDisjoint { } [
+  {
+    unit = runNixUnit { kind = "unit"; };
+    # A group of NixOS evaluations can peak above 3 GiB.
+    integration = runNixUnit {
+      kind = "integration";
+      jobs = 2;
+    };
+  }
+]

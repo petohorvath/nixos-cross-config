@@ -1,13 +1,8 @@
-/*
-  Assemble the public flake with the supplied inputs, including in offline
-  runners.
-*/
-{ flakeParts, nixpkgs }:
+# Assemble the public flake with the supplied inputs, including in offline
+# runners.
+{ flake-parts, nixpkgs }:
 let
-  inputs = {
-    flake-parts = flakeParts;
-    inherit nixpkgs;
-  };
+  inputs = { inherit flake-parts nixpkgs; };
   self = (import ../../flake.nix).outputs (inputs // { inherit self; }) // {
     outPath = ../..;
     inherit inputs;

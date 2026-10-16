@@ -1,6 +1,6 @@
 {
   crossConfig,
-  flakeParts,
+  flake-parts,
   mkReceiverLib,
   nixpkgs,
   system,
@@ -15,9 +15,9 @@ let
     systems = [ ];
   };
   evaluateConsumer =
-    module: flakeParts.lib.evalFlakeModule { inputs.self.outPath = ../..; } (consumerModule module);
+    module: flake-parts.lib.evalFlakeModule { inputs.self.outPath = ../..; } (consumerModule module);
   mkConsumer =
-    module: flakeParts.lib.mkFlake { inputs.self.outPath = ../..; } (consumerModule module);
+    module: flake-parts.lib.mkFlake { inputs.self.outPath = ../..; } (consumerModule module);
   mkUnconfiguredNode =
     modules:
     lib.nixosSystem {

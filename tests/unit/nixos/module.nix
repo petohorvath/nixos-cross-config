@@ -1,11 +1,6 @@
-{
-  allAssertionsPass,
-  lib,
-  mkNodeCollection,
-  mkReceiverLib,
-  ...
-}:
+{ helpers, lib, ... }:
 let
+  inherit (helpers) allAssertionsPass mkNodeCollection mkReceiverLib;
   receivers = {
     alpha = "beta";
     beta = "alpha";

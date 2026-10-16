@@ -1,14 +1,12 @@
 {
-  allAssertionsPass,
-  flakeConsumer,
-  flakeExample,
-  flakeRejections,
+  fixtures,
+  helpers,
   lib,
-  messagePattern,
-  plainFlakeConsumer,
   ...
 }:
 let
+  inherit (fixtures) flakeExample flakeRejections;
+  inherit (helpers) allAssertionsPass flakeConsumer messagePattern;
   inherit (flakeConsumer)
     evaluateConsumer
     mkConsumer
@@ -327,7 +325,7 @@ in
   };
   plainImport =
     let
-      consumer = plainFlakeConsumer.mkConsumer {
+      consumer = flakeConsumer.mkConsumer {
         crossConfig.optionPaths = [ ];
       };
       node = mkNode {

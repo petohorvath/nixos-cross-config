@@ -1,12 +1,11 @@
 {
-  allAssertionsPass,
   crossConfig,
+  helpers,
   lib,
-  mkNodeCollection,
-  mkReceiverLib,
   ...
 }:
 let
+  inherit (helpers) allAssertionsPass mkNodeCollection mkReceiverLib;
   optionPaths = [
     [
       "inventory"

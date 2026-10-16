@@ -4,7 +4,6 @@
     {
       config,
       pkgs,
-      system,
       ...
     }:
     {
@@ -13,7 +12,7 @@
         inherit (config) formatter;
       };
       checks = import ./checks.nix {
-        inherit inputs pkgs system;
+        inherit inputs pkgs;
         inherit (config) formatter;
       };
     };
