@@ -26,10 +26,10 @@ in
 lib.foldl' lib.attrsets.unionOfDisjoint { } [
   {
     unit = runNixUnit { kind = "unit"; };
-    # A group of NixOS evaluations can peak above 3 GiB.
+    # A group of NixOS evaluations can peak above 3 GiB, so run one at a time.
     integration = runNixUnit {
       kind = "integration";
-      jobs = 2;
+      jobs = 1;
     };
   }
 ]
