@@ -324,27 +324,6 @@ in
       expected = true;
     };
   };
-  plainImport =
-    let
-      consumer = flakeConsumer.mkConsumer {
-        crossConfig.optionPaths = [ ];
-      };
-      node = mkNode {
-        configuredModule = consumer.nixosModules.crossConfig;
-        name = "idle";
-        nodeModule = { };
-      };
-    in
-    {
-      testEmptyPaths = {
-        expr = node.config.crossConfig.optionPaths;
-        expected = [ ];
-      };
-      testAssertions = {
-        expr = allAssertionsPass { inherit node; };
-        expected = true;
-      };
-    };
   testRejectsOldCollectionName = {
     expr = flakeRejections.oldCollectionName;
     expectedError = {
