@@ -1,11 +1,11 @@
 # Builds testContext, the argument of every nix-unit suite. The unit entry
-# point passes neither flake-parts nor self, so only the helpers, fixtures,
-# and suites of the integration entry point read them.
+# point passes only nixpkgs, so only the helpers, fixtures, and suites of the
+# integration entry point read flake-parts, self, and system.
 {
   flake-parts ? null,
   nixpkgs,
   self ? null,
-  system,
+  system ? null,
 }:
 let
   inherit (nixpkgs) lib;
@@ -77,14 +77,16 @@ in
     };
     taggedValueCycle = import ./fixtures/tagged-value-cycle.nix { inherit mkNodeCollection; };
     valueCycle = import ./fixtures/value-cycle.nix { inherit mkNodeCollection; };
-    minimalExample = import ../examples/minimal.nix { inherit crossConfig nixpkgs system; };
-    flakeExample = import ../examples/flake-parts.nix {
-      inherit
-        crossConfig
-        flake-parts
-        nixpkgs
-        system
-        ;
+    examples = {
+      minimal = import ../examples/minimal.nix { inherit crossConfig nixpkgs system; };
+      flake-parts = import ../examples/flake-parts.nix {
+        inherit
+          crossConfig
+          flake-parts
+          nixpkgs
+          system
+          ;
+      };
     };
   };
 }

@@ -1,6 +1,6 @@
-{ nixpkgs, system }:
+{ nixpkgs }:
 let
-  testContext = import ../test-context.nix { inherit nixpkgs system; };
+  testContext = import ../test-context.nix { inherit nixpkgs; };
 in
 {
   lib = import ./lib.nix testContext;

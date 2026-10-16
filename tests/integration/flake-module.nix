@@ -5,8 +5,9 @@
   ...
 }:
 let
-  inherit (fixtures) flakeExample flakeRejections;
+  inherit (fixtures) flakeRejections;
   inherit (helpers) allAssertionsPass flakeConsumer messagePattern;
+  flakeExample = fixtures.examples.flake-parts;
   inherit (flakeConsumer)
     evaluateConsumer
     mkConsumer
