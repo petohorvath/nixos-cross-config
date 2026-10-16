@@ -50,10 +50,11 @@ Root `nix flake check --no-update-lock-file --print-build-logs` runs every test 
 ```bash
 nix-unit --flake .#tests.systems.x86_64-linux.unit.settings
 nix-unit --flake .#tests.systems.x86_64-linux.integration.merging
-nix-unit --flake .#tests.systems.x86_64-linux.integration.destinations.testRejectsMissingDestination
+nix-unit --flake .#tests.systems.x86_64-linux.integration.destinations \
+  --attr testRejectsMissingDestination
 ```
 
-A suite path selects its descendants; a full test path selects one case. Every selected case includes its value or error expectations, including required message fragments. nix-unit handles discovery, selection, comparisons, error matching, and reporting. It evaluates the current checkout as a flake, so edits to tests are available without re-entering the shell. Track new files with `git add` before Git-backed flake evaluation.
+A suite path selects its descendants; `--attr` with a test name below that path selects one case. Every selected case includes its value or error expectations, including required message fragments. nix-unit handles discovery, selection, comparisons, error matching, and reporting. It evaluates the current checkout as a flake, so edits to tests are available without re-entering the shell. Track new files with `git add` before Git-backed flake evaluation.
 
 The entry points [tests/unit/default.nix](../tests/unit/default.nix) and [tests/integration/default.nix](../tests/integration/default.nix) take each input they evaluate as an argument, without defaults; [development composition](../dev/default.nix) passes the flake's inputs and the system. The integration entry point also takes `self`, the flake, for the `flake-outputs` suite. The root [locked input](../flake.lock), `nixpkgs`, selects NixOS 26.05. The entry points return test definitions; evaluating them alone does not verify expectations. Raw configurations under [tests/fixtures](../tests/fixtures/) are private inputs to the suites.
 
