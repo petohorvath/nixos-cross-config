@@ -9,9 +9,12 @@
     };
     nix-unit = {
       url = "github:nix-community/nix-unit";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.treefmt-nix.follows = "";
-      inputs.nix-github-actions.follows = "";
+      # Consumers lock no second nixpkgs and none of nix-unit's own tooling.
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        treefmt-nix.follows = "";
+        nix-github-actions.follows = "";
+      };
     };
   };
 
