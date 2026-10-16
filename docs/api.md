@@ -94,7 +94,7 @@ Plain Nix consumers can import the adapter directly in their flake-parts module:
 }
 ```
 
-The root flake-parts input assembles the flake and supports assembled-consumer checks, with its `nixpkgs-lib` following the selected root `nixpkgs`. Direct imports of `flake-module.nix`, `nixos/module.nix`, and `lib/` do not evaluate either development input. Standalone consumers do not need to evaluate flake-parts.
+The root flake-parts input assembles the flake and supports assembled-consumer checks, with its `nixpkgs-lib` following the selected root `nixpkgs`. The `nix-unit` input supplies the test runner's flake-parts module; it follows the root `nixpkgs`, so a consumer's lock gains no second nixpkgs, and a consumer can drop it with `inputs.crossConfig.inputs.nix-unit.follows = "";`. Direct imports of `flake-module.nix`, `nixos/module.nix`, and `lib/` do not evaluate any development input. Standalone consumers do not need to evaluate flake-parts.
 
 ## Compatibility adapter
 
