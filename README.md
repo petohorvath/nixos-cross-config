@@ -23,7 +23,7 @@ Every entry point configures the NixOS module with the receiving evaluation's `l
 ## Requirements
 
 - All nodes in a collection use one nixpkgs revision and are evaluated within one Nix computation. Each node can have its own module evaluation, and source modules can come from separate repositories.
-- Each entry in the collection exposes its evaluated configuration as `.config`, as `nixpkgs.lib.nixosSystem` results do. Nodes built by other host and guest helpers qualify; the [host and guest tests](tests/suites/host-guest.nix) include a guest created through NixOS's `containers` option.
+- Each entry in the collection exposes its evaluated configuration as `.config`, as `nixpkgs.lib.nixosSystem` results do. Nodes built by other host and guest helpers qualify; the [host and guest tests](tests/integration/host-guest.nix) include a guest created through NixOS's `containers` option.
 
 The checks run against NixOS 26.05 and the [shared project policy](docs/development.md#ci-and-policy)'s stable and unstable nixpkgs revisions, on `x86_64-linux` and `aarch64-linux`.
 
