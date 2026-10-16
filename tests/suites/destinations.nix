@@ -3,7 +3,7 @@
   destinationRejections,
   lib,
   messagePattern,
-  mkNodes,
+  mkNodeCollection,
   ...
 }:
 let
@@ -40,7 +40,7 @@ in
 {
   ordinaryReadOnlyOption =
     let
-      nodes = mkNodes {
+      nodes = mkNodeCollection {
         optionPaths = [
           [
             "services"
@@ -68,7 +68,7 @@ in
 
   selfConditionalSubmodule =
     let
-      nodes = mkNodes {
+      nodes = mkNodeCollection {
         optionPaths = [
           [
             "inventory"
@@ -112,7 +112,7 @@ in
 
   unusedMissingWithReceivedCondition =
     let
-      nodes = mkNodes {
+      nodes = mkNodeCollection {
         optionPaths = [
           [ "gate" ]
           [
@@ -180,7 +180,7 @@ in
 
   namedSubmoduleOption =
     let
-      nodes = mkNodes {
+      nodes = mkNodeCollection {
         optionPaths = [
           [
             "inventory"
@@ -237,7 +237,7 @@ in
         "beta"
         "gamma"
       ];
-      nodes = mkNodes {
+      nodes = mkNodeCollection {
         optionPaths = map (entry: [
           "inventory"
           "entries"
@@ -285,7 +285,7 @@ in
 
   receiverLocalSubmoduleDeclaration =
     let
-      nodes = mkNodes {
+      nodes = mkNodeCollection {
         optionPaths = [
           [
             "inventory"
@@ -334,7 +334,7 @@ in
 
   receiverLocalFreeformType =
     let
-      nodes = mkNodes {
+      nodes = mkNodeCollection {
         optionPaths = [
           [
             "inventory"
@@ -378,7 +378,7 @@ in
       mkCase =
         wrapper:
         let
-          nodes = mkNodes {
+          nodes = mkNodeCollection {
             optionPaths = [
               [
                 "inventory"
@@ -444,7 +444,7 @@ in
 
   unusedMissing =
     let
-      nodes = mkNodes {
+      nodes = mkNodeCollection {
         optionPaths = [
           [
             "unavailable"
@@ -496,7 +496,7 @@ in
 
   unusedReadOnly =
     let
-      nodes = mkNodes {
+      nodes = mkNodeCollection {
         optionPaths = [
           [
             "inventory"
@@ -551,7 +551,7 @@ in
 
   unusedMissingSubmoduleOption =
     let
-      nodes = mkNodes {
+      nodes = mkNodeCollection {
         optionPaths = [
           [
             "environment"
@@ -593,7 +593,7 @@ in
 
   disabledInvalidDestinations =
     let
-      nodes = mkNodes {
+      nodes = mkNodeCollection {
         optionPaths = [
           [
             "unavailable"
@@ -637,7 +637,7 @@ in
 
   unusedReadOnlySubmoduleOption =
     let
-      nodes = mkNodes {
+      nodes = mkNodeCollection {
         optionPaths = [
           [
             "inventory"

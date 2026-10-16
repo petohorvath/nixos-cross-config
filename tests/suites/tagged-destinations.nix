@@ -2,8 +2,7 @@
   allAssertionsPass,
   lib,
   messagePattern,
-  mkModuleNodes,
-  mkTaggedNodes,
+  mkNodeCollection,
   taggedNixos,
   taggedPermissionsOption,
   taggedRejections,
@@ -17,6 +16,41 @@ let
     "destination `inventory.payload.value`"
     "fixtures/tagged-destinations.nix"
   ];
+  # Contribute to the receiver's tagged destination at `inventory.<tagName>`.
+  mkTaggedNodes =
+    {
+      tagName ? "payload",
+      leafPath ? [ "value" ],
+      tagOption,
+      senderDefinitions ? [ "contributed" ],
+      receiverDefinitions ? [ ],
+    }:
+    let
+      path = [
+        "inventory"
+        tagName
+      ]
+      ++ leafPath;
+    in
+    {
+      inherit path;
+      nodes = mkNodeCollection {
+        evaluator = "modules";
+        optionPaths = [ path ];
+        modules = {
+          sender.crossConfig.contributions.receiver = lib.setAttrByPath path (lib.mkMerge senderDefinitions);
+          receiver = {
+            options.inventory = lib.mkOption {
+              type = lib.types.attrTag { ${tagName} = tagOption; };
+              description = "A tagged receiver destination.";
+            };
+            config = lib.optionalAttrs (receiverDefinitions != [ ]) {
+              inventory = lib.mkMerge receiverDefinitions;
+            };
+          };
+        };
+      };
+    };
   checkValue =
     expected: args:
     let
@@ -249,7 +283,8 @@ in
   };
   transportSelection =
     let
-      nodes = mkModuleNodes {
+      nodes = mkNodeCollection {
+        evaluator = "modules";
         optionPaths = [
           [
             "inventory"
@@ -315,7 +350,8 @@ in
           '';
         };
       };
-      nodes = mkModuleNodes {
+      nodes = mkNodeCollection {
+        evaluator = "modules";
         optionPaths = [
           [
             "inventory"
@@ -372,7 +408,8 @@ in
     };
   conditionalSelf =
     let
-      nodes = mkModuleNodes {
+      nodes = mkNodeCollection {
+        evaluator = "modules";
         optionPaths = [
           [
             "inventory"
@@ -399,7 +436,8 @@ in
     };
   reciprocal =
     let
-      nodes = mkModuleNodes {
+      nodes = mkNodeCollection {
+        evaluator = "modules";
         optionPaths = [
           [
             "inventory"

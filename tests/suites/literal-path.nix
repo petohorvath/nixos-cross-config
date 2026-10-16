@@ -1,6 +1,6 @@
-{ allAssertionsPass, mkNodes, ... }:
+{ allAssertionsPass, mkNodeCollection, ... }:
 let
-  nodes = mkNodes {
+  nodes = mkNodeCollection {
     optionPaths = [
       [
         "environment"

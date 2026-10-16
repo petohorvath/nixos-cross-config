@@ -1,4 +1,4 @@
-{ mkNodes }:
+{ mkNodeCollection }:
 let
   inventoryModule = { lib, ... }: {
     options.inventory = lib.mkOption {
@@ -16,7 +16,8 @@ let
       description = "Inventory containing the cyclic contribution.";
     };
   };
-  nodes = mkNodes {
+  nodes = mkNodeCollection {
+    evaluator = "modules";
     optionPaths = [
       [
         "inventory"

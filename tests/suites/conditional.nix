@@ -1,4 +1,4 @@
-{ allAssertionsPass, mkNodes, ... }:
+{ allAssertionsPass, mkNodeCollection, ... }:
 let
   senderModule =
     { config, lib, ... }:
@@ -52,7 +52,7 @@ let
         })
       ];
     };
-  nodes = mkNodes {
+  nodes = mkNodeCollection {
     optionPaths = [
       [
         "networking"

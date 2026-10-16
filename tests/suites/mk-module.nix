@@ -1,7 +1,8 @@
 {
   allAssertionsPass,
-  constructorArguments,
-  evaluateConstructor,
+  crossConfig,
+  lib,
+  mkNodeCollection,
   mkReceiverLib,
   ...
 }:
@@ -21,37 +22,30 @@ let
     ]
   ];
 
-  nodes = {
-    alpha = mkNode {
-      name = "alpha";
-      receiver = "beta";
-    };
-    beta = mkNode {
-      name = "beta";
-      receiver = "alpha";
-    };
+  receivers = {
+    alpha = "beta";
+    beta = "alpha";
   };
 
-  mkNode =
-    { name, receiver }:
-    evaluateConstructor { inherit name nodes optionPaths; } {
-      specialArgs = {
-        inherit receiver;
-        lib = mkReceiverLib name;
-        name = "ordinary-name-${name}";
-        nodes.marker = "ordinary-nodes-${name}";
-        optionPaths = [ [ "ordinary-optionPaths-${name}" ] ];
-      };
-      modules = [
-        ../fixtures/factory-node.nix
-        {
-          config = {
-            _module.args.ordinaryArgument = "argument-${name}";
-            inventory.identity = name;
-          };
-        }
-      ];
+  nodes = mkNodeCollection {
+    evaluator = "modules";
+    adapter = "compatibility";
+    inherit optionPaths;
+    specialArgs = name: {
+      lib = mkReceiverLib name;
+      name = "ordinary-name-${name}";
+      nodes.marker = "ordinary-nodes-${name}";
+      optionPaths = [ [ "ordinary-optionPaths-${name}" ] ];
+      receiver = receivers.${name};
     };
+    modules = lib.mapAttrs (name: _: {
+      imports = [ ../fixtures/factory-node.nix ];
+      config = {
+        _module.args.ordinaryArgument = "argument-${name}";
+        inventory.identity = name;
+      };
+    }) receivers;
+  };
 
   mkNodeTests =
     { name, sender }:
@@ -111,7 +105,7 @@ let
 in
 {
   testConstructorArguments = {
-    expr = constructorArguments;
+    expr = builtins.functionArgs crossConfig.lib.mkModule;
     expected = {
       name = false;
       nodes = false;

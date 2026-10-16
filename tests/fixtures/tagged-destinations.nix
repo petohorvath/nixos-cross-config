@@ -1,4 +1,4 @@
-{ mkNodes }:
+{ checkAssertions, mkNodeCollection }:
 let
   submoduleOption =
     lib:
@@ -22,7 +22,7 @@ let
         description = "A read-only child below a writable tag.";
       };
     };
-  mkReceiver =
+  mkTaggedReceiver =
     {
       tagOption,
       receiverDefinitions ? _: [ ],
@@ -38,7 +38,8 @@ let
       ]
       ++ leafPath;
     in
-    (mkNodes {
+    (mkNodeCollection {
+      evaluator = "modules";
       optionPaths = [ path ];
       modules = {
         sender = { lib, ... }: {
@@ -60,14 +61,14 @@ let
     }).receiver;
 
   assertionFailures = {
-    missingTag = mkReceiver {
+    missingTag = mkTaggedReceiver {
       tagOption = submoduleOption;
       tagName = "other";
     };
-    readOnlyTag = mkReceiver {
+    readOnlyTag = mkTaggedReceiver {
       tagOption = lib: submoduleOption lib // { readOnly = true; };
     };
-    missingChild = mkReceiver {
+    missingChild = mkTaggedReceiver {
       tagOption =
         lib:
         lib.mkOption {
@@ -75,7 +76,7 @@ let
           description = "A writable tag without the contributed child.";
         };
     };
-    readOnlyChild = mkReceiver {
+    readOnlyChild = mkTaggedReceiver {
       tagOption =
         lib:
         lib.mkOption {
@@ -83,7 +84,7 @@ let
           description = "A writable tag containing a read-only child.";
         };
     };
-    readOnlyName = mkReceiver {
+    readOnlyName = mkTaggedReceiver {
       tagOption =
         lib:
         lib.mkOption {
@@ -100,11 +101,11 @@ let
           description = "A tag with name-dependent child permissions.";
         };
     };
-    readOnlyLocal = mkReceiver {
+    readOnlyLocal = mkTaggedReceiver {
       tagOption = lib: import ./tagged-permissions.nix { inherit lib; };
       receiverDefinitions = _: [ { payload.locked = true; } ];
     };
-    inspectionDefinitionSource = mkReceiver {
+    inspectionDefinitionSource = mkTaggedReceiver {
       tagOption = lib: import ./tagged-permissions.nix { inherit lib; };
       receiverModules = [ ./tagged-invalid-local.nix ];
     };
@@ -113,7 +114,7 @@ let
     builtins.mapAttrs
       (
         _: wrap:
-        mkReceiver {
+        mkTaggedReceiver {
           tagOption =
             lib:
             lib.mkOption {
@@ -133,10 +134,10 @@ let
         readOnlyUnique = lib: lib.types.uniq;
       };
 in
-builtins.mapAttrs (_: receiver: receiver.config.system.build.toplevel.drvPath) assertionFailures
+builtins.mapAttrs (_: checkAssertions) assertionFailures
 // {
   incompatible =
-    (mkReceiver {
+    (mkTaggedReceiver {
       tagOption =
         lib:
         lib.mkOption {
@@ -150,12 +151,12 @@ builtins.mapAttrs (_: receiver: receiver.config.system.build.toplevel.drvPath) a
         };
     }).config.inventory.payload.value;
   conflict =
-    (mkReceiver {
+    (mkTaggedReceiver {
       tagOption = submoduleOption;
       receiverDefinitions = _: [ { payload.value = "receiver"; } ];
     }).config.inventory.payload.value;
   defaultSource =
-    (mkReceiver {
+    (mkTaggedReceiver {
       leafPath = [ ];
       tagOption = lib: import ./tagged-default.nix { inherit lib; };
       senderDefinitions = lib: [ (lib.mkIf false (throw "Disabled contribution was forced.")) ];

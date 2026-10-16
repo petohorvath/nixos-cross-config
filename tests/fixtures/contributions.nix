@@ -1,8 +1,8 @@
-{ mkNodes }:
+{ checkAssertions, mkNodeCollection }:
 let
   evaluateReceiverDomain =
     modules:
-    (mkNodes {
+    (mkNodeCollection {
       optionPaths = [
         [
           "networking"
@@ -59,7 +59,7 @@ in
     receiver = { };
   };
   nestedConflict =
-    (mkNodes {
+    (mkNodeCollection {
       optionPaths = [
         [
           "services"
@@ -85,7 +85,7 @@ in
       };
     }).receiver.config.services.nginx.virtualHosts."shared.example".locations."/".proxyPass;
   incompatibleType =
-    (mkNodes {
+    (mkNodeCollection {
       optionPaths = [
         [
           "networking"
@@ -101,18 +101,19 @@ in
       };
     }).receiver.config.networking.firewall.allowedTCPPorts;
   failedAssertion =
-    (mkNodes {
-      optionPaths = [
-        [ "assertions" ]
-      ];
-      modules = {
-        sender.crossConfig.contributions.receiver.assertions = [
-          {
-            assertion = false;
-            message = "The contributed receiver assertion failed.";
-          }
+    checkAssertions
+      (mkNodeCollection {
+        optionPaths = [
+          [ "assertions" ]
         ];
-        receiver = { };
-      };
-    }).receiver.config.system.build.toplevel.drvPath;
+        modules = {
+          sender.crossConfig.contributions.receiver.assertions = [
+            {
+              assertion = false;
+              message = "The contributed receiver assertion failed.";
+            }
+          ];
+          receiver = { };
+        };
+      }).receiver;
 }

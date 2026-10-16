@@ -1,7 +1,8 @@
 { crossConfig, lib }:
 let
-  evaluate =
-    module:
+  # Evaluate receiver modules without NixOS, declaring the assertions option
+  # that participating modules define.
+  evaluateModules =
     {
       modules,
       specialArgs ? { },
@@ -9,7 +10,6 @@ let
     lib.evalModules {
       inherit specialArgs;
       modules = [
-        module
         {
           options.assertions = lib.mkOption {
             type = lib.types.listOf lib.types.raw;
@@ -20,15 +20,11 @@ let
       ]
       ++ modules;
     };
+  evaluate =
+    module: arguments: evaluateModules (arguments // { modules = [ module ] ++ arguments.modules; });
 in
 {
+  inherit evaluateModules;
   evaluateModule = evaluate crossConfig.nixosModules.default;
-  evaluateConstructor = args: evaluate (crossConfig.lib.mkModule args);
-  constructorArguments = builtins.functionArgs crossConfig.lib.mkModule;
-  withModule = module: {
-    imports = [
-      crossConfig.nixosModules.default
-      module
-    ];
-  };
+  evaluateConstructor = settings: evaluate (crossConfig.lib.mkModule settings);
 }

@@ -3,7 +3,7 @@
   evaluateModule,
   lib,
   messagePattern,
-  mkModuleNodes,
+  mkNodeCollection,
   moduleRejections,
   ...
 }:
@@ -26,7 +26,8 @@ let
       expectedOther ? [ ],
     }:
     let
-      nodes = mkModuleNodes {
+      nodes = mkNodeCollection {
+        evaluator = "modules";
         optionPaths = lib.mkDefault [ ];
         modules = {
           sender = {

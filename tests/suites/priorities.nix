@@ -2,7 +2,7 @@
   allAssertionsPass,
   contributionRejections,
   messagePattern,
-  mkNodes,
+  mkNodeCollection,
   ...
 }:
 let
@@ -146,7 +146,7 @@ in
 builtins.mapAttrs (
   _: scenario:
   let
-    nodes = mkNodes {
+    nodes = mkNodeCollection {
       optionPaths = [
         [
           "networking"

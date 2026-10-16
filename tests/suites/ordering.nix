@@ -1,4 +1,4 @@
-{ allAssertionsPass, mkNodes, ... }:
+{ allAssertionsPass, mkNodeCollection, ... }:
 let
   optionPaths = [
     [
@@ -6,7 +6,7 @@ let
       "search"
     ]
   ];
-  nodes = mkNodes {
+  nodes = mkNodeCollection {
     inherit optionPaths;
     modules = {
       alpha =
@@ -36,7 +36,7 @@ let
         };
     };
   };
-  forcedNodes = mkNodes {
+  forcedNodes = mkNodeCollection {
     inherit optionPaths;
     modules = {
       alpha =

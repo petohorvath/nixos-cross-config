@@ -2,11 +2,11 @@
   allAssertionsPass,
   contributionRejections,
   messagePattern,
-  mkNodes,
+  mkNodeCollection,
   ...
 }:
 let
-  nodes = mkNodes {
+  nodes = mkNodeCollection {
     optionPaths = [
       [
         "networking"

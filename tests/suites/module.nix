@@ -1,52 +1,39 @@
 {
   allAssertionsPass,
-  evaluateModule,
   lib,
+  mkNodeCollection,
   mkReceiverLib,
   ...
 }:
 let
-  nodes = {
-    alpha = mkNode {
-      name = "alpha";
-      receiver = "beta";
-    };
-    beta = mkNode {
-      name = "beta";
-      receiver = "alpha";
-    };
+  receivers = {
+    alpha = "beta";
+    beta = "alpha";
   };
-  mkNode =
-    { name, receiver }:
-    evaluateModule {
-      specialArgs.lib = mkReceiverLib name;
-      modules = [
-        {
-          options = {
-            inventory.values = lib.mkOption {
-              type = lib.types.listOf lib.types.str;
-              default = [ ];
-              apply = map (value: "${name}:${value}");
-              description = "Values marked by the receiver after merging.";
-            };
-          };
-          config = {
-            crossConfig = {
-              inherit name;
-              nodeConfigurations = nodes;
-              optionPaths = [
-                [
-                  "inventory"
-                  "values"
-                ]
-              ];
-              contributions.${receiver}.inventory.values = lib.mkBefore [ "from-${name}" ];
-            };
-            inventory.values = [ "local-${name}" ];
-          };
-        }
-      ];
-    };
+  nodes = mkNodeCollection {
+    evaluator = "modules";
+    specialArgs = name: { lib = mkReceiverLib name; };
+    optionPaths = [
+      [
+        "inventory"
+        "values"
+      ]
+    ];
+    modules = lib.mapAttrs (name: receiver: {
+      options = {
+        inventory.values = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          apply = map (value: "${name}:${value}");
+          description = "Values marked by the receiver after merging.";
+        };
+      };
+      config = {
+        crossConfig.contributions.${receiver}.inventory.values = lib.mkBefore [ "from-${name}" ];
+        inventory.values = [ "local-${name}" ];
+      };
+    }) receivers;
+  };
 in
 {
   testAlphaAppliedValues = {
