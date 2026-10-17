@@ -1,7 +1,5 @@
-/*
-  Shares collection settings at flake scope. The caller constructs both nodes
-  and explicitly imports the configured NixOS module into each one.
-*/
+# Shares collection settings at flake scope. The caller constructs both nodes
+# and explicitly imports the configured NixOS module into each one.
 {
   crossConfig,
   flake-parts,

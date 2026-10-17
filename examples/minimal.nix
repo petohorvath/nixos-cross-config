@@ -1,7 +1,5 @@
-/*
-  Builds a caller-owned collection of two NixOS container configurations.
-  The application contributes nginx settings to the proxy's existing options.
-*/
+# Builds a caller-owned collection of two NixOS container configurations.
+# The application contributes nginx settings to the proxy's existing options.
 {
   crossConfig,
   nixpkgs,

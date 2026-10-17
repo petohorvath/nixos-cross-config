@@ -1,7 +1,5 @@
-/*
-  Share collection settings through a NixOS module that callers import
-  explicitly.
-*/
+# Share collection settings through a NixOS module that callers import
+# explicitly.
 { config, lib, ... }:
 let
   cfg = config.crossConfig;
