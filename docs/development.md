@@ -18,7 +18,7 @@ The root `.envrc` loads nix-direnv before calling `use flake`. nix-direnv caches
 
 ## Formatting and lint
 
-Root `nix fmt` runs treefmt as [treefmt-nix](https://github.com/numtide/treefmt-nix) configures it from [dev/treefmt.nix](../dev/treefmt.nix). Nix uses nixfmt and deadnix, workflows use actionlint, and Markdown, YAML, and JSON use Prettier, whose settings live in the same file. Existing Markdown wrapping is preserved. New prose uses one source line per paragraph. deadnix runs with `--edit`, so `nix fmt` also removes dead code; review the diff before committing. `nix fmt -- <path>...` formats only the given files.
+Root `nix fmt` runs treefmt as [treefmt-nix](https://github.com/numtide/treefmt-nix) configures it from [dev/treefmt.nix](../dev/treefmt.nix). Nix uses nixfmt and deadnix, workflows use actionlint, and Markdown, YAML, and JSON use Prettier with its default settings, so an editor that formats on save gives the same result. Prettier's defaults preserve existing Markdown wrapping. New prose uses one source line per paragraph. deadnix runs with `--edit`, so `nix fmt` also removes dead code; review the diff before committing. `nix fmt -- <path>...` formats only the given files.
 
 Formatting skips lockfiles and files that Git ignores, such as direnv state and build results.
 
