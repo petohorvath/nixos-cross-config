@@ -1,13 +1,17 @@
 {
-  allAssertionsPass,
-  evaluateModule,
+  fixtures,
+  helpers,
   lib,
-  messagePattern,
-  mkNodeCollection,
-  moduleRejections,
   ...
 }:
 let
+  inherit (fixtures) moduleRejections;
+  inherit (helpers)
+    allAssertionsPass
+    evaluateModule
+    messagePattern
+    mkNodeCollection
+    ;
   valuePath = [
     "inventory"
     "values"

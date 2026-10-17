@@ -1,11 +1,7 @@
-{
-  allAssertionsPass,
-  contributionRejections,
-  messagePattern,
-  mkNodeCollection,
-  ...
-}:
+{ fixtures, helpers, ... }:
 let
+  inherit (fixtures) contributionRejections;
+  inherit (helpers) allAssertionsPass messagePattern mkNodeCollection;
   scenarios = {
     contributedDefault = {
       modules = {

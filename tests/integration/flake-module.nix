@@ -1,14 +1,13 @@
 {
-  allAssertionsPass,
-  flakeConsumer,
-  flakeExample,
-  flakeRejections,
+  fixtures,
+  helpers,
   lib,
-  messagePattern,
-  plainFlakeConsumer,
   ...
 }:
 let
+  inherit (fixtures) flakeRejections;
+  inherit (helpers) allAssertionsPass flakeConsumer messagePattern;
+  flakeExample = fixtures.examples.flake-parts;
   inherit (flakeConsumer)
     evaluateConsumer
     mkConsumer
@@ -325,27 +324,6 @@ in
       expected = true;
     };
   };
-  plainImport =
-    let
-      consumer = plainFlakeConsumer.mkConsumer {
-        crossConfig.optionPaths = [ ];
-      };
-      node = mkNode {
-        configuredModule = consumer.nixosModules.crossConfig;
-        name = "idle";
-        nodeModule = { };
-      };
-    in
-    {
-      testEmptyPaths = {
-        expr = node.config.crossConfig.optionPaths;
-        expected = [ ];
-      };
-      testAssertions = {
-        expr = allAssertionsPass { inherit node; };
-        expected = true;
-      };
-    };
   testRejectsOldCollectionName = {
     expr = flakeRejections.oldCollectionName;
     expectedError = {

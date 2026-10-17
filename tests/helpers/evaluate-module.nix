@@ -26,5 +26,13 @@ in
 {
   inherit evaluateModules;
   evaluateModule = evaluate crossConfig.nixosModules.default;
+  # Add the NixOS module to a configuration that another evaluation builds,
+  # such as a NixOS container's.
+  withNixosModule = module: {
+    imports = [
+      crossConfig.nixosModules.default
+      module
+    ];
+  };
   evaluateConstructor = settings: evaluate (crossConfig.lib.mkModule settings);
 }

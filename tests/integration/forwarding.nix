@@ -1,12 +1,12 @@
 {
-  allAssertionsPass,
-  contributionRejections,
+  fixtures,
+  helpers,
   lib,
-  messagePattern,
-  mkNodeCollection,
   ...
 }:
 let
+  inherit (fixtures) contributionRejections;
+  inherit (helpers) allAssertionsPass messagePattern mkNodeCollection;
   nodes = mkNodeCollection {
     optionPaths = [
       [

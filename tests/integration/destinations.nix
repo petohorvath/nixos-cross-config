@@ -1,12 +1,12 @@
 {
-  allAssertionsPass,
-  destinationRejections,
+  fixtures,
+  helpers,
   lib,
-  messagePattern,
-  mkNodeCollection,
   ...
 }:
 let
+  inherit (fixtures) destinationRejections;
+  inherit (helpers) allAssertionsPass messagePattern mkNodeCollection;
   contributionOrigin = [
     "sender `sender`"
     "receiver `receiver`"

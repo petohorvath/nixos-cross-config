@@ -1,5 +1,6 @@
-{ allAssertionsPass, mkNodeCollection, ... }:
+{ helpers, ... }:
 let
+  inherit (helpers) allAssertionsPass mkNodeCollection;
   optionPaths = [
     [
       "networking"

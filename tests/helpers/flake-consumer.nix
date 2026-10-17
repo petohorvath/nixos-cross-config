@@ -1,27 +1,35 @@
 {
   crossConfig,
-  flakeParts,
+  flake-parts,
   mkReceiverLib,
   nixpkgs,
-  system,
+  sharedPkgsModule,
 }:
 let
   inherit (nixpkgs) lib;
-  consumerModule = module: {
+  consumerModule = flakeModule: module: {
     imports = [
-      crossConfig.flakeModules.default
+      flakeModule
       module
     ];
     systems = [ ];
   };
-  evaluateConsumer =
-    module: flakeParts.lib.evalFlakeModule { inputs.self.outPath = ../..; } (consumerModule module);
+  # Evaluate a consumer of any flake module, such as the flake's own export.
+  evaluateFlakeModule =
+    flakeModule: module:
+    flake-parts.lib.evalFlakeModule { inputs.self.outPath = ../..; } (
+      consumerModule flakeModule module
+    );
+  evaluateConsumer = evaluateFlakeModule crossConfig.flakeModules.default;
   mkConsumer =
-    module: flakeParts.lib.mkFlake { inputs.self.outPath = ../..; } (consumerModule module);
+    module:
+    flake-parts.lib.mkFlake { inputs.self.outPath = ../..; } (
+      consumerModule crossConfig.flakeModules.default module
+    );
   mkUnconfiguredNode =
     modules:
     lib.nixosSystem {
-      inherit modules system;
+      modules = [ sharedPkgsModule ] ++ modules;
     };
   mkNode =
     {
@@ -30,9 +38,9 @@ let
       nodeModule,
     }:
     lib.nixosSystem {
-      inherit system;
       specialArgs.lib = mkReceiverLib name;
       modules = [
+        sharedPkgsModule
         configuredModule
         {
           options.inventory = lib.genAttrs [ "values" "literal.values" ] (
@@ -73,6 +81,7 @@ in
 {
   inherit
     evaluateConsumer
+    evaluateFlakeModule
     mkConsumer
     mkNode
     mkPairConsumer

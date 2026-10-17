@@ -1,10 +1,7 @@
-{
-  allAssertionsPass,
-  mkNodeCollection,
-  valueCycle,
-  ...
-}:
+{ fixtures, helpers, ... }:
 let
+  inherit (fixtures) valueCycle;
+  inherit (helpers) allAssertionsPass mkNodeCollection;
   nodes = mkNodeCollection {
     optionPaths = [
       [
