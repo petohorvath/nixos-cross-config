@@ -1,8 +1,6 @@
-/*
-  Contributes definitions between caller-owned NixOS nodes. Each participant
-  supplies crossConfig.name, crossConfig.nodeConfigurations, and
-  crossConfig.optionPaths.
-*/
+# Contributes definitions between caller-owned NixOS nodes. Each participant
+# supplies crossConfig.name, crossConfig.nodeConfigurations, and
+# crossConfig.optionPaths.
 {
   config,
   extendModules,
