@@ -12,6 +12,8 @@
 
 ### Changed
 
+- **Breaking:** require each node's `crossConfig.name` to be a key of its own `crossConfig.nodeConfigurations`. Its assertions fail otherwise.
+- **Breaking:** fail assertions when nodes disagree on shared settings, instead of dropping contributions silently. A node with allowed paths compares the identity, normalized paths, and collection names of every node in its collection with its own; a node without paths compares only the receivers it targets. A contribution to a collection entry that does not import the module now fails the sender's assertions. Such entries remain allowed otherwise.
 - **Breaking:** rename `crossConfig.nodeCollection` to `crossConfig.nodeConfigurations` at NixOS and flake-parts scope.
 - **Breaking:** rename the outgoing option `crossConfig.nodes` to `crossConfig.contributions`, so `nodes` no longer names both the node collection and the contributions a sender supplies. The `lib.mkModule` argument `nodes` is unchanged.
 - **Breaking:** reject allowed paths rooted at `crossConfig` or `_module` through both interfaces; nested attributes and tags with these names remain supported. Validate required settings and nonempty string-segment paths, and normalize duplicate registrations so contributions arrive once.
@@ -59,6 +61,8 @@ Flake-parts consumers can opt into `flakeModules.default`, move shared registrat
 Replace `crossConfig.lib.mkModule { inherit name nodes optionPaths; }` in a node's imports with `crossConfig.nixosModules.default`. Set `crossConfig.name = name`, `crossConfig.nodeConfigurations = nodes`, and `crossConfig.optionPaths = optionPaths` through ordinary modules. The constructor remains available for incremental migration; both interfaces use outgoing `crossConfig.contributions`.
 
 Share the collection and registrations through common imported settings modules. Path lists follow normal priorities and merge before deduplication. Supply `[ ]` explicitly when no contributions are allowed. Registrations must be independent of receiving configuration; register service destinations unconditionally and condition contributions instead. See the [API reference](docs/api.md#allowed-option-paths) for literal segments, normalization, and dependency limits.
+
+Include every node in its own collection; a collection that omits the evaluating node now fails its assertions. Give all participants the same collection names, `crossConfig.optionPaths` set, and identities that match their collection keys. Remove contributions to collection entries that do not import the module, or import the module there. The new assertion messages name both nodes and list the differences; see [shared settings agreement](docs/api.md#shared-settings-agreement).
 
 Move any destination rooted at `crossConfig` or `_module` beneath an ordinary receiving namespace and update its registrations and contributors. This restriction applies even through the compatibility adapter and to unused paths. Nested names are unaffected. The new export is additive, but the destination restriction is a breaking public-contract change; after an initial release, a 0.x release containing it requires a minor version bump.
 

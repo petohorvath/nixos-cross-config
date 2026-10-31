@@ -15,6 +15,7 @@ let
   };
 in
 {
+  agreement = import ./agreement.nix testContext;
   conditional = import ./conditional.nix testContext;
   destinations = import ./destinations.nix testContext;
   example = import ./example.nix testContext;

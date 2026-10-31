@@ -67,6 +67,9 @@ in
   };
 
   fixtures = {
+    agreementRejections = import ./fixtures/agreement.nix {
+      inherit checkAssertions mkNodeCollection;
+    };
     contributionRejections = import ./fixtures/contributions.nix {
       inherit checkAssertions mkNodeCollection;
     };

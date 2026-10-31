@@ -8,7 +8,7 @@ Vocabulary for configuration contributed between nodes.
 A named NixOS configuration for a host or guest that participates in configuration contributions.
 
 **Node collection**:
-The set of named nodes participating in configuration contributions.
+The named set of NixOS configurations that contains every node. It can also contain configurations that do not participate; those receive no contributions.
 
 **Node identity**:
 A node's name within its node collection, independent of its hostname.

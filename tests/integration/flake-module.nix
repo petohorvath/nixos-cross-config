@@ -86,7 +86,12 @@ let
     {
       crossConfig = {
         optionPaths = [ ];
-        nodeConfigurations.unused = throw "An unused node in the opaque collection was forced.";
+        # The pair's own entries keep each identity in its collection.
+        nodeConfigurations = lib.genAttrs [
+          "alpha"
+          "beta"
+          "unused"
+        ] (name: throw "Collection entry `${name}` in the opaque collection was forced.");
       };
     }
   ] { };
@@ -288,7 +293,12 @@ in
         node:
         node.config.crossConfig.optionPaths == [ ]
         && node.config.crossConfig.contributions == { }
-        && builtins.attrNames node.config.crossConfig.nodeConfigurations == [ "unused" ]
+        &&
+          builtins.attrNames node.config.crossConfig.nodeConfigurations == [
+            "alpha"
+            "beta"
+            "unused"
+          ]
       ) (builtins.attrValues emptyConsumer.nixosConfigurations);
       expected = true;
     };
