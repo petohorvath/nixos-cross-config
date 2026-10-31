@@ -19,6 +19,7 @@ let
   # Paths whose destinations enclosing evaluations are inspecting; each
   # inspection re-evaluates the receiver without receiving at its own path.
   inspectionPaths = specialArgs.__nixosCrossConfigInspectionPaths or [ ];
+  isInspecting = inspectionPaths != [ ];
 
   restoreDefinitionProperties = import ./restore-definition-properties.nix { inherit lib; };
 
@@ -283,7 +284,7 @@ let
 in
 {
   # Whether this evaluation inspects destinations for an enclosing one.
-  isInspecting = inspectionPaths != [ ];
+  inherit isInspecting;
 
   /*
     Places definitions at a destination.
@@ -308,9 +309,13 @@ in
           lib.mkMerge definitions
         else
           # A false `lib.mkIf` would still push its attributes into the path;
-          # an empty merge defines none.
+          # an empty merge defines none. An inspection places other paths
+          # unchecked: checking them would nest inspections factorially
+          # (#53), and declarations must not depend on received values.
           lib.mkMerge (
-            lib.optional (isWritable destination) (lib.setAttrByPath remaining (lib.mkMerge definitions))
+            lib.optional (isInspecting || isWritable destination) (
+              lib.setAttrByPath remaining (lib.mkMerge definitions)
+            )
           );
 
       # Repeats the structural walk so attribute names never force deep

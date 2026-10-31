@@ -247,7 +247,16 @@ in
         modules = {
           sender = ../fixtures/destination-sibling-sender.nix;
           receiver =
-            { lib, ... }:
+            { lib, specialArgs, ... }:
+            let
+              # Each inspection re-evaluates the receiver with one more
+              # inspected path. An inspection nested inside another grows
+              # factorially with sibling paths (#53), so fail fast instead.
+              inspectionDepth = builtins.length (specialArgs.__nixosCrossConfigInspectionPaths or [ ]);
+            in
+            assert lib.assertMsg (
+              inspectionDepth <= 1
+            ) "destination inspection nested to depth ${toString inspectionDepth}";
             {
               options.inventory.entries = lib.mkOption {
                 type = lib.types.attrsOf (

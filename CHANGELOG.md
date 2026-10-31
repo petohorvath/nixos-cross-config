@@ -36,6 +36,10 @@
 - Completed implementation plans and separate review, research, and validation logs; retain current design explanations and architectural decisions.
 - **Breaking:** the root `nixpkgs-unstable` input. Compatibility revisions are supplied through native root input overrides.
 
+### Fixed
+
+- Evaluate receivers in time linear in the allowed paths below one submodule option. Destination inspection nested once per path, so four such paths took tens of seconds and five could exhaust memory ([#53](https://github.com/petohorvath/nixos-cross-config/issues/53)).
+
 ### Migration
 
 Rename `crossConfig.nodeCollection` to `crossConfig.nodeConfigurations` in NixOS modules and flake-parts settings. Update reads of that option as well as assignments. The old name is no longer declared. The `lib.mkModule` argument `nodes` is unchanged.
