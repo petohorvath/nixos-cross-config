@@ -6,7 +6,13 @@
 }:
 let
   inherit (fixtures) destinationRejections;
-  inherit (helpers) allAssertionsPass messagePattern mkNodeCollection;
+  inherit (helpers)
+    allAssertionsPass
+    checkAssertions
+    inspectionDepth
+    messagePattern
+    mkNodeCollection
+    ;
   contributionOrigin = [
     "sender `sender`"
     "receiver `receiver`"
@@ -247,16 +253,7 @@ in
         modules = {
           sender = ../fixtures/destination-sibling-sender.nix;
           receiver =
-            { lib, specialArgs, ... }:
-            let
-              # Each inspection re-evaluates the receiver with one more
-              # inspected path. An inspection nested inside another grows
-              # factorially with sibling paths (#53), so fail fast instead.
-              inspectionDepth = builtins.length (specialArgs.__nixosCrossConfigInspectionPaths or [ ]);
-            in
-            assert lib.assertMsg (
-              inspectionDepth <= 1
-            ) "destination inspection nested to depth ${toString inspectionDepth}";
+            { lib, ... }:
             {
               options.inventory.entries = lib.mkOption {
                 type = lib.types.attrsOf (
@@ -289,6 +286,186 @@ in
       testAssertions = {
         expr = allAssertionsPass nodes;
         expected = true;
+      };
+    };
+
+  # Inspecting one destination must not inspect its siblings again, which
+  # grows factorially with paths below one option (#53).
+  siblingInspection =
+    let
+      fields = [
+        "alpha"
+        "beta"
+        "gamma"
+        "delta"
+      ];
+      mkNodes =
+        maxDepth:
+        mkNodeCollection {
+          optionPaths = map (field: [
+            "inventory"
+            "entry"
+            field
+          ]) fields;
+          modules = {
+            sender = {
+              crossConfig.contributions.receiver.inventory.entry = lib.genAttrs fields (
+                field: "contributed-${field}"
+              );
+            };
+            receiver =
+              { lib, specialArgs, ... }:
+              let
+                depth = inspectionDepth specialArgs;
+              in
+              assert lib.assertMsg (depth <= maxDepth) "destination inspection at depth ${toString depth}";
+              {
+                options.inventory.entry = lib.mkOption {
+                  type = lib.types.submodule {
+                    options = lib.genAttrs fields (
+                      field:
+                      lib.mkOption {
+                        type = lib.types.str;
+                        default = "local";
+                        description = "Destination `${field}` below one submodule option.";
+                      }
+                    );
+                  };
+                  default = { };
+                  description = "Entry with several destinations.";
+                };
+              };
+          };
+        };
+      nodes = mkNodes 1;
+    in
+    {
+      testInspectsWithoutNesting = {
+        expr = nodes.receiver.config.inventory.entry;
+        expected = lib.genAttrs fields (field: "contributed-${field}");
+      };
+      testAssertions = {
+        expr = allAssertionsPass nodes;
+        expected = true;
+      };
+      # Guards the guard: the marker must reach the receiver, or
+      # testInspectsWithoutNesting would pass without checking anything.
+      testMarksInspections = {
+        expr = (mkNodes 0).receiver.config.inventory.entry;
+        expectedError = {
+          type = "ThrownError";
+          msg = messagePattern [ "destination inspection at depth 1" ];
+        };
+      };
+    };
+
+  # Invalid destinations beside a writable one keep their assertions, and
+  # inspecting the writable one leaves their payloads unevaluated.
+  invalidSiblingDestinations =
+    let
+      nodes = mkNodeCollection {
+        optionPaths = [
+          [
+            "inventory"
+            "entries"
+            "alpha"
+            "value"
+          ]
+          [
+            "inventory"
+            "entries"
+            "alpha"
+            "serial"
+          ]
+          [
+            "inventory"
+            "entries"
+            "alpha"
+            "absent"
+          ]
+          [
+            "inventory"
+            "tagged"
+            "item"
+            "value"
+          ]
+          [
+            "inventory"
+            "tagged"
+            "item"
+            "absent"
+          ]
+        ];
+        modules = {
+          sender = ../fixtures/invalid-sibling-sender.nix;
+          receiver =
+            { lib, ... }:
+            let
+              value = lib.mkOption {
+                type = lib.types.str;
+                default = "local";
+                description = "Writable destination beside invalid siblings.";
+              };
+            in
+            {
+              options.inventory = {
+                entries = lib.mkOption {
+                  type = lib.types.attrsOf (
+                    lib.types.submodule {
+                      options = {
+                        inherit value;
+                        serial = lib.mkOption {
+                          type = lib.types.attrsOf lib.types.str;
+                          readOnly = true;
+                          default = { };
+                          description = "Read-only sibling destination.";
+                        };
+                      };
+                    }
+                  );
+                  default = { };
+                  description = "Entries with writable, read-only, and missing siblings.";
+                };
+                tagged = lib.mkOption {
+                  type = lib.types.attrTag {
+                    item = lib.mkOption {
+                      type = lib.types.submodule { options = { inherit value; }; };
+                      description = "Tag with a writable and a missing sibling.";
+                    };
+                  };
+                  default.item = { };
+                  description = "Tagged entry with a missing sibling.";
+                };
+              };
+            };
+        };
+      };
+      inherit (nodes.receiver.config) inventory;
+    in
+    {
+      testValues = {
+        expr = {
+          inherit (inventory.entries.alpha) serial value;
+          tagged = inventory.tagged.item.value;
+        };
+        expected = {
+          serial = { };
+          value = "contributed-entry";
+          tagged = "contributed-tag";
+        };
+      };
+      testRejectsInvalidSiblings = {
+        expr = checkAssertions nodes.receiver;
+        expectedError = {
+          type = "ThrownError";
+          msg = messagePattern [
+            "read-only destination `inventory.entries.alpha.serial`"
+            "missing destination `inventory.entries.alpha.absent`"
+            "missing destination `inventory.tagged.item.absent`"
+            "sender `sender`"
+            "fixtures/invalid-sibling-sender.nix"
+          ];
+        };
       };
     };
 

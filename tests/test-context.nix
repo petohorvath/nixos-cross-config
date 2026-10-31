@@ -57,6 +57,7 @@ in
       mkNodeCollection
       mkReceiverLib
       ;
+    inspectionDepth = import ./helpers/inspection-depth.nix;
     messagePattern = import ./helpers/message-pattern.nix { inherit lib; };
     allAssertionsPass =
       nodes:
