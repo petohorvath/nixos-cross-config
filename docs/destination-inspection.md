@@ -12,11 +12,11 @@ The destination module receives the receiver's `lib`, declarations, `extendModul
 
 - `receivingDefinition` places a path's definitions. It takes attribute names from the receiver's declarations alone and forces the deep check only inside the matched option's value.
 - `status` classifies the destination as writable, missing, or read-only for assertions.
-- `isInspecting` tells the NixOS module to skip assertions inside an inspection evaluation. The special argument that marks these evaluations stays private to the module.
+- `isInspecting` tells the NixOS module to skip assertions inside an inspection evaluation. The special argument that marks these evaluations, named in [lib/inspection-argument.nix](../lib/inspection-argument.nix), stays private to the module and its tests.
 
 The module shares [definition-property restoration](../lib/restore-definition-properties.nix) with the sending module so both preserve priorities, ordering, and source locations.
 
-For a path inside a submodule, deep resolution uses `extendModules` to inspect the receiver while omitting contributions at that path. This lets receiver-local module functions, instance names, configuration, and freeform types determine whether the destination exists and is writable. These evaluations inspect destination metadata; they do not discover allowed paths or introduce a registration evaluation stage.
+For a path inside a submodule, deep resolution uses `extendModules` to inspect the receiver while omitting contributions at that path. This lets receiver-local module functions, instance names, configuration, and freeform types determine whether the destination exists and is writable. The inspection places contributions at other paths without checking their destinations, because receiver declarations and permissions must be independent of received values. Checking them would nest one inspection per path, growing factorially with the paths below one option. These evaluations inspect destination metadata; they do not discover allowed paths or introduce a registration evaluation stage.
 
 Traversal uses evaluated type metadata where available and retains native handling of wrappers such as `nullOr` and `unique`. At each step, `evaluateOption` probes the current type with a stub definition naming the next path segment and reads the evaluated option's `valueMeta` and `definitionsWithLocations`. A declaration-only walk through `getSubOptions` cannot establish instance-specific permissions. Root imports and declarations remain the caller's responsibility, as described in [ADR 0003](adr/0003-contribute-existing-option-definitions.md).
 
@@ -32,7 +32,7 @@ Inspection consumes the evaluated option's type and definitions while leaving it
 
 Destination inspection must not force disabled contribution payloads or introduce dependencies on a tag's final merged value. Self-targeted and reciprocal contributions remain valid; actual value-dependency cycles retain native Nix recursion errors.
 
-Tagged-destination tests ([unit](../tests/unit/tagged-destinations.nix), [integration](../tests/integration/tagged-destinations.nix)) cover writable tags, names, wrappers, defaults, priorities, receiver-local permissions, and laziness. Rejection cases declare their expected error type and message beside the expression, including contribution context and source locations. Reciprocal and tagged-destination suites also require native recursion errors for value-dependency cycles. nix-unit executes every assertion for a selected test; the [development guide](development.md#focused-checks) describes complete and focused runs.
+Tagged-destination tests ([unit](../tests/unit/tagged-destinations.nix), [integration](../tests/integration/tagged-destinations.nix)) cover writable tags, names, wrappers, defaults, priorities, receiver-local permissions, and laziness. Rejection cases declare their expected error type and message beside the expression, including contribution context and source locations. Reciprocal and tagged-destination suites also require native recursion errors for value-dependency cycles. The [destination suite](../tests/integration/destinations.nix) fails as soon as one inspection nests inside another, and checks that invalid destinations beside a writable one keep their assertions without evaluating their payloads. nix-unit executes every assertion for a selected test; the [development guide](development.md#focused-checks) describes complete and focused runs.
 
 ## Module-system dependencies
 

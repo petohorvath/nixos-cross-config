@@ -16,9 +16,11 @@
   specialArgs,
 }:
 let
+  inspectionArgument = import ./inspection-argument.nix;
   # Paths whose destinations enclosing evaluations are inspecting; each
   # inspection re-evaluates the receiver without receiving at its own path.
-  inspectionPaths = specialArgs.__nixosCrossConfigInspectionPaths or [ ];
+  inspectionPaths = specialArgs.${inspectionArgument} or [ ];
+  isInspecting = inspectionPaths != [ ];
 
   restoreDefinitionProperties = import ./restore-definition-properties.nix { inherit lib; };
 
@@ -257,7 +259,7 @@ let
             option =
               lib.getAttrFromPath prefix
                 (extendModules {
-                  specialArgs.__nixosCrossConfigInspectionPaths = inspectionPaths ++ [ path ];
+                  specialArgs.${inspectionArgument} = inspectionPaths ++ [ path ];
                 }).options;
           };
     in
@@ -283,7 +285,7 @@ let
 in
 {
   # Whether this evaluation inspects destinations for an enclosing one.
-  isInspecting = inspectionPaths != [ ];
+  inherit isInspecting;
 
   /*
     Places definitions at a destination.
@@ -295,7 +297,8 @@ in
     Returns a receiver configuration fragment. Its attribute names come from
     the receiver's declarations alone; the deep writability check stays
     inside the matched option's value. The fragment is empty for a path
-    whose destination this evaluation is inspecting.
+    whose destination this evaluation is inspecting, and other paths'
+    fragments skip the deep check during an inspection.
   */
   receivingDefinition =
     path: definitions:
@@ -308,9 +311,13 @@ in
           lib.mkMerge definitions
         else
           # A false `lib.mkIf` would still push its attributes into the path;
-          # an empty merge defines none.
+          # an empty merge defines none. An inspection places other paths
+          # unchecked: checking them would nest inspections factorially
+          # (#53), and declarations must be independent of received values.
           lib.mkMerge (
-            lib.optional (isWritable destination) (lib.setAttrByPath remaining (lib.mkMerge definitions))
+            lib.optional (isInspecting || isWritable destination) (
+              lib.setAttrByPath remaining (lib.mkMerge definitions)
+            )
           );
 
       # Repeats the structural walk so attribute names never force deep
