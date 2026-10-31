@@ -108,7 +108,7 @@ Only `host` appears in the standard flake output; the caller-owned collection al
 
 Shared flake modules can each define `crossConfig.optionPaths`. Lists merge at the winning priority, ordering helpers apply, and duplicate complete paths collapse in first-occurrence order. An ordinary definition replaces `mkDefault` registrations, and `mkForce` replaces ordinary registrations. One node collection definition must remain at the winning priority; evaluated collections are opaque and are never recursively merged or compared.
 
-The configured NixOS module supplies the resolved paths and collection with `lib.mkDefault`. Extend shared paths through flake-level modules so every participant receives the same normalized set. An ordinary node-level list replaces the entire supplied default, including when that list is empty; it does not append to the shared list. Deliberate node-level overrides must preserve the same collection and normalized path set across all participants.
+The configured NixOS module supplies the resolved paths and collection with `lib.mkDefault`. Extend shared paths through flake-level modules so every participant receives the same normalized set. An ordinary node-level list replaces the entire supplied default, including when that list is empty; it does not append to the shared list. Deliberate node-level overrides must preserve the same collection and normalized path set across all participants, or [agreement checks](api.md#shared-settings-agreement) fail.
 
 Path registrations must remain independent of receiving configuration. Prefer unconditional registrations and put service-dependent conditions on contributions. Moving composition to flake scope does not remove these [registration-dependency limits](api.md#allowed-option-paths).
 

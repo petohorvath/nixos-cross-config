@@ -37,7 +37,7 @@ All three settings are required:
 | `crossConfig.nodeConfigurations` | An opaque, lazy attribute set built by the caller. Each entry exposes its evaluated NixOS configuration through `.config`. |
 | `crossConfig.optionPaths`        | A shared list of nonempty lists of literal string segments. An explicit empty outer list permits no contributions.         |
 
-Every participating node must use the same node collection and normalized allowed-path set. Set each identity locally and import a common settings module for the collection and registrations:
+Every participating node must use the same node collection and normalized allowed-path set; [shared settings agreement](#shared-settings-agreement) describes how nodes check it. Set each identity locally and import a common settings module for the collection and registrations:
 
 ```nix
 let
@@ -53,7 +53,7 @@ in
 }
 ```
 
-The caller constructs `nodes`; the module does not discover nodes or combine different per-node registration sets. The collection type checks only the outer attribute set. It keeps entries lazy and does not recursively type-check, compare, copy, or merge evaluated configurations. Supply one collection definition at the winning option priority. Conflicting definitions at that priority fail; use `lib.mkDefault`, ordinary definitions, or `lib.mkForce` to select a collection.
+The caller constructs `nodes`; the module does not discover nodes or combine different per-node registration sets. Each node's `crossConfig.name` must be a key of its own collection. The collection can also contain entries that do not import the module, such as unrelated configurations in a flake's `nixosConfigurations`. Those entries receive no contributions, and a contribution to one fails the sender's assertions. The collection type checks only the outer attribute set. It keeps entries lazy and does not recursively type-check, compare, copy, or merge evaluated configurations. Supply one collection definition at the winning option priority. Conflicting definitions at that priority fail; use `lib.mkDefault`, ordinary definitions, or `lib.mkForce` to select a collection.
 
 The module receives `lib` from the node's NixOS evaluation. It does not evaluate development inputs or require flake-parts. With a checkout at `./nixos-cross-config`, use its module path directly:
 
@@ -82,7 +82,7 @@ Import `crossConfig.flakeModules.default` in a consumer's flake-parts module. It
 
 The adapter provides `config.flake.nixosModules.crossConfig`, also exported as the consumer's `nixosModules.crossConfig`. Each participating node imports it explicitly and supplies its own `crossConfig.name`. Outgoing contributions stay at NixOS scope. The adapter does not construct or discover nodes, extend existing evaluated configurations, or create another collection. The [flake-parts guide](flake-parts.md) shows default and explicit collections.
 
-The configured module imports the same lower-level NixOS module as `nixosModules.default` and supplies both shared settings with the receiver's `lib.mkDefault`. Extend or override shared paths at flake scope. A normal-priority node-level path list replaces the complete supplied default; it does not append to it. Deliberate node-level overrides must still leave all participants with the same collection and normalized path set.
+The configured module imports the same lower-level NixOS module as `nixosModules.default` and supplies both shared settings with the receiver's `lib.mkDefault`. Extend or override shared paths at flake scope. A normal-priority node-level path list replaces the complete supplied default; it does not append to it. Deliberate node-level overrides must still leave all participants with the same collection and normalized path set, or [agreement checks](#shared-settings-agreement) fail.
 
 The flake-parts evaluation supplies `lib` for flake-level options; the receiving NixOS evaluation supplies `lib` for the configured module. Shared settings remain lazy across these scopes. The [registration-dependency constraints](#allowed-option-paths) still apply: flake-level composition does not make registrations derived from receiving configuration safe.
 
@@ -312,7 +312,7 @@ crossConfig.contributions.beta.networking.hosts."192.0.2.10" = [ "alpha.example"
 crossConfig.contributions.alpha.networking.hosts."192.0.2.20" = [ "beta.example" ];
 ```
 
-This also works for hosts and guests, including a container contributing to its parent and itself. Each node imports `nixosModules.default` and supplies its own `crossConfig.name`, with the same collection and normalized path set.
+This also works for hosts and guests, including a container contributing to its parent and itself. Each node imports `nixosModules.default` and supplies its own `crossConfig.name`.
 
 An actual cycle between values still fails with Nix's native `infinite recursion encountered` error. In the following example, each sender reads the domain that only the other sender can supply:
 
@@ -339,6 +339,7 @@ Missing required settings and invalid setting types fail with the relevant `cros
 | Missing receiving option                      | The receiver's assertions fail.                                                        |
 | Read-only receiving option                    | The receiver's assertions fail, even without a default or another definition.          |
 | Unknown receiver identity                     | The sender's assertions fail. Building the sender exposes the error.                   |
+| Receiver that does not import the module      | The sender's assertions fail.                                                          |
 | Path outside `optionPaths`                    | The sender's module option check fails. This also applies when `optionPaths` is empty. |
 | Incompatible value or conflicting definitions | The receiving option type reports its native type or merge error.                      |
 
@@ -353,6 +354,23 @@ Missing-option, read-only, type, and merge failures identify the sender, receive
 ```
 
 Nested errors retain the receiving type's more specific option path. `--show-trace` provides additional evaluation context, including the sender of a contribution outside `optionPaths`. Exact original line and column attribution is not guaranteed.
+
+### Shared settings agreement
+
+Receivers collect contributions through their own settings, so nodes that disagree on shared settings could lose contributions. Assertions report each disagreement instead. A node's assertions fail when its `crossConfig.name` is not a key of its own `crossConfig.nodeConfigurations`, or when a checked collection entry disagrees with it. An entry agrees when all of these hold:
+
+- Its `crossConfig.name` equals its key in the collection.
+- Its normalized `crossConfig.optionPaths` contains the same paths, in any order.
+- Its `crossConfig.nodeConfigurations` has the same attribute names. Entries are not compared.
+
+A node with allowed option paths checks every entry in its collection that imports the module. A node with an empty path list checks only the receivers it targets, so its collection entries stay unforced. Each disagreeing entry produces one assertion that lists every difference:
+
+```text
+nixos-cross-config: node `proxy` and collection entry `application` disagree on shared settings.
+Only `application` allows `networking.hosts`.
+```
+
+The sender reports a disagreement in two cases that the receiver does not check: a receiver with an empty path list, and a receiver whose collection lacks the sender. Building only such a receiver therefore succeeds without the contribution. Collections with the same names but different evaluated entries count as agreeing.
 
 ## Evaluation and deployment
 

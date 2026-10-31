@@ -92,7 +92,10 @@ let
     {
       testCollectionNames = {
         expr = builtins.attrNames node.config.crossConfig.nodeConfigurations;
-        expected = [ "unused" ];
+        expected = [
+          "idle"
+          "unused"
+        ];
       };
       testEmptyPaths = {
         expr = node.config.crossConfig.optionPaths;
@@ -168,11 +171,21 @@ in
     expectedPaths = [ valuePath ];
   };
   opaqueCollection = checkIdleCollection [
-    { crossConfig.nodeConfigurations.unused = throw "Unused node was forced."; }
+    {
+      crossConfig.nodeConfigurations = {
+        idle = throw "Own node was forced.";
+        unused = throw "Unused node was forced.";
+      };
+    }
   ];
   collectionPriorities = checkIdleCollection [
     { crossConfig.nodeConfigurations = lib.mkDefault (throw "Discarded collection was forced."); }
-    { crossConfig.nodeConfigurations.unused = throw "Selected node was forced."; }
+    {
+      crossConfig.nodeConfigurations = {
+        idle = throw "Own node was forced.";
+        unused = throw "Selected node was forced.";
+      };
+    }
   ];
   forcedCollection = checkIdleCollection [
     {
@@ -180,6 +193,7 @@ in
     }
     {
       crossConfig.nodeConfigurations = lib.mkForce {
+        idle = throw "Own node was forced.";
         unused = throw "Selected node was forced.";
       };
     }

@@ -42,15 +42,19 @@ let
   };
   inherit (receiving) destinationAssertions receivedConfig;
 
-  mkReceiverAssertion = receiver: contribution: {
-    assertion = builtins.seq contribution (builtins.hasAttr receiver cfg.nodeConfigurations);
-    message = "nixos-cross-config: sender `${cfg.name}` targets unknown receiver `${receiver}`.";
+  peerAssertions = import ../lib/peer-agreement.nix {
+    inherit lib;
+    inherit (cfg)
+      contributions
+      name
+      nodeConfigurations
+      optionPaths
+      ;
   };
-  receiverAssertions = lib.mapAttrsToList mkReceiverAssertion cfg.contributions;
 
   # Required settings must also be checked on idle nodes with no paths.
   assertions = builtins.seq cfg.name (
-    builtins.seq cfg.nodeConfigurations (destinationAssertions ++ receiverAssertions)
+    builtins.seq cfg.nodeConfigurations (destinationAssertions ++ peerAssertions)
   );
 in
 {
