@@ -357,16 +357,16 @@ Nested errors retain the receiving type's more specific option path. `--show-tra
 
 ### Shared settings agreement
 
-Receivers collect contributions through their own settings, so nodes that disagree on shared settings could lose contributions. Assertions report each disagreement instead. A node's assertions fail when its `crossConfig.name` is not a key of its own `crossConfig.nodeConfigurations`, or when a checked collection entry disagrees with it. An entry agrees when all of these hold:
+A node's assertions fail when its `crossConfig.name` is not a key of its own `crossConfig.nodeConfigurations`, or when a node it checks disagrees with it on shared settings. Receivers collect contributions through their own settings, so a disagreement would otherwise lose contributions without an error. A checked node agrees when all of these hold:
 
 - Its `crossConfig.name` equals its key in the collection.
 - Its normalized `crossConfig.optionPaths` contains the same paths, in any order.
-- Its `crossConfig.nodeConfigurations` has the same attribute names. Entries are not compared.
+- Its `crossConfig.nodeConfigurations` has the same attribute names.
 
-A node with allowed option paths checks every entry in its collection that imports the module. A node with an empty path list checks only the receivers it targets, so its collection entries stay unforced. Each disagreeing entry produces one assertion that lists every difference:
+A node with allowed option paths checks every entry in its collection that imports the module. A node with an empty path list checks only the receivers it targets, so its collection entries stay unforced. Each disagreeing node produces one assertion that lists every difference:
 
 ```text
-nixos-cross-config: node `proxy` and collection entry `application` disagree on shared settings.
+nixos-cross-config: nodes `proxy` and `application` disagree on shared settings.
 Only `application` allows `networking.hosts`.
 ```
 

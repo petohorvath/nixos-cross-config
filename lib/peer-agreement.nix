@@ -13,7 +13,7 @@ let
   # receive nothing and are not compared.
   participates = node: node.config ? crossConfig;
 
-  showNames = lib.concatMapStringsSep ", " (entry: "`${entry}`");
+  showNames = lib.concatMapStringsSep ", " (key: "`${key}`");
   showPaths = lib.concatMapStringsSep ", " (path: "`${lib.showOption path}`");
 
   membershipAssertion = {
@@ -40,16 +40,16 @@ let
   mkPeerAssertion =
     key: node:
     let
-      peer = node.config.crossConfig;
+      peerCfg = node.config.crossConfig;
       ownNames = builtins.attrNames nodeConfigurations;
-      peerNames = builtins.attrNames peer.nodeConfigurations;
+      peerNames = builtins.attrNames peerCfg.nodeConfigurations;
       # Paths compare as sets: receivers merge in their own path order.
-      onlyOwnPaths = lib.subtractLists peer.optionPaths optionPaths;
-      onlyPeerPaths = lib.subtractLists optionPaths peer.optionPaths;
+      onlyOwnPaths = lib.subtractLists peerCfg.optionPaths optionPaths;
+      onlyPeerPaths = lib.subtractLists optionPaths peerCfg.optionPaths;
       onlyOwnNames = lib.subtractLists peerNames ownNames;
       onlyPeerNames = lib.subtractLists ownNames peerNames;
       differences = lib.concatLists [
-        (lib.optional (peer.name != key) "Its crossConfig.name is `${peer.name}`.")
+        (lib.optional (peerCfg.name != key) "Collection key `${key}` holds node `${peerCfg.name}`.")
         (lib.optional (onlyOwnPaths != [ ]) "Only `${name}` allows ${showPaths onlyOwnPaths}.")
         (lib.optional (onlyPeerPaths != [ ]) "Only `${key}` allows ${showPaths onlyPeerPaths}.")
         (lib.optional (
@@ -63,7 +63,7 @@ let
     {
       assertion = differences == [ ];
       message =
-        "nixos-cross-config: node `${name}` and collection entry `${key}` disagree on shared settings.\n"
+        "nixos-cross-config: nodes `${name}` and `${key}` disagree on shared settings.\n"
         + lib.concatStringsSep "\n" differences;
     };
 

@@ -39,6 +39,11 @@ let
     };
     extraNodes.plain.config = { };
   };
+  idleNodes = mkNodeCollection {
+    optionPaths = [ ];
+    modules.idle = { };
+    extraNodes.unused = throw "An idle node forced a collection entry.";
+  };
 in
 {
   testReorderedPathsHosts = {
@@ -58,47 +63,47 @@ in
     expected = true;
   };
   testRejectsDifferentPathsOnSender = {
-    expr = agreementRejections.differentPathsSender;
+    expr = agreementRejections.differentPathsOnSender;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
-        "node `sender` and collection entry `receiver` disagree on shared settings"
+        "nodes `sender` and `receiver` disagree on shared settings"
         "Only `sender` allows `networking.hosts`."
       ];
     };
   };
   testRejectsDifferentPathsOnReceiver = {
-    expr = agreementRejections.differentPathsReceiver;
+    expr = agreementRejections.differentPathsOnReceiver;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
-        "node `receiver` and collection entry `sender` disagree on shared settings"
+        "nodes `receiver` and `sender` disagree on shared settings"
         "Only `sender` allows `networking.hosts`."
       ];
     };
   };
   testRejectsIdleReceiverOnSender = {
-    expr = agreementRejections.idleReceiverSender;
+    expr = agreementRejections.idleReceiverOnSender;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
-        "node `sender` and collection entry `receiver` disagree on shared settings"
+        "nodes `sender` and `receiver` disagree on shared settings"
         "Only `sender` allows `networking.hosts`, `networking.domain`."
       ];
     };
   };
-  testRejectsMissingSender = {
-    expr = agreementRejections.missingSender;
+  testRejectsExcludedSenderOnSender = {
+    expr = agreementRejections.excludedSenderOnSender;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
-        "node `sender` and collection entry `receiver` disagree on shared settings"
+        "nodes `sender` and `receiver` disagree on shared settings"
         "Only the collection of `sender` contains `sender`."
       ];
     };
   };
-  testRejectsRenamedSender = {
-    expr = agreementRejections.renamedSender;
+  testRejectsRenamedSenderOnSender = {
+    expr = agreementRejections.renamedSenderOnSender;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
@@ -107,17 +112,31 @@ in
     };
   };
   testRejectsRenamedSenderOnReceiver = {
-    expr = agreementRejections.renamedSenderReceiver;
+    expr = agreementRejections.renamedSenderOnReceiver;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [
-        "node `receiver` and collection entry `sender` disagree on shared settings"
-        "Its crossConfig.name is `renamed`."
+        "nodes `receiver` and `sender` disagree on shared settings"
+        "Collection key `sender` holds node `renamed`."
       ];
     };
   };
-  testRejectsPlainReceiver = {
-    expr = agreementRejections.plainReceiver;
+  testRejectsIdleSenderOnSender = {
+    expr = agreementRejections.idleSenderOnSender;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "nodes `sender` and `receiver` disagree on shared settings"
+        "Only `receiver` allows `networking.hosts`, `networking.domain`."
+      ];
+    };
+  };
+  testIdleNodeLeavesCollectionUnforced = {
+    expr = allAssertionsPass { inherit (idleNodes) idle; };
+    expected = true;
+  };
+  testRejectsPlainReceiverOnSender = {
+    expr = agreementRejections.plainReceiverOnSender;
     expectedError = {
       type = "ThrownError";
       msg = messagePattern [

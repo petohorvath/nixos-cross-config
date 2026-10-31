@@ -13,7 +13,7 @@
 ### Changed
 
 - **Breaking:** require each node's `crossConfig.name` to be a key of its own `crossConfig.nodeConfigurations`. Its assertions fail otherwise.
-- **Breaking:** fail assertions when nodes disagree on shared settings, instead of dropping contributions silently. A node with allowed paths compares every participating collection entry's identity, normalized paths, and collection names with its own; a node without paths compares only the receivers it targets. A contribution to a collection entry that does not import the module now fails the sender's assertions. Such entries remain allowed otherwise.
+- **Breaking:** fail assertions when nodes disagree on shared settings, instead of dropping contributions silently. A node with allowed paths compares the identity, normalized paths, and collection names of every node in its collection with its own; a node without paths compares only the receivers it targets. A contribution to a collection entry that does not import the module now fails the sender's assertions. Such entries remain allowed otherwise.
 - **Breaking:** rename `crossConfig.nodeCollection` to `crossConfig.nodeConfigurations` at NixOS and flake-parts scope.
 - **Breaking:** rename the outgoing option `crossConfig.nodes` to `crossConfig.contributions`, so `nodes` no longer names both the node collection and the contributions a sender supplies. The `lib.mkModule` argument `nodes` is unchanged.
 - **Breaking:** reject allowed paths rooted at `crossConfig` or `_module` through both interfaces; nested attributes and tags with these names remain supported. Validate required settings and nonempty string-segment paths, and normalize duplicate registrations so contributions arrive once.

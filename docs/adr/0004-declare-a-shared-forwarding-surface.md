@@ -1,6 +1,6 @@
 # Declare the allowed option paths
 
-The node collection uses one explicit shared set of allowed option paths, configured through `crossConfig.optionPaths`. Shared modules can merge and prioritize registrations, with duplicate paths normalized after merging. Every participant must use the same node collection and normalized path set. Each receiver collects contributions through its own copy of these settings, so nodes check that the peers they exchange with agree instead of letting a disagreement drop contributions.
+The node collection uses one explicit shared set of allowed option paths, configured through `crossConfig.optionPaths`. Shared modules can merge and prioritize registrations, with duplicate paths normalized after merging. Every participant must use the same node collection and normalized path set. Each receiver collects contributions through its own copy of these settings, so each node checks that the nodes it exchanges with agree instead of letting a disagreement drop contributions.
 
 The receiving configuration's outer namespace names come from the receiver's declared options. Allowed-path filtering and contribution collection happen only inside each namespace. This keeps the outer structure independent of the path list and receiving values, allowing settings to participate in ordinary module evaluation without another registration-discovery stage.
 

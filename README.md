@@ -44,7 +44,7 @@ Import `crossConfig.nixosModules.default` on every participating node and set it
 | `crossConfig.nodeConfigurations` | The lazy attribute set of all nodes in the collection.                                                                         |
 | `crossConfig.optionPaths`        | The list of allowed option paths, each a nonempty list of literal attribute names. An explicit `[ ]` permits no contributions. |
 
-Every node must use the same collection and allowed option paths, and [assertions report disagreements](docs/api.md#shared-settings-agreement). Define those two in a settings module that all nodes import, and set `crossConfig.name` on each node. Path lists from several modules merge, and duplicate paths deliver contributions once. Importing the module enables both sending and receiving; there is no separate enable option.
+Every node must use the same collection and allowed option paths, which [assertions check](docs/api.md#shared-settings-agreement). Define those two in a settings module that all nodes import, and set `crossConfig.name` on each node. Path lists from several modules merge, and duplicate paths deliver contributions once. Importing the module enables both sending and receiving; there is no separate enable option.
 
 ## Usage
 
