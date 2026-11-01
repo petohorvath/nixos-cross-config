@@ -75,10 +75,10 @@ Use the same input name as the consuming flake; `crossConfig` matches the README
 
 Import `crossConfig.flakeModules.default` in a consumer's flake-parts module. It declares two system-independent options at flake scope, outside `perSystem`:
 
-| Option                           | Contract                                                                                                                                                                                                           |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `crossConfig.optionPaths`        | Required, with the same path shape, literal segments, list merging, priorities, first-occurrence deduplication, and reserved-root validation as the standalone option. An explicit `[ ]` permits no contributions. |
-| `crossConfig.nodeConfigurations` | The same opaque, lazy collection contract as the standalone option. Defaults to `config.flake.nixosConfigurations`; one explicit definition at the winning priority replaces the default.                          |
+| Option                           | Contract                                                                                                                                                                                                                              |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `crossConfig.optionPaths`        | Required, with the same path shape, literal segments, list merging, priorities, first-occurrence deduplication, reserved-root validation, and overlap rejection as the standalone option. An explicit `[ ]` permits no contributions. |
+| `crossConfig.nodeConfigurations` | The same opaque, lazy collection contract as the standalone option. Defaults to `config.flake.nixosConfigurations`; one explicit definition at the winning priority replaces the default.                                             |
 
 The adapter provides `config.flake.nixosModules.crossConfig`, also exported as the consumer's `nixosModules.crossConfig`. Each participating node imports it explicitly and supplies its own `crossConfig.name`. Outgoing contributions stay at NixOS scope. The adapter does not construct or discover nodes, extend existing evaluated configurations, or create another collection. The [flake-parts guide](flake-parts.md) shows default and explicit collections.
 
@@ -132,6 +132,8 @@ The setting has no implicit empty default. Set `crossConfig.optionPaths = [ ];` 
 Several shared modules can supply registrations. List definitions merge at the winning option priority and then complete paths are deduplicated, preserving their first occurrence. Repeating a list-valued destination delivers each contribution only once. An ordinary list replaces `lib.mkDefault` lists; `lib.mkForce` replaces ordinary lists. Ordering helpers such as `lib.mkBefore` order surviving registrations before deduplication.
 
 Paths whose first segment is `crossConfig` or `_module` are rejected, including unused registrations, because those namespaces configure the module and module-system internals. Nested attributes and tags with these names remain supported, for example `[ "inventory" "_module" "value" ]`.
+
+Registrations cannot overlap. A path that starts with another complete registered path is rejected, including unused registrations, such as `[ "services" "nginx" ]` together with `[ "services" "nginx" "virtualHosts" ]`. Segments compare whole, so `[ "inventory" "values" ]` and `[ "inventory" "valuesArchive" ]` do not overlap. Register only the path that names the receiving option; it already permits contributions to values nested below it.
 
 Registrations are structural configuration. Literal paths, shared list composition, override priorities, and conditions based on independent setup values are supported. Paths must remain independent of receiving configuration: even a locally defined flag inside a generated receiving namespace can introduce a dependency cycle. Register paths unconditionally where possible and put service-dependent conditions on the contributions themselves, as in [conditional contributions](#conditional-contributions). The module does not add an evaluation stage to discover registrations.
 
@@ -332,7 +334,7 @@ Evaluating either receiving domain exposes the cycle. Cyclic values are not drop
 
 ## Validation and errors
 
-Missing required settings and invalid setting types fail with the relevant `crossConfig` option name. Checking assertions also checks required settings on idle nodes with no contributions. Reserved-root errors identify the offending registration and the node identity when available. Setting validation applies through the compatibility adapter as well.
+Missing required settings and invalid setting types fail with the relevant `crossConfig` option name. Checking assertions also checks required settings on idle nodes with no contributions. Reserved-root and overlap errors identify the offending registrations and the node identity when available. Setting validation applies through the compatibility adapter as well.
 
 | Contribution                                  | Validation                                                                             |
 | --------------------------------------------- | -------------------------------------------------------------------------------------- |

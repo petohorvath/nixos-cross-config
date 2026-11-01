@@ -148,6 +148,7 @@ The configured module supplies the shared settings with `lib.mkDefault`, so exte
 - No release is tagged yet. The [changelog](CHANGELOG.md) lists the unreleased breaking changes and their migration steps.
 - Allowed option paths, node identities, and the receiver's imports and option declarations cannot depend on received values. Register paths unconditionally and put service-dependent conditions on the contributions.
 - Allowed option paths cannot start with `crossConfig` or `_module`. These names remain valid deeper in a path.
+- Allowed option paths cannot overlap: no path can start with another complete path in the list.
 - Node construction, discovery, and deployment remain the caller's responsibility.
 
 ## Contributing

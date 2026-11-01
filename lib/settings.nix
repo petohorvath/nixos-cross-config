@@ -48,11 +48,34 @@ let
     else
       path;
 
+  # A sender cannot declare an option inside another option, and keeping only
+  # the outer path would fail where it names a namespace on a receiver.
+  rejectOverlaps =
+    paths:
+    let
+      overlaps = lib.concatMap (
+        outer:
+        map (inner: { inherit inner outer; }) (
+          builtins.filter (path: path != outer && lib.lists.hasPrefix outer path) paths
+        )
+      ) paths;
+      overlap = builtins.head overlaps;
+    in
+    if overlaps == [ ] then
+      paths
+    else
+      throw (
+        "nixos-cross-config: crossConfig.optionPaths registrations `${lib.showOption overlap.outer}` and `${lib.showOption overlap.inner}`"
+        + lib.optionalString (nodeName != null) " on node `${nodeName}`"
+        + " overlap. Register only one of them."
+      );
+
   normalizePaths =
     paths:
     lib.pipe paths [
       (map validatePath)
       lib.unique
+      rejectOverlaps
     ];
 in
 {

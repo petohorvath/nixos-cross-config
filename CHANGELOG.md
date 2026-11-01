@@ -17,6 +17,7 @@
 - **Breaking:** rename `crossConfig.nodeCollection` to `crossConfig.nodeConfigurations` at NixOS and flake-parts scope.
 - **Breaking:** rename the outgoing option `crossConfig.nodes` to `crossConfig.contributions`, so `nodes` no longer names both the node collection and the contributions a sender supplies. The `lib.mkModule` argument `nodes` is unchanged.
 - **Breaking:** reject allowed paths rooted at `crossConfig` or `_module` through both interfaces; nested attributes and tags with these names remain supported. Validate required settings and nonempty string-segment paths, and normalize duplicate registrations so contributions arrive once.
+- **Breaking:** reject overlapping allowed paths, where one path starts with another complete registered path. Contributions to such a collection previously failed with `expected a list but found a set`; the registrations now fail with an error that names both paths.
 - Explain usage with a complete README example and move detailed behavior to a separate API reference.
 - Return `mkFlake` directly from the root flake, with public module and library exports declared there. Keep shell, formatter, treefmt, and check assembly configuration in a `dev` partition, preserving root development commands and `.envrc`.
 - **Breaking:** select tools, fixtures, checks, and examples through one root `nixpkgs` input; remove stable/unstable labels from focused fixtures and root check names. Test runners still accept `nixpkgs` explicitly. Root `nix flake check` validates the selected revision. Native input overrides select another revision for the complete root check interface without changing the committed default.
@@ -69,6 +70,8 @@ Share the collection and registrations through common imported settings modules.
 Include every node in its own collection; a collection that omits the evaluating node now fails its assertions. Give all participants the same collection names, `crossConfig.optionPaths` set, and identities that match their collection keys. Remove contributions to collection entries that do not import the module, or import the module there. The new assertion messages name both nodes and list the differences; see [shared settings agreement](docs/api.md#shared-settings-agreement).
 
 Move any destination rooted at `crossConfig` or `_module` beneath an ordinary receiving namespace and update its registrations and contributors. This restriction applies even through the compatibility adapter and to unused paths. Nested names are unaffected. The new export is additive, but the destination restriction is a breaking public-contract change; after an initial release, a 0.x release containing it requires a minor version bump.
+
+Remove overlapping registrations so that no allowed path starts with another. Keep the path that names the receiving option, or replace a namespace path with the separate option paths below it.
 
 Replace `nix develop ./dev` with root `nix develop`, and run root `nix fmt --no-update-lock-file` instead of formatting from `dev/`. The separate development flake has been removed. Root `nix flake check --no-update-lock-file` validates the committed `nixpkgs` default. For another exact selection, set `NIXPKGS_REV` to its full commit and run:
 

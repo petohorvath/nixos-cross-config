@@ -21,6 +21,13 @@ in
     ]
   ];
   emptyRegistration = evaluatePaths [ [ ] ];
+  overlappingPaths = evaluatePaths [
+    [ "inventory" ]
+    [
+      "inventory"
+      "values"
+    ]
+  ];
   reservedCrossConfig = evaluatePaths [
     [
       "crossConfig"
