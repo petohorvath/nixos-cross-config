@@ -436,4 +436,15 @@ in
       ];
     };
   };
+  testRejectsOverlappingPaths = {
+    expr = flakeRejections.overlappingPaths;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.optionPaths"
+        "`inventory` and `inventory.values`"
+        "overlap"
+      ];
+    };
+  };
 }

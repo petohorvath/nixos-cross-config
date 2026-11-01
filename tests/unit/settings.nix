@@ -20,6 +20,10 @@ let
     "inventory"
     "other"
   ];
+  valuesArchivePath = [
+    "inventory"
+    "valuesArchive"
+  ];
   checkRegistrations =
     {
       modules,
@@ -169,6 +173,21 @@ in
       })
     ];
     expectedPaths = [ valuePath ];
+  };
+  # Paths that share a string prefix but no segment prefix do not overlap.
+  segmentPrefixRegistrations = checkRegistrations {
+    modules = [
+      {
+        crossConfig.optionPaths = [
+          valuePath
+          valuesArchivePath
+        ];
+      }
+    ];
+    expectedPaths = [
+      valuePath
+      valuesArchivePath
+    ];
   };
   opaqueCollection = checkIdleCollection [
     {
@@ -363,6 +382,53 @@ in
         "reserved root"
         "_module.args"
         "receiver"
+      ];
+    };
+  };
+  testRejectsOverlappingPaths = {
+    expr = moduleRejections.overlappingPaths;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.optionPaths"
+        "`inventory` and `inventory.values`"
+        "on node `receiver`"
+        "overlap"
+      ];
+    };
+  };
+  testRejectsOverlappingPathsReversed = {
+    expr = moduleRejections.overlappingPathsReversed;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.optionPaths"
+        "`inventory` and `inventory.values`"
+        "on node `receiver`"
+        "overlap"
+      ];
+    };
+  };
+  testRejectsOverlappingWithoutName = {
+    expr = moduleRejections.overlappingWithoutName;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.optionPaths"
+        "`inventory` and `inventory.values`"
+        "overlap"
+      ];
+    };
+  };
+  testRejectsLegacyOverlapping = {
+    expr = moduleRejections.legacyOverlapping;
+    expectedError = {
+      type = "ThrownError";
+      msg = messagePattern [
+        "crossConfig.optionPaths"
+        "`inventory` and `inventory.values`"
+        "on node `receiver`"
+        "overlap"
       ];
     };
   };

@@ -38,6 +38,31 @@ in
       "args"
     ]
   ];
+  overlappingPaths = evaluatePaths [
+    [ "inventory" ]
+    [
+      "inventory"
+      "values"
+    ]
+  ];
+  overlappingPathsReversed = evaluatePaths [
+    [
+      "inventory"
+      "values"
+    ]
+    [ "inventory" ]
+  ];
+  overlappingWithoutName =
+    (evaluate {
+      inherit (settings) nodeConfigurations;
+      optionPaths = [
+        [ "inventory" ]
+        [
+          "inventory"
+          "values"
+        ]
+      ];
+    }).config.crossConfig.optionPaths;
   reservedWithoutName =
     (evaluate {
       inherit (settings) nodeConfigurations;
@@ -62,6 +87,18 @@ in
         [
           "_module"
           "args"
+        ]
+      ];
+    } { modules = [ ]; }).config.assertions;
+  legacyOverlapping =
+    (evaluateConstructor {
+      inherit (settings) name;
+      nodes = { };
+      optionPaths = [
+        [ "inventory" ]
+        [
+          "inventory"
+          "values"
         ]
       ];
     } { modules = [ ]; }).config.assertions;
