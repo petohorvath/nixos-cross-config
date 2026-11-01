@@ -37,14 +37,21 @@ let
     emptyValue = { };
   };
 
+  throwRegistrationError =
+    paths: problem:
+    throw (
+      "nixos-cross-config: crossConfig.optionPaths registration"
+      + lib.optionalString (builtins.length paths > 1) "s"
+      + " "
+      + lib.concatMapStringsSep " and " (path: "`${lib.showOption path}`") paths
+      + lib.optionalString (nodeName != null) " on node `${nodeName}`"
+      + " ${problem}"
+    );
+
   validatePath =
     path:
     if builtins.elem (builtins.head path) reservedRoots then
-      throw (
-        "nixos-cross-config: crossConfig.optionPaths registration `${lib.showOption path}`"
-        + lib.optionalString (nodeName != null) " on node `${nodeName}`"
-        + " uses a reserved root."
-      )
+      throwRegistrationError [ path ] "uses a reserved root."
     else
       path;
 
@@ -64,11 +71,12 @@ let
     if overlaps == [ ] then
       paths
     else
-      throw (
-        "nixos-cross-config: crossConfig.optionPaths registrations `${lib.showOption overlap.outer}` and `${lib.showOption overlap.inner}`"
-        + lib.optionalString (nodeName != null) " on node `${nodeName}`"
-        + " overlap. Register only one of them."
-      );
+      throwRegistrationError
+        [
+          overlap.outer
+          overlap.inner
+        ]
+        "overlap. Keep the path that names the receiving option, or replace a namespace path with the option paths below it.";
 
   normalizePaths =
     paths:
